@@ -42,21 +42,79 @@ class LeNet(nn.Module):
         x = self.fc2(x)
         return F.log_softmax(x, dim=1)
 
-def test(test_image_path, model_path, batch_size):
-	test_loader = torch.utils.data.DataLoader(
-    datasets.MNIST('../data', train=False, download=True, transform=transforms.Compose([
-            transforms.ToTensor(),
-            ])),
-        batch_size=1, shuffle=True)
+class AlexNet(nn.Module):
+    def __init__(self, num_classes: int = 1000, dropout: float = 0.5) -> None:
+        super().__init__()
+        #_log_api_usage_once(self)
+        self.features = nn.Sequential(
+            nn.Conv2d(3, 64, kernel_size=11, stride=4, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(64, 192, kernel_size=5, padding=2),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.Conv2d(192, 384, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(384, 256, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+        )
+        self.avgpool = nn.AdaptiveAvgPool2d((6, 6))
+        self.classifier = nn.Sequential(
+            nn.Dropout(p=dropout),
+            nn.Linear(256 * 6 * 6, 4096),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=dropout),
+            nn.Linear(4096, 4096),
+            nn.ReLU(inplace=True),
+            nn.Linear(4096, num_classes),
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.features(x)
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = self.classifier(x)
+        return x
+
+def test(test_image_path, model, dataset, batch_size):
+	if (dataset == 'mnist'):
+		test_loader = torch.utils.data.DataLoader(
+	    datasets.MNIST('./data', train=False, download=True, transform=transforms.Compose([
+	            transforms.ToTensor(),
+	            ])),
+	        batch_size=1, shuffle=True)
+	elif (dataset == 'cifar10'):
+		test_loader = torch.utils.data.DataLoader(
+	    datasets.CIFAR10('./data', train=False, download=True, transform=transforms.Compose([
+	            transforms.ToTensor(),
+	            ])),
+	        batch_size=1, shuffle=True)
+	else:
+		print ('No Valid Dataset Suggested')
+		exit()
 
 
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 	# Initialize the network
-	model = LeNet().to(device)
+	model_path = 0
+	if (model == 'le_net'):
+		model = LeNet().to(device)
+		model_path = './models/lenet_mnist_model.pth'
+	elif (model == 'alex_net'):
+		# model = AlexNet().to(device)
+		# model_path = './models/alexnet_cifar10_model_best.pth.tar'
+		model = torch.hub.load('pytorch/vision:v0.6.0', 'alexnet', pretrained=True)
+	else:
+		print ('No Valid Model Suggested')
+		exit(())
 
 	# Load the pretrained model
-	model.load_state_dict(torch.load(model_path, map_location=device))
+	if (model_path != 0):
+		model.load_state_dict(torch.load(model_path, map_location=device))
 
 	print ('Model Loaded')
 
@@ -79,7 +137,7 @@ def test(test_image_path, model_path, batch_size):
 	    data.requires_grad = True
 
 	    #atk = torchattacks.MIFGSM(model, eps=255/255, alpha=255/255, steps=10)
-	    atk = mifgsm.MIFGSM(model, eps=128/255, alpha=128/255, steps=100000)
+	    atk = mifgsm.MIFGSM(model, eps=128/255, alpha=16/255, steps=100)
 	    atk.set_mode_targeted_least_likely()
 
 	    adv_images = atk(data, target)
@@ -116,8 +174,9 @@ def test(test_image_path, model_path, batch_size):
 
 if __name__ == '__main__':
 	test_image_path = './data/mnist/archive/testSet/testSet/*.jpg' #for now dl using torchvision
-	model_path = './models/lenet_mnist_model.pth'
+	model = 'le_net'
+	dataset = 'mnist'
 	batch_size = 16
 
 
-	test(test_image_path, model_path, batch_size)
+	test(test_image_path, model, dataset, batch_size)
