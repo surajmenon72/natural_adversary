@@ -15,6 +15,7 @@ import os
 sys.path.append(os.path.abspath("/Users/surajmenon/Desktop/natural_adversary/adversarial-attacks-pytorch-master"))
 from torchattacks_local import attack
 from torchattacks_local.attacks import mifgsm
+from torchattacks_local.attacks import fib_attack
 
 from six.moves import urllib
 opener = urllib.request.build_opener()
@@ -137,7 +138,8 @@ def test(test_image_path, model, dataset, batch_size):
 	    data.requires_grad = True
 
 	    #atk = torchattacks.MIFGSM(model, eps=255/255, alpha=255/255, steps=10)
-	    atk = mifgsm.MIFGSM(model, eps=128/255, alpha=16/255, steps=100)
+	    #atk = mifgsm.MIFGSM(model, eps=255/255, alpha=255/255, steps=1000)
+	    atk = fib_attack.FIBA(model, eps=255/255, alpha=255/255, steps=1000)
 	    atk.set_mode_targeted_least_likely()
 
 	    adv_images = atk(data, target)
