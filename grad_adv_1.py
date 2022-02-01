@@ -1,4 +1,4 @@
-#FGSM-Test
+#Grad-Adv-Test
 from __future__ import print_function
 import torch
 import torch.nn as nn
@@ -43,6 +43,19 @@ class LeNet(nn.Module):
         x = self.fc2(x)
         return F.log_softmax(x, dim=1)
 
+    def semi_forward(self, x):
+        y = F.max_pool2d(self.conv1(x), 2)
+        ya = F.relu(y)
+        z = F.max_pool2d(self.conv2_drop(self.conv2(ya)), 2)
+        za = F.relu(z)
+
+        x = za.view(-1, 320)
+        x = F.relu(self.fc1(x))
+        x = F.dropout(x, training=self.training)
+        x = self.fc2(x)
+        return F.log_softmax(x, dim=1), y, ya, z, za
+
+
 class AlexNet(nn.Module):
     def __init__(self, num_classes: int = 1000, dropout: float = 0.5) -> None:
         super().__init__()
@@ -80,105 +93,117 @@ class AlexNet(nn.Module):
         x = self.classifier(x)
         return x
 
+
 def test(test_image_path, model, dataset, batch_size):
-	if (dataset == 'mnist'):
-		test_loader = torch.utils.data.DataLoader(
-	    datasets.MNIST('./data', train=False, download=True, transform=transforms.Compose([
-	            transforms.ToTensor(),
-	            ])),
-	        batch_size=1, shuffle=True)
-	elif (dataset == 'cifar10'):
-		test_loader = torch.utils.data.DataLoader(
-	    datasets.CIFAR10('./data', train=False, download=True, transform=transforms.Compose([
-	            transforms.ToTensor(),
-	            ])),
-	        batch_size=1, shuffle=True)
-	else:
-		print ('No Valid Dataset Suggested')
-		exit()
+    if (dataset == 'mnist'):
+        train_loader = torch.utils.data.DataLoader(
+        datasets.MNIST('./data', train=True, download=True, transform=transforms.Compose([
+                transforms.ToTensor(),
+                ])),
+            batch_size=1, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(
+        datasets.MNIST('./data', train=False, download=True, transform=transforms.Compose([
+                transforms.ToTensor(),
+                ])),
+            batch_size=1, shuffle=True)
+    elif (dataset == 'cifar10'):
+        test_loader = torch.utils.data.DataLoader(
+        datasets.CIFAR10('./data', train=True, download=True, transform=transforms.Compose([
+                transforms.ToTensor(),
+                ])),
+            batch_size=1, shuffle=True)
+        test_loader = torch.utils.data.DataLoader(
+        datasets.CIFAR10('./data', train=False, download=True, transform=transforms.Compose([
+                transforms.ToTensor(),
+                ])),
+            batch_size=1, shuffle=True)
+    else:
+        print ('No Valid Dataset Suggested')
+        exit()
 
 
-	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-	# Initialize the network
-	model_path = 0
-	if (model == 'le_net'):
-		model = LeNet().to(device)
-		model_path = './models/lenet_mnist_model.pth'
-	elif (model == 'alex_net'):
-		# model = AlexNet().to(device)
-		# model_path = './models/alexnet_cifar10_model_best.pth.tar'
-		model = torch.hub.load('pytorch/vision:v0.6.0', 'alexnet', pretrained=True)
-	else:
-		print ('No Valid Model Suggested')
-		exit(())
+    # Initialize the network
+    model_path = 0
+    if (model == 'le_net'):
+        model = LeNet().to(device)
+        model_path = './models/lenet_mnist_model.pth'
+    elif (model == 'alex_net'):
+        # model = AlexNet().to(device)
+        # model_path = './models/alexnet_cifar10_model_best.pth.tar'
+        model = torch.hub.load('pytorch/vision:v0.6.0', 'alexnet', pretrained=True)
+    else:
+        print ('No Valid Model Suggested')
+        exit(())
 
-	# Load the pretrained model
-	if (model_path != 0):
-		model.load_state_dict(torch.load(model_path, map_location=device))
+    # Load the pretrained model
+    if (model_path != 0):
+        model.load_state_dict(torch.load(model_path, map_location=device))
 
-	print ('Model Loaded')
+    print ('Model Loaded')
 
-	# Set the model in evaluation mode. In this case this is for the Dropout layers
-	model.eval()
+    # Set the model in evaluation mode. In this case this is for the Dropout layers
+    model.eval()
 
-	# Accuracy counter
-	correct = 0
-	adv_examples = []
+    # Accuracy counter
+    correct = 0
+    adv_examples = []
 
-	print ('Starting')
+    print ('Starting')
 
-	# Loop over all examples in test set
-	for data, target in test_loader:
+    #atk = torchattacks.MIFGSM(model, eps=255/255, alpha=255/255, steps=10)
+    #atk = mifgsm.MIFGSM(model, eps=255/255, alpha=255/255, steps=1000)
+    atk = fib_attack.FIBA(model, train_loader, eps=255/255, alpha=255/255, steps=1000)
+    atk.set_mode_targeted_least_likely()
+    atk.set_fi(5000)
 
-	    # Send the data and label to the device
-	    data, target = data.to(device), target.to(device)
+    # Loop over all examples in test set
+    for data, target in test_loader:
 
-	    # Set requires_grad attribute of tensor. Important for Attack
-	    data.requires_grad = True
+        # Send the data and label to the device
+        data, target = data.to(device), target.to(device)
 
-	    #atk = torchattacks.MIFGSM(model, eps=255/255, alpha=255/255, steps=10)
-	    #atk = mifgsm.MIFGSM(model, eps=255/255, alpha=255/255, steps=1000)
-	    atk = fib_attack.FIBA(model, eps=255/255, alpha=255/255, steps=1000)
-	    atk.set_mode_targeted_least_likely()
+        # Set requires_grad attribute of tensor. Important for Attack
+        data.requires_grad = True
 
-	    adv_images = atk(data, target)
+        adv_images = atk(data, target)
 
-	    print (data.shape)
-	    print (target.shape)
-	    print (adv_images.shape)
+        print (data.shape)
+        print (target.shape)
+        print (adv_images.shape)
 
-	    img_real = data[0].permute(1, 2, 0)
-	    img_adv = adv_images[0].permute(1, 2, 0)
+        img_real = data[0].permute(1, 2, 0)
+        img_adv = adv_images[0].permute(1, 2, 0)
 
-	    f, axarr = plt.subplots(2)
-	    axarr[0].imshow(img_real.detach().numpy(), cmap='gray')
-	    axarr[1].imshow(img_adv.detach().numpy(), cmap='gray')
-	    plt.show()
-	    exit()
+        f, axarr = plt.subplots(2)
+        axarr[0].imshow(img_real.detach().numpy(), cmap='gray')
+        axarr[1].imshow(img_adv.detach().numpy(), cmap='gray')
+        plt.show()
+        exit()
 
-	    output = model(adv_images)
+        output = model(adv_images)
 
-	    # Check for success
-	    final_pred = output.max(1, keepdim=True)[1] # get the index of the max log-probability
-	    if (final_pred.item() == target.item()):
-	   		print ('Correct')
-	   		correct += 1
-	    else:
-	    	print ('Incorrect')
+        # Check for success
+        final_pred = output.max(1, keepdim=True)[1] # get the index of the max log-probability
+        if (final_pred.item() == target.item()):
+            print ('Correct')
+            correct += 1
+        else:
+            print ('Incorrect')
 
-	# Calculate final accuracy for this epsilon
-	final_acc = correct/float(len(test_loader))
-	print("Epsilon: {}\tTest Accuracy = {} / {} = {}".format(epsilon, correct, len(test_loader), final_acc))
+    # Calculate final accuracy for this epsilon
+    final_acc = correct/float(len(test_loader))
+    print("Epsilon: {}\tTest Accuracy = {} / {} = {}".format(epsilon, correct, len(test_loader), final_acc))
 
-	# Return the accuracy and an adversarial example
-	return final_acc, adv_examples
+    # Return the accuracy and an adversarial example
+    return final_acc, adv_examples
 
 if __name__ == '__main__':
-	test_image_path = './data/mnist/archive/testSet/testSet/*.jpg' #for now dl using torchvision
-	model = 'le_net'
-	dataset = 'mnist'
-	batch_size = 16
+    test_image_path = './data/mnist/archive/testSet/testSet/*.jpg' #for now dl using torchvision
+    model = 'le_net'
+    dataset = 'mnist'
+    batch_size = 16
 
 
-	test(test_image_path, model, dataset, batch_size)
+    test(test_image_path, model, dataset, batch_size)
