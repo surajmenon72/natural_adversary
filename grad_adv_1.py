@@ -156,8 +156,11 @@ def test(test_image_path, model, dataset, batch_size):
     #atk = mifgsm.MIFGSM(model, eps=255/255, alpha=255/255, steps=1000)
     atk = fib_attack.FIBA(model, train_loader, eps=255/255, alpha=255/255, steps=10)
     atk.set_mode_targeted_least_likely()
-    #atk.set_fi(5000)
     atk.set_fi(10)
+
+    atk_exp = fib_attack.FIBA(model, train_loader, eps=255/255, alpha=255/255, steps=10, mode='Step')
+    atk_exp.set_mode_targeted_least_likely()
+    atk_exp.set_fi(10)
 
     # Loop over all examples in test set
     for data, target in test_loader:
@@ -169,17 +172,17 @@ def test(test_image_path, model, dataset, batch_size):
         data.requires_grad = True
 
         adv_images = atk(data, target)
-
-        print (data.shape)
-        print (target.shape)
-        print (adv_images.shape)
+        adv_images_exp = atk_exp(data, target)
 
         img_real = data[0].permute(1, 2, 0)
         img_adv = adv_images[0].permute(1, 2, 0)
+        img_adv_exp = adv_images_exp[0].permute(1, 2, 0)
 
-        f, axarr = plt.subplots(2)
-        axarr[0].imshow(img_real.detach().numpy(), cmap='gray')
-        axarr[1].imshow(img_adv.detach().numpy(), cmap='gray')
+        f, axarr = plt.subplots(2, 2)
+        axarr[0, 0].imshow(img_real.detach().numpy(), cmap='gray')
+        axarr[0, 1].imshow(img_adv.detach().numpy(), cmap='gray')
+        axarr[1, 0].imshow(img_real.detach().numpy(), cmap='gray')
+        axarr[1, 1].imshow(img_adv_exp.detach().numpy(), cmap='gray')
         plt.show()
         exit()
 

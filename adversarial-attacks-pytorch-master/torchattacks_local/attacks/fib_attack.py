@@ -28,16 +28,18 @@ class FIBA(Attack):
 
     """
 
-    def __init__(self, model, data_loader, eps=8/255, alpha=2/255, steps=5, decay=1.0):
+    def __init__(self, model, data_loader, eps=8/255, alpha=2/255, steps=5, decay=1.0, mode='Identity'):
         super().__init__("FIBA", model)
         self.eps = eps
         self.steps = steps
         self.decay = decay
         self.alpha = alpha
+        self.mode = mode
         self._supported_mode = ['default', 'targeted']
         self.data_loader = data_loader
         self.total_filters = (model.conv1.out_channels+model.conv2.out_channels) #needs to be done automated
         self.fi_dict = torch.zeros(self.total_filters)
+        self.fi_dict_rankings = torch.zeros(self.total_filters)
 
     def fi_norm(self, val):
         return (val**2)
@@ -89,7 +91,6 @@ class FIBA(Attack):
                         self.fi_dict[i] += self.fi_norm(grad_b[i, j, k])
 
             iteration += 1
-            print (iteration)
             if (iteration >= sample_thresh):
                 break
 
@@ -98,8 +99,14 @@ class FIBA(Attack):
         for i in range(self.total_filters):
             self.fi_dict[i] /= total
 
-        print ('Set Filter Importance Dict')
+        args = torch.argsort(self.fi_dict, axis=0)
+
+        for i in range(self.total_filters):
+            self.fi_dict_rankings[args[i]] = i
+
+        print ('Set Filter Importance Dict and Rankings')
         print (self.fi_dict)
+        print (self.fi_dict_rankings)
 
     def scale_identity(self, val, imp):
         return val
@@ -110,23 +117,92 @@ class FIBA(Attack):
     def scale_inverse(self, val, imp, alpha):
         return alpha*(1-imp)*val
 
+    def scale_step(self, val, imp, rank, alpha):
+        scaled_val = 0
+        filter_range_low = int(self.total_filters*(1/3))
+        filter_range_high = int(self.total_filters*(2/3))
+
+        if (rank > filter_range_low and rank < filter_range_high):
+            scaled_val = alpha*val
+            #scaled_val = 0
+        else:
+            scaled_val = 0
+
+        return scaled_val
+
     def scale_gaussian(self, val, imp, alpha):
-        #still to implement
+        #TODO: still to implement
         return val
 
     def scale_func(self, grad, f_index):
         sgn = torch.sign(grad)
         val = torch.abs(grad)
         imp = self.fi_dict[f_index]
+        rank = self.fi_dict_rankings[f_index]
 
-        #select scaling func, make set in main func
-        scaled_val = self.scale_identity(val, imp)
-        #scaled_val = self.scale_inverse(val, imp, 1)
+        #select scaling func, #TODO: make set in main func
+        if (self.mode == 'Identity'):
+            scaled_val = self.scale_identity(val, imp)
+        elif (self.mode == 'Linear'):
+            scaled_val = self.scale_linear(val, imp, 1)
+        elif (self.mode == 'Inverse'):
+            scaled_val = self.scale_inverse(val, imp, 1)
+        elif (self.mode == 'Step'):
+            scaled_val = self.scale_step(val, imp, rank, 1)
 
         return (sgn*scaled_val)
 
     def accumulation_func(self, grad):
         return (torch.sum(grad))
+
+    def propagated_grad(self, grad_data, grad_conv, f_index_ref):
+        f, h, w = grad_data.shape
+        grad_ret = torch.zeros((f, h, w))
+        grad_ret_i = torch.zeros((f, h, w))
+
+        f_index_start = f_index_ref
+        f1, h1, w1 = grad_data.shape
+        f2, h2, w2 = grad_conv.shape
+        for i in range(f1):
+            for j in range(h1):
+                for k in range(w1):
+                    accumulation = 0
+                    accumulation_i = 0
+                    f_index = f_index_start
+                    for ii in range(f2):
+                        for jj in range(h2):
+                            for kk in range(w2):
+                                scaling = self.scale_func(grad_conv[ii, jj, kk], f_index)
+                                partial = (grad_data[i, j, k] / grad_conv[ii, jj, kk]) #TODO: div 0 issue
+                                accumulation += (scaling*partial)
+                                accumulation_i += (grad_conv[ii, jj, kk]*partial)
+                        f_index += 1
+                    grad_ret[i, j, k] = accumulation
+                    grad_ret_i[i, j, k] = accumulation_i
+
+        return grad_ret, grad_ret_i
+
+    def non_propagated_grad(self, grad_conv, f_index_ref):
+        f_index_start = f_index_ref
+        f1, h1, w1 = grad_conv.shape
+
+        accumulation = 0
+        accumulation_i = 0
+        f_index = f_index_start
+        for i in range(f1):
+            for j in range(h1):
+                for k in range(w1):
+                    scaling = self.scale_func(grad_conv[i, j, k], f_index)
+                    accumulation += (scaling)
+                    accumulation_i += grad_conv[i, j, k]
+            f_index += 1
+
+        grad_ratio = 0
+        if (accumulation_i != 0):
+            grad_ratio = accumulation/accumulation_i
+
+        return grad_ratio
+
 
     def calc_scaled_grads(self, data, target):
         data, target = data.to(self.device), target.to(self.device)
@@ -170,69 +246,20 @@ class FIBA(Attack):
         batch, c, h, w = grad_x.shape
         grad_x = grad_x.view(c, h, w)
 
-        
-        print ('Accumulated Grads') #abstract to func, try to vectorize
-        print (grad_a.shape)
-        print (grad_a_a.shape)
-        print (grad_b.shape)
-        print (grad_b_a.shape)
-        print (grad_x.shape)
-        
-        f, h, w = grad_a_a.shape
-        grad_second = torch.zeros((f, h, w))
-        grad_second_i = torch.zeros((f, h, w))
-        f, h, w = grad_x.shape
-        grad_first = torch.zeros((f, h, w))
-        grad_first_i = torch.zeros((f, h, w))
+        # grad_first, grad_first_i = self.propagated_grad(grad_x, grad_a, 0)
+        # grad_second, grad_second_i = self.propagated_grad(grad_a_a, grad_b, 10)
 
-        f_index_start = 0
-        f1, h1, w1 = grad_x.shape
-        f2, h2, w2 = grad_a.shape
-        #for 1st conv layer
-        for i in range(f1):
-            for j in range(h1):
-                for k in range(w1):
-                    accumulation = 0
-                    accumulation_i = 0
-                    f_index = f_index_start
-                    for ii in range(f2):
-                        for jj in range(h2):
-                            for kk in range(w2):
-                                scaling = self.scale_func(grad_a[ii, jj, kk], f_index)
-                                partial = (grad_x[i, j, k] / grad_a[ii, jj, kk])
-                                accumulation += (scaling*partial)
-                                accumulation_i += (grad_a[ii, jj, kk]*partial)
-                        f_index += 1
-                    grad_first[i, j, k] = accumulation
-                    grad_first_i[i, j, k] = accumulation_i
+        # grad_first_value = self.accumulation_func(grad_first)
+        # grad_first_value_i = self.accumulation_func(grad_first_i)
+        # grad_second_value = self.accumulation_func(grad_second)
+        # grad_second_value_i = self.accumulation_func(grad_second_i)
 
-        f_index_start = 10
-        f1, h1, w1 = grad_a_a.shape
-        f2, h2, w2 = grad_b.shape
-        #first for 2nd conv layer, propagate through 1st activation
-        for i in range(f1):
-            for j in range(h1):
-                for k in range(w1):
-                    accumulation = 0
-                    accumulation_i = 0
-                    f_index = f_index_start
-                    for ii in range(f_index, f2):
-                        for jj in range(h2):
-                            for kk in range(w2):
-                                scaling = self.scale_func(grad_b[ii, jj, kk], f_index)
-                                partial = (grad_a_a[i, j, k] / grad_b[ii, jj, kk])
-                                accumulation += (scaling*partial)
-                                accumulation_i += (grad_b[ii, jj, kk]*partial)
-                        f_index += 1
-                    grad_second[i, j, k] = accumulation
-                    grad_second_i[i, j, k] = accumulation_i
+        #return grad_first_value, grad_first_value_i, grad_second_value, grad_second_value_i
 
-        grad_first_value = self.accumulation_func(grad_first)
-        grad_first_value_i = self.accumulation_func(grad_first_i)
-        grad_second_value = self.accumulation_func(grad_second)
-        grad_second_value_i = self.accumulation_func(grad_second_i)
+        r1 = self.non_propagated_grad(grad_a, 0)
+        r2 = self.non_propagated_grad(grad_b, 10)
 
-        return grad_first_value, grad_first_value_i, grad_second_value, grad_second_value_i
+        return r1, r2
 
     def forward(self, images, labels):
         r"""
@@ -266,19 +293,23 @@ class FIBA(Attack):
             grad = torch.autograd.grad(cost, adv_images,
                                        retain_graph=True, create_graph=True)[0]
 
-            #assume hardcoded for LeNet for now
-            a, a_i, b, b_i = self.calc_scaled_grads(adv_images, labels)
+            # print ('Pre-grad')
+            # print (torch.sum(grad))
 
-            print (a)
-            print (a_i)
-            print (b)
-            print (b_i)
-            exit()
+            #assume hardcoded for LeNet for now
+            #a, a_i, b, b_i = self.calc_scaled_grads(adv_images, labels)
 
             # ratio_a = a/a_i
             # ratio_b = b/b_i
 
             # grad = ratio_a*ratio_b*grad
+
+            r1, r2 = self.calc_scaled_grads(adv_images, labels)
+
+            grad = (r1*grad + r2*grad) / 2
+
+            # print ('Post-grad')
+            # print (torch.sum(grad))
 
             grad = grad / torch.mean(torch.abs(grad), dim=(1,2,3), keepdim=True)
             grad = grad + momentum*self.decay
