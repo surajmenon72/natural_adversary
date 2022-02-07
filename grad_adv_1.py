@@ -49,11 +49,17 @@ class LeNet(nn.Module):
         z = F.max_pool2d(self.conv2_drop(self.conv2(ya)), 2)
         za = F.relu(z)
 
-        x = za.view(-1, 320)
-        x = F.relu(self.fc1(x))
-        x = F.dropout(x, training=self.training)
-        x = self.fc2(x)
-        return F.log_softmax(x, dim=1), y, ya, z, za
+        # x = za.view(-1, 320)
+        # x = F.relu(self.fc1(x))
+        # x = F.dropout(x, training=self.training)
+        # x = self.fc2(x)
+        # return F.log_softmax(x, dim=1), y, ya, z, za
+
+        q = za.view(-1, 320)
+        q = F.relu(self.fc1(q))
+        q = F.dropout(q, training=self.training)
+        q = self.fc2(q)
+        return F.log_softmax(q, dim=1), y, ya, z, za
 
 
 class AlexNet(nn.Module):
@@ -154,13 +160,18 @@ def test(test_image_path, model, dataset, batch_size):
 
     #atk = torchattacks.MIFGSM(model, eps=255/255, alpha=255/255, steps=10)
     #atk = mifgsm.MIFGSM(model, eps=255/255, alpha=255/255, steps=1000)
-    atk = fib_attack.FIBA(model, train_loader, eps=255/255, alpha=255/255, steps=10)
+    atk = fib_attack.FIBA(model, train_loader, eps=255/255, alpha=128/255, steps=10)
     atk.set_mode_targeted_least_likely()
     atk.set_fi(10)
 
-    atk_exp = fib_attack.FIBA(model, train_loader, eps=255/255, alpha=255/255, steps=10, mode='Step')
+    atk_exp = fib_attack.FIBA(model, train_loader, eps=255/255, alpha=128/255, steps=10, mode='Step-High')
     atk_exp.set_mode_targeted_least_likely()
     atk_exp.set_fi(10)
+
+    atk_exp_2 = fib_attack.FIBA(model, train_loader, eps=255/255, alpha=128/255, steps=10, mode='Step-Low')
+    atk_exp_2.set_mode_targeted_least_likely()
+    atk_exp_2.set_fi(10)
+
 
     # Loop over all examples in test set
     for data, target in test_loader:
@@ -173,16 +184,18 @@ def test(test_image_path, model, dataset, batch_size):
 
         adv_images = atk(data, target)
         adv_images_exp = atk_exp(data, target)
+        adv_images_exp_2 = atk_exp_2(data, target)
 
         img_real = data[0].permute(1, 2, 0)
         img_adv = adv_images[0].permute(1, 2, 0)
         img_adv_exp = adv_images_exp[0].permute(1, 2, 0)
+        img_adv_exp_2 = adv_images_exp_2[0].permute(1, 2, 0)
 
         f, axarr = plt.subplots(2, 2)
         axarr[0, 0].imshow(img_real.detach().numpy(), cmap='gray')
         axarr[0, 1].imshow(img_adv.detach().numpy(), cmap='gray')
-        axarr[1, 0].imshow(img_real.detach().numpy(), cmap='gray')
-        axarr[1, 1].imshow(img_adv_exp.detach().numpy(), cmap='gray')
+        axarr[1, 0].imshow(img_adv_exp.detach().numpy(), cmap='gray')
+        axarr[1, 1].imshow(img_adv_exp_2.detach().numpy(), cmap='gray')
         plt.show()
         exit()
 

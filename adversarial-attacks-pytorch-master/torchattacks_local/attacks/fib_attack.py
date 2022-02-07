@@ -37,9 +37,10 @@ class FIBA(Attack):
         self.mode = mode
         self._supported_mode = ['default', 'targeted']
         self.data_loader = data_loader
-        self.total_filters = (model.conv1.out_channels+model.conv2.out_channels) #needs to be done automated
+        self.total_filters = (model.conv1.out_channels+model.conv2.out_channels) #TODO: needs to be done automated
         self.fi_dict = torch.zeros(self.total_filters)
         self.fi_dict_rankings = torch.zeros(self.total_filters)
+        self.num_classes = 10 #assume mnist TODO: make variable
 
     def fi_norm(self, val):
         return (val**2)
@@ -122,9 +123,38 @@ class FIBA(Attack):
         filter_range_low = int(self.total_filters*(1/3))
         filter_range_high = int(self.total_filters*(2/3))
 
+        filter_range_low = 28
+        filter_range_high = 30
+
         if (rank > filter_range_low and rank < filter_range_high):
             scaled_val = alpha*val
             #scaled_val = 0
+        else:
+            scaled_val = 0
+
+        return scaled_val
+
+    def scale_step_high(self, val, imp, rank, alpha):
+        scaled_val = 0
+
+        filter_range_low = 28
+        filter_range_high = 30
+
+        if (rank > filter_range_low and rank < filter_range_high):
+            scaled_val = alpha*val
+        else:
+            scaled_val = 0
+
+        return scaled_val
+
+    def scale_step_low(self, val, imp, rank, alpha):
+        scaled_val = 0
+
+        filter_range_low = 0
+        filter_range_high = 2
+
+        if (rank > filter_range_low and rank < filter_range_high):
+            scaled_val = alpha*val
         else:
             scaled_val = 0
 
@@ -147,8 +177,12 @@ class FIBA(Attack):
             scaled_val = self.scale_linear(val, imp, 1)
         elif (self.mode == 'Inverse'):
             scaled_val = self.scale_inverse(val, imp, 1)
-        elif (self.mode == 'Step'):
+        elif (self.mode == 'Step-Middle'):
             scaled_val = self.scale_step(val, imp, rank, 1)
+        elif (self.mode == 'Step-High'):
+            scaled_val = self.scale_step_high(val, imp, rank, 1)
+        elif (self.mode == 'Step-Low'):
+            scaled_val = self.scale_step_low(val, imp, rank, 1)
 
         return (sgn*scaled_val)
 
@@ -203,6 +237,80 @@ class FIBA(Attack):
 
         return grad_ratio
 
+    def replicate_input_withgrad(self, x):
+        return x.detach().clone().requires_grad_()
+
+    def jacobian(self, model, x, output_class):
+        """
+        Compute the output_class'th row of a Jacobian matrix. In other words,
+        compute the gradient wrt to the output_class.
+        :param model: forward pass function.
+        :param x: input tensor.
+        :param output_class: the output class we want to compute the gradients.
+        :return: output_class'th row of the Jacobian matrix wrt x.
+        """
+        xvar = self.replicate_input_withgrad(x)
+        scores = model(xvar)
+
+        # compute gradients for the class output_class wrt the input x
+        # using backpropagation
+        torch.sum(scores[:, output_class]).backward()
+
+        return xvar.grad.detach().clone()
+
+    def compute_forward_derivative(self, xadv, y):
+        jacobians = torch.stack([self.jacobian(self.model, xadv, yadv)
+                                 for yadv in range(self.num_classes)])
+        grads = jacobians.view((jacobians.shape[0], jacobians.shape[1], -1))
+        grads_target = grads[y, range(len(y)), :]
+        grads_other = grads.sum(dim=0) - grads_target
+        return grads_target, grads_other
+
+    def grad_play(self, x, y, y_targ):
+        loss = nn.CrossEntropyLoss()
+
+        outputs, a, a_a, b, b_a = self.model.semi_forward(x)
+        cost = -loss(outputs, y_targ)
+
+        grad_x = torch.autograd.grad(cost, x,
+                       retain_graph=True, create_graph=True)[0]
+
+        grad_a = torch.autograd.grad(cost, a,
+                       retain_graph=True, create_graph=True)[0]
+
+        grad_a = torch.squeeze(grad_a)
+
+        batch, c, h, w = grad_x.shape
+        grad_x = grad_x.view(c, h, w)
+        x_i, x_j, x_k = 0, 1, 1
+
+        f, h, w = grad_a.shape
+
+        print (x.shape)
+        print (a.shape)
+        print (grad_x.shape)
+        print (grad_a.shape)
+
+        print (x[0, x_i, x_j, x_k])
+        print (grad_x[x_i, x_j, x_k])
+
+        print ('Starting Grad Accum')
+        grad_acum = 0
+        for i in range(f):
+            for j in range(h):
+                for k in range(w):
+                    s_grad = torch.autograd.grad(a[0, i, j, k], x,
+                                retain_graph=True, create_graph=True, allow_unused=True)[0]
+
+                    s_grad_val = s_grad[0, x_i, x_j, x_k]
+                    if (s_grad_val == None):
+                        s_grad_val = 0
+
+                    val = grad_a[i, j, k] * s_grad_val
+                    grad_acum += val
+
+        print (grad_acum)
+        exit()
 
     def calc_scaled_grads(self, data, target):
         data, target = data.to(self.device), target.to(self.device)
@@ -214,6 +322,9 @@ class FIBA(Attack):
             target_labels = self._get_target_label(data, target)
 
         target_labels = target_labels.to(self.device)
+
+        #lets try some stuff out here
+        v = self.grad_play(data, target, target_labels)
 
         outputs, a, a_a, b, b_a = self.model.semi_forward(data)
 
@@ -306,7 +417,7 @@ class FIBA(Attack):
 
             r1, r2 = self.calc_scaled_grads(adv_images, labels)
 
-            grad = (r1*grad + r2*grad) / 2
+            # grad = (r1*grad + r2*grad) / 2
 
             # print ('Post-grad')
             # print (torch.sum(grad))
