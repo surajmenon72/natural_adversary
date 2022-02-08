@@ -161,15 +161,15 @@ def test(test_image_path, model, dataset, batch_size):
     #atk = torchattacks.MIFGSM(model, eps=255/255, alpha=255/255, steps=10)
     #atk = mifgsm.MIFGSM(model, eps=255/255, alpha=255/255, steps=1000)
 
-    atk = fib_attack.FIBA(model, train_loader, eps=255/255, alpha=64/255, steps=50, mode='Identity')
+    atk = fib_attack.FIBA(model, train_loader, eps=255/255, alpha=128/255, steps=50, mode='Step-Middle')
     atk.set_mode_targeted_least_likely()
     atk.set_fi(10)
 
-    atk_exp = fib_attack.FIBA(model, train_loader, eps=255/255, alpha=64/255, steps=50, mode='Step-High')
+    atk_exp = fib_attack.FIBA(model, train_loader, eps=255/255, alpha=128/255, steps=50, mode='Step-High')
     atk_exp.set_mode_targeted_least_likely()
     atk_exp.set_fi(10)
 
-    atk_exp_2 = fib_attack.FIBA(model, train_loader, eps=255/255, alpha=64/255, steps=50, mode='Step-Low')
+    atk_exp_2 = fib_attack.FIBA(model, train_loader, eps=255/255, alpha=128/255, steps=50, mode='Step-Low')
     atk_exp_2.set_mode_targeted_least_likely()
     atk_exp_2.set_fi(10)
 

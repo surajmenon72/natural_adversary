@@ -210,6 +210,9 @@ class FIBA(Attack):
             scaled_val = self.scale_step_layer_low(val, layer, 1)
         elif (self.mode == 'Step-Layer-High'):
             scaled_val = self.scale_step_layer_high(val, layer, 1)
+        else:
+            print ('NOT SUPPORTED MODE')
+            scaled_val = self.scale_identity(val, imp)
 
         return (sgn*scaled_val)
 
