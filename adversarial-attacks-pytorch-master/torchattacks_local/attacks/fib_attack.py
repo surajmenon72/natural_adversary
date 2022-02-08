@@ -263,12 +263,8 @@ class FIBA(Attack):
         filter_range_low = int(self.total_filters*(1/3))
         filter_range_high = int(self.total_filters*(2/3))
 
-        filter_range_low = 28
-        filter_range_high = 30
-
         if (rank > filter_range_low and rank < filter_range_high):
             scaled_val = alpha*val
-            #scaled_val = 0
         else:
             scaled_val = 0
 
@@ -356,21 +352,12 @@ class FIBA(Attack):
         for i in range(f):
             for j in range(h):
                 for k in range(w):
-
                     scaled_grad = self.scale_func(grad_a[i, j, k], i)
                     s_grad = torch.autograd.grad(a[0, i, j, k], x,
                                 retain_graph=True, create_graph=True, allow_unused=True)[0]
 
 
                     final_grads[0, :, :, :] += scaled_grad * s_grad[0, :, :, :]
-                    # for ii in range(xf):
-                    #     for jj in range(xh):
-                    #         for kk in range(xw):
-                    #             s_grad_val = s_grad[0, ii, jj, kk]
-                    #             if (s_grad_val == None):
-                    #                  s_grad_val = 0
-                    #             final_grads[0, ii, jj, kk] += scaled_grad * s_grad_val
-
         return final_grads
 
     def forward(self, images, labels):
