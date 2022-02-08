@@ -42,8 +42,11 @@ class FIBA(Attack):
         self.fi_dict_rankings = torch.zeros(self.total_filters)
         self.num_classes = 10 #assume mnist TODO: make variable
 
-    def fi_norm(self, val):
+    def fi_2_norm(self, val):
         return (val**2)
+
+    def fi_1_norm(self, val):
+        return (torch.abs(val))
 
     def set_fi(self, sample_thresh):
         print ('Setting Filter Importance')
@@ -79,17 +82,18 @@ class FIBA(Attack):
 
             f_index = 0
             f, h, w = grad_a.shape
-            for i in range(f_index, f):
+            for i in range(f):
                 for j in range(h):
                     for k in range(w):
-                        self.fi_dict[i] += self.fi_norm(grad_a[i, j, k])
+                        self.fi_dict[f_index+i] += self.fi_2_norm(grad_a[i, j, k])
 
             f_index += f
             f, h, w = grad_b.shape
-            for i in range(f_index, f):
+            for i in range(f):
                 for j in range(h):
                     for k in range(w):
-                        self.fi_dict[i] += self.fi_norm(grad_b[i, j, k])
+                        self.fi_dict[f_index+i] += self.fi_2_norm(grad_b[i, j, k])
+
 
             iteration += 1
             if (iteration >= sample_thresh):
@@ -123,20 +127,23 @@ class FIBA(Attack):
         filter_range_low = int(self.total_filters*(1/3))
         filter_range_high = int(self.total_filters*(2/3))
 
-        if (rank > filter_range_low and rank < filter_range_high):
+        filter_range_low = 8
+        filter_range_high = 22
+
+        if ((rank > filter_range_low) and (rank < filter_range_high)):
             scaled_val = alpha*val
         else:
-            scaled_val = 0
+            scaled_val = 1e-3*val
 
         return scaled_val
 
     def scale_step_high(self, val, imp, rank, alpha):
         scaled_val = 0
 
-        filter_range_low = 28
+        filter_range_low = 27
         filter_range_high = 30
 
-        if (rank > filter_range_low and rank < filter_range_high):
+        if ((rank > filter_range_low) and (rank < filter_range_high)):
             scaled_val = alpha*val
         else:
             scaled_val = 0
@@ -147,9 +154,29 @@ class FIBA(Attack):
         scaled_val = 0
 
         filter_range_low = 0
-        filter_range_high = 2
+        filter_range_high = 3
 
-        if (rank > filter_range_low and rank < filter_range_high):
+        if ((rank > filter_range_low) and (rank < filter_range_high)):
+            scaled_val = alpha*val
+        else:
+            scaled_val = 0
+
+        return scaled_val
+
+    def scale_step_layer_low(self, val, level, alpha):
+        scaled_val = 0
+
+        if (level == 1):
+            scaled_val = alpha*val
+        else:
+            scaled_val = 0
+
+        return scaled_val
+
+    def scale_step_layer_high(self, val, level, alpha):
+        scaled_val = 0
+
+        if (level == 2):
             scaled_val = alpha*val
         else:
             scaled_val = 0
@@ -160,7 +187,7 @@ class FIBA(Attack):
         #TODO: still to implement
         return val
 
-    def scale_func(self, grad, f_index):
+    def scale_func(self, grad, f_index, layer):
         sgn = torch.sign(grad)
         val = torch.abs(grad)
         imp = self.fi_dict[f_index]
@@ -179,6 +206,10 @@ class FIBA(Attack):
             scaled_val = self.scale_step_high(val, imp, rank, 1)
         elif (self.mode == 'Step-Low'):
             scaled_val = self.scale_step_low(val, imp, rank, 1)
+        elif (self.mode == 'Step-Layer-Low'):
+            scaled_val = self.scale_step_layer_low(val, layer, 1)
+        elif (self.mode == 'Step-Layer-High'):
+            scaled_val = self.scale_step_layer_high(val, layer, 1)
 
         return (sgn*scaled_val)
 
@@ -188,7 +219,16 @@ class FIBA(Attack):
         loss = nn.CrossEntropyLoss()
 
         outputs, a, a_a, b, b_a = self.model.semi_forward(x)
-        cost = -loss(outputs, y_targ)
+        #cost = -loss(outputs, y_targ)
+        #cost = -loss(outputs, y)
+
+        #y_targ = (y_targ+1)%10
+
+        alpha = 0
+        beta = 1
+        # cost = alpha*loss(outputs, y_targ) + beta*(-loss(outputs, y_targ))
+        cost = alpha*(-loss(outputs, y)) + beta*(-loss(outputs, y_targ))
+
 
         grad_x = torch.autograd.grad(cost, x,
                        retain_graph=True, create_graph=True)[0]
@@ -196,29 +236,54 @@ class FIBA(Attack):
         grad_a = torch.autograd.grad(cost, a,
                        retain_graph=True, create_graph=True)[0]
 
+        grad_b = torch.autograd.grad(cost, b,
+                       retain_graph=True, create_graph=True)[0]
+
         grad_a = torch.squeeze(grad_a)
+        grad_b = torch.squeeze(grad_b)
 
         batch, c, h, w = grad_x.shape
         grad_x = grad_x.view(c, h, w)
 
-        f, h, w = grad_a.shape
+        af, ah, aw = grad_a.shape
+        bf, bh, bw = grad_b.shape
         xf, xh, xw = grad_x.shape
 
-        final_grads = torch.zeros((1, xf, xh, xw)) #TODO: Set batch size here
 
-        print ('Starting Grad Accum')
-        grad_acum = 0
-        s_grad_acum = 0
-        for i in range(f):
-            for j in range(h):
-                for k in range(w):
-                    scaled_grad = self.scale_func(grad_a[i, j, k], i)
+        #TODO: Set batch size here
+        #keep separate for now, but can be combined eventually for memory savings
+        final_grads_1 = torch.zeros((1, xf, xh, xw)) #layer 1
+        final_grads_2 = torch.zeros((1, xf, xh, xw)) #layer 2
+
+        filter_index = 0
+        layer = 1
+        for i in range(af):
+            for j in range(ah):
+                for k in range(aw):
+                    scaled_grad = self.scale_func(grad_a[i, j, k], filter_index+i, layer)
                     s_grad = torch.autograd.grad(a[0, i, j, k], x,
                                 retain_graph=True, create_graph=True, allow_unused=True)[0]
 
 
-                    final_grads[0, :, :, :] += scaled_grad * s_grad[0, :, :, :]
+                    final_grads_1[0, :, :, :] += scaled_grad * s_grad[0, :, :, :]
+
+        filter_index += af
+        layer += 1
+        for i in range(bf):
+            for j in range(bh):
+                for k in range(bw):
+                    scaled_grad = self.scale_func(grad_b[i, j, k], filter_index+i, layer)
+                    s_grad = torch.autograd.grad(b[0, i, j, k], x, 
+                                retain_graph=True, create_graph=True, allow_unused=True)[0]
+
+                    final_grads_2[0, :, :, :] += scaled_grad * s_grad[0, :, :, :]
+
+        #for now take midpoint for return grad
+        final_grads = (final_grads_1 + final_grads_2)/2
         return final_grads
+
+    def clean_image(self, images, target):
+        outputs = self.model(images)
 
     def forward(self, images, labels):
         r"""
@@ -240,20 +305,20 @@ class FIBA(Attack):
 
         for _ in range(self.steps):
             adv_images.requires_grad = True
-            outputs = self.model(adv_images)
+            # outputs = self.model(adv_images)
 
-            # Calculate loss
-            if self._targeted:
-                cost = -loss(outputs, target_labels)
-            else:
-                cost = loss(outputs, labels)
+            # # Calculate loss
+            # if self._targeted:
+            #     cost = -loss(outputs, target_labels)
+            # else:
+            #     cost = loss(outputs, labels)
 
-            # Update adversarial images
-            grad = torch.autograd.grad(cost, adv_images,
-                                       retain_graph=True, create_graph=True)[0]
+            # # Update adversarial images
+            # grad = torch.autograd.grad(cost, adv_images,
+            #                            retain_graph=True, create_graph=True)[0]
 
-            print ('Pre-grad')
-            print (torch.sum(grad))
+            # print ('Pre-grad')
+            # print (torch.sum(grad))
 
             #assume hardcoded for LeNet for now
             #a, a_i, b, b_i = self.calc_scaled_grads(adv_images, labels)
@@ -270,8 +335,8 @@ class FIBA(Attack):
             #for now intercept here
             grad = self.grad_play(adv_images, labels, target_labels)
 
-            print ('Post-grad')
-            print (torch.sum(grad))
+            # print ('Post-grad')
+            # print (torch.sum(grad))
 
             # exit()
 
@@ -282,5 +347,7 @@ class FIBA(Attack):
             adv_images = adv_images.detach() + self.alpha*grad.sign()
             delta = torch.clamp(adv_images - images, min=-self.eps, max=self.eps)
             adv_images = torch.clamp(images + delta, min=0, max=1).detach()
+
+        # self.clean_image(adv_images)
 
         return adv_images
