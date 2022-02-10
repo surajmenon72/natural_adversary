@@ -77,22 +77,22 @@ class FIBA(Attack):
             grad_b = torch.autograd.grad(cost, b,
                            retain_graph=True, create_graph=True)[0]
 
-            grad_a = torch.squeeze(grad_a)
-            grad_b = torch.squeeze(grad_b)
+            #grad_a = torch.squeeze(grad_a)
+            #grad_b = torch.squeeze(grad_b)
 
             f_index = 0
-            f, h, w = grad_a.shape
+            b, f, h, w = grad_a.shape
             for i in range(f):
                 for j in range(h):
                     for k in range(w):
-                        self.fi_dict[f_index+i] += self.fi_2_norm(grad_a[i, j, k])
+                        self.fi_dict[f_index+i] += self.fi_2_norm(grad_a[0, i, j, k])
 
             f_index += f
-            f, h, w = grad_b.shape
+            b, f, h, w = grad_b.shape
             for i in range(f):
                 for j in range(h):
                     for k in range(w):
-                        self.fi_dict[f_index+i] += self.fi_2_norm(grad_b[i, j, k])
+                        self.fi_dict[f_index+i] += self.fi_2_norm(grad_b[0, i, j, k])
 
 
             iteration += 1
@@ -220,18 +220,24 @@ class FIBA(Attack):
         x, y = x.to(self.device), y.to(self.device)
         x.requires_grad = True
         loss = nn.CrossEntropyLoss()
+        kl_loss = nn.KLDivLoss(log_target=True)
 
         outputs, a, a_a, b, b_a = self.model.semi_forward(x)
-        #cost = -loss(outputs, y_targ)
-        #cost = -loss(outputs, y)
+        #cost = -loss(outputs, y_targ) #moves towards y_targ (due to ascending gradient)
+        #cost = -loss(outputs, y) #moves towards y
 
         #y_targ = (y_targ+1)%10
 
         alpha = 0
         beta = 1
         # cost = alpha*loss(outputs, y_targ) + beta*(-loss(outputs, y_targ))
-        cost = alpha*(-loss(outputs, y)) + beta*(-loss(outputs, y_targ))
-
+        # cost = alpha*(-loss(outputs, y)) + beta*(-loss(outputs, y_targ))
+        cost = (kl_loss(outputs[0], outputs[1])) 
+        
+        print (cost)
+        if (cost == 0):
+            print (outputs[0])
+            print (outputs[1])
 
         grad_x = torch.autograd.grad(cost, x,
                        retain_graph=True, create_graph=True)[0]
@@ -242,15 +248,15 @@ class FIBA(Attack):
         grad_b = torch.autograd.grad(cost, b,
                        retain_graph=True, create_graph=True)[0]
 
-        grad_a = torch.squeeze(grad_a)
-        grad_b = torch.squeeze(grad_b)
+        #grad_a = torch.squeeze(grad_a)
+        #grad_b = torch.squeeze(grad_b)
 
-        batch, c, h, w = grad_x.shape
-        grad_x = grad_x.view(c, h, w)
+        #batch, c, h, w = grad_x.shape
+        #grad_x = grad_x.view(c, h, w)
 
-        af, ah, aw = grad_a.shape
-        bf, bh, bw = grad_b.shape
-        xf, xh, xw = grad_x.shape
+        ab, af, ah, aw = grad_a.shape
+        bb, bf, bh, bw = grad_b.shape
+        xb, xf, xh, xw = grad_x.shape
 
 
         #TODO: Set batch size here
@@ -263,7 +269,7 @@ class FIBA(Attack):
         for i in range(af):
             for j in range(ah):
                 for k in range(aw):
-                    scaled_grad = self.scale_func(grad_a[i, j, k], filter_index+i, layer)
+                    scaled_grad = self.scale_func(grad_a[0, i, j, k], filter_index+i, layer)
                     s_grad = torch.autograd.grad(a[0, i, j, k], x,
                                 retain_graph=True, create_graph=True, allow_unused=True)[0]
 
@@ -275,7 +281,7 @@ class FIBA(Attack):
         for i in range(bf):
             for j in range(bh):
                 for k in range(bw):
-                    scaled_grad = self.scale_func(grad_b[i, j, k], filter_index+i, layer)
+                    scaled_grad = self.scale_func(grad_b[0, i, j, k], filter_index+i, layer)
                     s_grad = torch.autograd.grad(b[0, i, j, k], x, 
                                 retain_graph=True, create_graph=True, allow_unused=True)[0]
 
@@ -283,10 +289,24 @@ class FIBA(Attack):
 
         #for now take midpoint for return grad
         final_grads = (final_grads_1 + final_grads_2)/2
-        return final_grads
+        return final_grads, cost
 
-    def clean_image(self, images, target):
+    def data_grad_sum(self, images, labels, target_labels):
+        loss = nn.CrossEntropyLoss()
+
+        images.requires_grad = True
         outputs = self.model(images)
+        if self._targeted:
+            cost = -loss(outputs, target_labels)
+        else:
+            cost = loss(outputs, labels)
+
+        grad = torch.autograd.grad(cost, images, 
+                                    retain_graph=True, create_graph=True)[0]
+
+        grad_sum = torch.sum(grad[0, :, :, :])
+
+        return grad_sum
 
     def forward(self, images, labels):
         r"""
@@ -302,7 +322,9 @@ class FIBA(Attack):
 
         momentum = torch.zeros_like(images).detach().to(self.device)
 
-        loss = nn.CrossEntropyLoss()
+        g_sum = self.data_grad_sum(images, labels, target_labels)
+        print ('Pre-Grad Sum')
+        print (g_sum)
 
         adv_images = images.clone().detach()
 
@@ -336,7 +358,7 @@ class FIBA(Attack):
             # grad = (r1*grad + r2*grad) / 2
 
             #for now intercept here
-            grad = self.grad_play(adv_images, labels, target_labels)
+            grad, cost = self.grad_play(adv_images, labels, target_labels)
 
             # print ('Post-grad')
             # print (torch.sum(grad))
@@ -351,6 +373,11 @@ class FIBA(Attack):
             delta = torch.clamp(adv_images - images, min=-self.eps, max=self.eps)
             adv_images = torch.clamp(images + delta, min=0, max=1).detach()
 
-        # self.clean_image(adv_images)
+            if (cost == 0):
+                break
+
+        g_sum = self.data_grad_sum(adv_images, labels, target_labels)
+        print ('Post-Grad Sum')
+        print (g_sum)
 
         return adv_images

@@ -60,6 +60,7 @@ class LeNet(nn.Module):
         q = F.dropout(q, training=self.training)
         q = self.fc2(q)
         return F.log_softmax(q, dim=1), y, ya, z, za
+        #return F.softmax(q, dim=1), y, ya, z, za
 
 
 class AlexNet(nn.Module):
@@ -106,23 +107,23 @@ def test(test_image_path, model, dataset, batch_size):
         datasets.MNIST('./data', train=True, download=True, transform=transforms.Compose([
                 transforms.ToTensor(),
                 ])),
-            batch_size=1, shuffle=True)
+            batch_size=2, shuffle=True)
         test_loader = torch.utils.data.DataLoader(
         datasets.MNIST('./data', train=False, download=True, transform=transforms.Compose([
                 transforms.ToTensor(),
                 ])),
-            batch_size=1, shuffle=True)
+            batch_size=2, shuffle=True)
     elif (dataset == 'cifar10'):
         test_loader = torch.utils.data.DataLoader(
         datasets.CIFAR10('./data', train=True, download=True, transform=transforms.Compose([
                 transforms.ToTensor(),
                 ])),
-            batch_size=1, shuffle=True)
+            batch_size=2, shuffle=True)
         test_loader = torch.utils.data.DataLoader(
         datasets.CIFAR10('./data', train=False, download=True, transform=transforms.Compose([
                 transforms.ToTensor(),
                 ])),
-            batch_size=1, shuffle=True)
+            batch_size=2, shuffle=True)
     else:
         print ('No Valid Dataset Suggested')
         exit()
@@ -136,8 +137,8 @@ def test(test_image_path, model, dataset, batch_size):
         model = LeNet().to(device)
         model_path = './models/lenet_mnist_model.pth'
     elif (model == 'alex_net'):
-        # model = AlexNet().to(device)
-        # model_path = './models/alexnet_cifar10_model_best.pth.tar'
+        model = AlexNet().to(device)
+        model_path = './models/alexnet_cifar10_model_best.pth.tar'
         model = torch.hub.load('pytorch/vision:v0.6.0', 'alexnet', pretrained=True)
     else:
         print ('No Valid Model Suggested')
@@ -161,17 +162,17 @@ def test(test_image_path, model, dataset, batch_size):
     #atk = torchattacks.MIFGSM(model, eps=255/255, alpha=255/255, steps=10)
     #atk = mifgsm.MIFGSM(model, eps=255/255, alpha=255/255, steps=1000)
 
-    atk = fib_attack.FIBA(model, train_loader, eps=255/255, alpha=128/255, steps=50, mode='Step-Middle')
+    atk = fib_attack.FIBA(model, train_loader, eps=255/255, alpha=255/255, steps=20, mode='Identity')
     atk.set_mode_targeted_least_likely()
     atk.set_fi(10)
 
-    atk_exp = fib_attack.FIBA(model, train_loader, eps=255/255, alpha=128/255, steps=50, mode='Step-High')
-    atk_exp.set_mode_targeted_least_likely()
-    atk_exp.set_fi(10)
+    # atk_exp = fib_attack.FIBA(model, train_loader, eps=255/255, alpha=128/255, steps=1, mode='Step-High')
+    # atk_exp.set_mode_targeted_least_likely()
+    # atk_exp.set_fi(10)
 
-    atk_exp_2 = fib_attack.FIBA(model, train_loader, eps=255/255, alpha=128/255, steps=50, mode='Step-Low')
-    atk_exp_2.set_mode_targeted_least_likely()
-    atk_exp_2.set_fi(10)
+    # atk_exp_2 = fib_attack.FIBA(model, train_loader, eps=255/255, alpha=128/255, steps=1, mode='Step-Low')
+    # atk_exp_2.set_mode_targeted_least_likely()
+    # atk_exp_2.set_fi(10)
 
     # Loop over all examples in test set
     for data, target in test_loader:
@@ -183,25 +184,30 @@ def test(test_image_path, model, dataset, batch_size):
         data.requires_grad = True
 
         adv_images = atk(data, target)
-        adv_images_exp = atk_exp(data, target)
-        adv_images_exp_2 = atk_exp_2(data, target)
+        # adv_images_exp = atk_exp(data, target)
+        # adv_images_exp_2 = atk_exp_2(data, target)
 
         img_real = data[0].permute(1, 2, 0)
+        img_real_2 = data[1].permute(1, 2, 0)
         img_adv = adv_images[0].permute(1, 2, 0)
-        img_adv_exp = adv_images_exp[0].permute(1, 2, 0)
-        img_adv_exp_2 = adv_images_exp_2[0].permute(1, 2, 0)
+        # img_adv_exp = adv_images_exp[0].permute(1, 2, 0)
+        # img_adv_exp_2 = adv_images_exp_2[0].permute(1, 2, 0)
+
+        # f, axarr = plt.subplots(3, 2)
+        # axarr[0, 0].imshow(img_real.detach().numpy(), cmap='gray')
+        # axarr[0, 1].imshow(img_real_2.detach().numpy(), cmap='gray')
+        # axarr[1, 0].imshow(img_adv.detach().numpy(), cmap='gray')
+        # axarr[1, 1].imshow(img_adv_exp.detach().numpy(), cmap='gray')
+        # axarr[2, 0].imshow(img_adv_exp_2.detach().numpy(), cmap='gray')
+        # axarr[2, 1].imshow(img_adv_exp_2.detach().numpy(), cmap='gray')
+        # plt.show()
 
         f, axarr = plt.subplots(2, 2)
         axarr[0, 0].imshow(img_real.detach().numpy(), cmap='gray')
-        axarr[0, 1].imshow(img_adv.detach().numpy(), cmap='gray')
-        axarr[1, 0].imshow(img_adv_exp.detach().numpy(), cmap='gray')
-        axarr[1, 1].imshow(img_adv_exp_2.detach().numpy(), cmap='gray')
+        axarr[0, 1].imshow(img_real_2.detach().numpy(), cmap='gray')
+        axarr[1, 0].imshow(img_adv.detach().numpy(), cmap='gray')
+        axarr[1, 1].imshow(img_adv.detach().numpy(), cmap='gray')
         plt.show()
-
-        # f, axarr = plt.subplots(2)
-        # axarr[0].imshow(img_real.detach().numpy(), cmap='gray')
-        # axarr[1].imshow(img_adv.detach().numpy(), cmap='gray')
-        # plt.show()
         exit()
 
         output = model(adv_images)
