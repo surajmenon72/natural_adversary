@@ -37,7 +37,6 @@ class OPTA(Attack):
         self.steps = steps
         self.decay = decay
         self.alpha = alpha
-        self.mode = mode
         self._supported_mode = ['default', 'targeted']
         self.data_loader = data_loader
         self.total_filters = (model.conv1.out_channels+model.conv2.out_channels) #TODO: needs to be done automated
@@ -46,7 +45,27 @@ class OPTA(Attack):
         self.width = 28 #assume MNIST
         self.channels = 1 #assume MNIST
 
-    def set_grad(self, x, y, y_targ):
+    def _feature_l1_norm(self, f1, f2):
+        return torch.sum(torch.abs(f1-f2))
+    def _feature_l2_norm(self, f1, f2):
+        return torch.sum((f1-f2)**2)
+
+    def set_grad_translation(self, x):
+        o_1, z1_1, a1_1, z2_1, a2_1 = self.model.semi_forward(x[:1])
+        o_2, z1_2, a1_2, z2_2, a2_2 = self.model.semi_forward(x[1:])
+
+        cost = self._feature_l2_norm(z1_1, z1_2) + self._feature_l2_norm(z2_1, z2_2) #TODO: Make generalized for all networks
+        grad_x = torch.autograd.grad(cost, x,
+               retain_graph=True, create_graph=True)[0]
+
+        return grad_x, cost
+
+    def update_image_with_grad_translation(self, x_star, x, grad):
+        x_star = x_star.detach() - self.alpha*grad.sign()
+        delta = torch.clamp(x_star - x, min=-self.eps, max=self.eps)
+        adv_images = torch.clamp(x + delta, min=0, max=1).detach()
+
+        return adv_images
 
 
     def forward(self, images, labels):
@@ -58,8 +77,7 @@ class OPTA(Attack):
 
         if self._targeted:
             target_labels = self._get_target_label(images, labels)
-
-        print (target_labels)
+            print (target_labels)
 
         momentum = torch.zeros_like(images).detach().to(self.device)
 
@@ -69,18 +87,14 @@ class OPTA(Attack):
             adv_images.requires_grad = True
 
             #for now intercept here
-            grad = self.set_grad(adv_images, labels, target_labels)
-
+            grad, cost = self.set_grad_translation(adv_images)
+            print (cost)
 
             grad = grad / torch.mean(torch.abs(grad), dim=(1,2,3), keepdim=True)
             grad = grad + momentum*self.decay
             momentum = grad
 
-            adv_images = adv_images.detach() + self.alpha*grad.sign()
-            delta = torch.clamp(adv_images - images, min=-self.eps, max=self.eps)
-            adv_images = torch.clamp(images + delta, min=0, max=1).detach()
-
-            if (cost == 0):
-                break
+            adv_images = self.update_image_with_grad_translation(adv_images, images, grad)
+            adv_images[1:] = images[1:] #reset adv_images target
 
         return adv_images

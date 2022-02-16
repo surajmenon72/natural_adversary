@@ -14,8 +14,7 @@ import os
 
 sys.path.append(os.path.abspath("/Users/surajmenon/Desktop/natural_adversary/adversarial-attacks-pytorch-master"))
 from torchattacks_local import attack
-from torchattacks_local.attacks import mifgsm
-from torchattacks_local.attacks import fib_attack
+from torchattacks_local.attacks import opt_attack
 
 from six.moves import urllib
 opener = urllib.request.build_opener()
@@ -159,8 +158,8 @@ def test(test_image_path, model, dataset, batch_size):
 
     print ('Starting')
 
-    atk = fib_attack.FIBA(model, train_loader, eps=255/255, alpha=8/255, steps=200, mode='Step-Middle')
-    atk.set_mode_targeted_least_likely()
+    atk = opt_attack.OPTA(model, train_loader, eps=255/255, alpha=8/255, steps=100)
+    #atk.set_mode_targeted_least_likely()
 
     # Loop over all examples in test set
     for data, target in test_loader:
@@ -173,15 +172,16 @@ def test(test_image_path, model, dataset, batch_size):
 
         adv_images = atk(data, target)
 
-        img_real = data[0].permute(1, 2, 0)
+        img_real_1 = data[0].permute(1, 2, 0)
         img_real_2 = data[1].permute(1, 2, 0)
-        img_adv = adv_images[0].permute(1, 2, 0)
+        img_adv_1 = adv_images[0].permute(1, 2, 0)
+        img_adv_2 = adv_images[1].permute(1, 2, 0)
 
         f, axarr = plt.subplots(2, 2)
-        axarr[0, 0].imshow(img_real.detach().numpy(), cmap='gray')
+        axarr[0, 0].imshow(img_real_1.detach().numpy(), cmap='gray')
         axarr[0, 1].imshow(img_real_2.detach().numpy(), cmap='gray')
-        axarr[1, 0].imshow(img_adv.detach().numpy(), cmap='gray')
-        axarr[1, 1].imshow(img_adv.detach().numpy(), cmap='gray')
+        axarr[1, 0].imshow(img_adv_1.detach().numpy(), cmap='gray')
+        axarr[1, 1].imshow(img_adv_2.detach().numpy(), cmap='gray')
         plt.show()
         exit()
 
