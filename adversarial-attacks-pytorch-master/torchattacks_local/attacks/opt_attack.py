@@ -8,10 +8,10 @@ from ..attack import Attack
 
 class OPTA(Attack):
     r"""
-    Filter Importance Basic Attack (In Development)
-    Leverages Momentum FGSM idea while taking into account a Filter Importance Scaling
+    Mixed Translation Optimization Attacks
+    Leverages Momentum FGSM idea while trying different optimizations.
 
-    Distance Measure : Linf
+    Distance Measure : L2
 
     Arguments:
         model (nn.Module): model to attack.
@@ -40,7 +40,7 @@ class OPTA(Attack):
         self._supported_mode = ['default', 'targeted']
         self.data_loader = data_loader
         self.total_filters = (model.conv1.out_channels+model.conv2.out_channels) #TODO: needs to be done automated
-        self.num_classes = 10 #assume mnist TODO: make variable
+        self.num_classes = 10 #assume MNIST TODO: make variable
         self.height = 28 #assume MNIST
         self.width = 28 #assume MNIST
         self.channels = 1 #assume MNIST
@@ -54,11 +54,29 @@ class OPTA(Attack):
         o_1, z1_1, a1_1, z2_1, a2_1 = self.model.semi_forward(x[:1])
         o_2, z1_2, a1_2, z2_2, a2_2 = self.model.semi_forward(x[1:])
 
-        cost = self._feature_l2_norm(z1_1, z1_2) + self._feature_l2_norm(z2_1, z2_2) #TODO: Make generalized for all networks
+        alpha = 1
+        beta = 1
+
+        cost = alpha*self._feature_l2_norm(z1_1, z1_2) + beta*self._feature_l2_norm(z2_1, z2_2) #TODO: Make generalized for all networks
         grad_x = torch.autograd.grad(cost, x,
                retain_graph=True, create_graph=True)[0]
 
         return grad_x, cost
+
+    def set_grad_mixing(self, x, x_orig):
+        o_1, z1_1, a1_1, z2_1, a2_1 = self.model.semi_forward(x[:1])
+        o_2, z1_2, a1_2, z2_2, a2_2 = self.model.semi_forward(x[1:])
+        o_3, z1_3, a1_3, z2_3, a2_3 = self.model.semi_forward(x_orig[:1])
+
+        alpha = 1
+        beta = 0
+
+        cost = alpha*self._feature_l2_norm(z1_1, z1_2) + beta*self._feature_l2_norm(z1_1, z1_3)
+        grad_x = torch.autograd.grad(cost, x, 
+                retain_graph=True, create_graph=True)[0]
+
+        return grad_x, cost
+
 
     def update_image_with_grad_translation(self, x_star, x, grad):
         x_star = x_star.detach() - self.alpha*grad.sign()
@@ -87,7 +105,8 @@ class OPTA(Attack):
             adv_images.requires_grad = True
 
             #for now intercept here
-            grad, cost = self.set_grad_translation(adv_images)
+            #grad, cost = self.set_grad_translation(adv_images)
+            grad, cost = self.set_grad_mixing(adv_images, images)
             print (cost)
 
             grad = grad / torch.mean(torch.abs(grad), dim=(1,2,3), keepdim=True)

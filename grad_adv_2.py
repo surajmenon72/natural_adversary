@@ -158,7 +158,7 @@ def test(test_image_path, model, dataset, batch_size):
 
     print ('Starting')
 
-    atk = opt_attack.OPTA(model, train_loader, eps=255/255, alpha=8/255, steps=100)
+    atk = opt_attack.OPTA(model, train_loader, eps=255/255, alpha=8/255, steps=500)
     #atk.set_mode_targeted_least_likely()
 
     # Loop over all examples in test set
