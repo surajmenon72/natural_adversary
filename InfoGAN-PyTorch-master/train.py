@@ -135,6 +135,8 @@ for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
 
     for i, (data, _) in enumerate(dataloader, 0):
+        print ('Batch')
+        print (i)
         # Get batch size
         b_size = data.size(0)
         # Transfer data tensor to GPU/CPU (device)
@@ -146,6 +148,7 @@ for epoch in range(params['num_epochs']):
         label = torch.full((b_size, ), real_label, device=device)
         output1 = discriminator(real_data)
         probs_real = netD(output1).view(-1)
+        label = label.to(torch.float32)
         loss_real = criterionD(probs_real, label)
         # Calculate gradients.
         loss_real.backward()
