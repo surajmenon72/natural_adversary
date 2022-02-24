@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 """
-Architecture based on InfoGAN paper.
+Architecture based on InfoGAN paper, +FringeGAN experiments.
 """
 
 class Generator(nn.Module):
@@ -80,3 +80,38 @@ class QHead(nn.Module):
         var = torch.exp(self.conv_var(x).squeeze())
 
         return disc_logits, mu, var
+
+class IHead(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        self.conv1 = nn.Conv2d(1, 64, 4, 2, 1)
+
+        self.conv2 = nn.Conv2d(64, 128, 4, 2, 1, bias=False)
+        self.bn2 = nn.BatchNorm2d(128)
+
+        self.conv3 = nn.Conv2d(128, 1024, 7, bias=False)
+        self.bn3 = nn.BatchNorm2d(1024)
+
+        self.conv4 = nn.Conv2d(1024, 512, 4, 2, 1)
+        self.bn4 = nn.BatchNorm2d(512)
+
+        self.conv5 = nn.Conv2d(512, 256, 4, 2, 1)
+        self.bn5 = nn.BatchNorm2d(256)
+
+        self.fc1 = nn.Linear(256, 256)
+        self.fc2 = nn.Linear(256, 64)
+
+    def forward(self, x):
+
+        x = F.leaky_relu(self.conv1(x), 0.1, inplace=True)
+        x = F.leaky_relu(self.bn2(self.conv2(x)), 0.1, inplace=True)
+        x = F.leaky_relu(self.bn3(self.conv3(x)), 0.1, inplace=True)
+
+        x = F.relu(self.bn4(self.conv4(x)))
+        x = F.relu(self.bn5(self.conv5(x)))
+
+        x = F.relu(self.fc1(x))
+        e = F.sigmoid(self.fc2(x))
+
+        return e
