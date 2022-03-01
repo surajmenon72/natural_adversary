@@ -8,13 +8,13 @@ import matplotlib.animation as animation
 import time
 import random
 
-from models.mnist_model import Generator, Discriminator, DHead, QHead
+from models.mnist_model_exp import Generator, Discriminator, DHead, QHead, IHead
 from dataloader import get_data
 from utils import *
 from config import params
 
 if(params['dataset'] == 'MNIST'):
-    from models.mnist_model import Generator, Discriminator, DHead, QHead
+    from models.mnist_model_exp import Generator, Discriminator, DHead, QHead, IHead
 elif(params['dataset'] == 'SVHN'):
     from models.svhn_model import Generator, Discriminator, DHead, QHead
 elif(params['dataset'] == 'CelebA'):
@@ -86,6 +86,11 @@ print(netD)
 netQ = QHead().to(device)
 netQ.apply(weights_init)
 print(netQ)
+
+netI = IHead().to(device)
+netI.apply(weights_init)
+print(netI)
+
 
 # Loss for discrimination between real and fake images.
 criterionD = nn.BCELoss()
