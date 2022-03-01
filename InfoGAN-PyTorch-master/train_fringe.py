@@ -8,13 +8,13 @@ import matplotlib.animation as animation
 import time
 import random
 
-from models.mnist_model_exp import Generator, Discriminator, DHead, QHead, IHead
+from models.mnist_model_exp import Generator, Discriminator, DHead, SHead, QHead
 from dataloader import get_data
 from utils import *
 from config import params
 
 if(params['dataset'] == 'MNIST'):
-    from models.mnist_model_exp import Generator, Discriminator, DHead, QHead, IHead
+    from models.mnist_model_exp import Generator, Discriminator, DHead, SHead, QHead
 elif(params['dataset'] == 'SVHN'):
     from models.svhn_model import Generator, Discriminator, DHead, QHead
 elif(params['dataset'] == 'CelebA'):
@@ -44,7 +44,7 @@ if(params['dataset'] == 'MNIST'):
     params['num_z'] = 62
     params['num_dis_c'] = 1
     params['dis_c_dim'] = 10
-    params['num_con_c'] = 2
+    params['num_con_c'] = 10 #continuous variable allocated for each class
 elif(params['dataset'] == 'SVHN'):
     params['num_z'] = 124
     params['num_dis_c'] = 4
@@ -83,24 +83,26 @@ netD = DHead().to(device)
 netD.apply(weights_init)
 print(netD)
 
+netS = SHead().to(device)
+netS.apply(weights_init)
+print (netS)
+
 netQ = QHead().to(device)
 netQ.apply(weights_init)
 print(netQ)
 
-netI = IHead().to(device)
-netI.apply(weights_init)
-print(netI)
-
 
 # Loss for discrimination between real and fake images.
 criterionD = nn.BCELoss()
+# Loss for split between identity and controversy
+criterionS = nn.KLDivLoss()
 # Loss for discrete latent code.
 criterionQ_dis = nn.CrossEntropyLoss()
 # Loss for continuous latent code.
 criterionQ_con = NormalNLLLoss()
 
 # Adam optimiser is used.
-optimD = optim.Adam([{'params': discriminator.parameters()}, {'params': netD.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimD = optim.Adam([{'params': discriminator.parameters()}, {'params': netD.parameters()}, {'params': netS.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 optimG = optim.Adam([{'params': netG.parameters()}, {'params': netQ.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 
 # Fixed Noise
@@ -139,13 +141,19 @@ iters = 0
 for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
 
-    for i, (data, _) in enumerate(dataloader, 0):
-        print ('Batch')
-        print (i)
+    for i, (data, true_label) in enumerate(dataloader, 0):
+        # print ('Batch')
+        # print (i)
         # Get batch size
         b_size = data.size(0)
         # Transfer data tensor to GPU/CPU (device)
         real_data = data.to(device)
+
+        #get targets
+        targets = get_targets(true_label, params['dis_c_dim'])
+
+        #get noise sample
+        noise, idx, c_nums = noise_sample_target(params['num_dis_c'], params['dis_c_dim'], params['num_con_c'], params['num_z'], b_size, device, targets)
 
         # Updating discriminator and DHead
         optimD.zero_grad()
@@ -158,9 +166,19 @@ for epoch in range(params['num_epochs']):
         # Calculate gradients.
         loss_real.backward()
 
+        #Split
+        split_labels = get_split_labels(true_label, targets, c_nums, params['dis_c_dim'])
+        output_s = discriminator(real_data)
+        probs_split = netS(output_s)
+        probs_split = torch.squeeze(probs_split) #TODO: consider if there are extra channels 
+        loss_split = criterionS(probs_split, split_labels)
+        # Calculate gradients
+        loss_split.backward()
+
         # Fake data
         label.fill_(fake_label)
-        noise, idx = noise_sample(params['num_dis_c'], params['dis_c_dim'], params['num_con_c'], params['num_z'], b_size, device)
+        #noise, idx = noise_sample(params['num_dis_c'], params['dis_c_dim'], params['num_con_c'], params['num_z'], b_size, device)
+        #noise, idx, c_nums = noise_sample_target(params['num_dis_c'], params['dis_c_dim'], params['num_con_c'], params['num_z'], b_size, device, targets)
         fake_data = netG(noise)
         output2 = discriminator(fake_data.detach())
         probs_fake = netD(output2).view(-1)
@@ -240,7 +258,7 @@ for epoch in range(params['num_epochs']):
             'optimD' : optimD.state_dict(),
             'optimG' : optimG.state_dict(),
             'params' : params
-            }, 'checkpoint/model_epoch_%d_{}'.format(params['dataset']) %(epoch+1))
+            }, 'checkpoint/model_fringe_epoch_%d_{}'.format(params['dataset']) %(epoch+1))
 
 training_time = time.time() - start_time
 print("-"*50)
