@@ -116,25 +116,25 @@ def noise_sample_target(n_dis_c, dis_c_dim, n_con_c, n_z, batch_size, device, ta
     return noise, idx, c_nums
 
 
-def get_targets(true_labels, num_classes):
+def get_targets(true_labels, num_classes, device):
     """
     Get target classes for which to adversarially train.
 
     Takes in the true_labels and total classes and then outputs a tensor of random targets
     """
     b_size = true_labels.shape[0]
-    targets = torch.randint(0, num_classes, (b_size, ))
+    targets = torch.randint(0, num_classes, (b_size, ), device=device)
 
     return targets
 
-def get_split_labels(true_label, targets, c_nums, num_classes):
+def get_split_labels(true_label, targets, c_nums, num_classes, device):
     """
     Get split classification labels, weighted by the random number generated for continuous variable
 
     Returns the weighted labels, including weights only for the true label the random target
     """
     b_size = true_label.shape[0]
-    labels = torch.zeros((b_size, num_classes))
+    labels = torch.zeros((b_size, num_classes), device=device)
     for i in range(b_size):
         c_num = c_nums[i]
         c_num /= 2 #divide in half as original is between 0-1, we want between 0-0.5

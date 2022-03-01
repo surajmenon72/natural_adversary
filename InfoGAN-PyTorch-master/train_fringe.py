@@ -150,7 +150,7 @@ for epoch in range(params['num_epochs']):
         real_data = data.to(device)
 
         #get targets
-        targets = get_targets(true_label, params['dis_c_dim'])
+        targets = get_targets(true_label, params['dis_c_dim'], device)
 
         #get noise sample
         noise, idx, c_nums = noise_sample_target(params['num_dis_c'], params['dis_c_dim'], params['num_con_c'], params['num_z'], b_size, device, targets)
@@ -167,7 +167,7 @@ for epoch in range(params['num_epochs']):
         loss_real.backward()
 
         #Split
-        split_labels = get_split_labels(true_label, targets, c_nums, params['dis_c_dim'])
+        split_labels = get_split_labels(true_label, targets, c_nums, params['dis_c_dim'], device)
         output_s = discriminator(real_data)
         probs_split = netS(output_s)
         probs_split = torch.squeeze(probs_split) #TODO: consider if there are extra channels 
