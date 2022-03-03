@@ -158,6 +158,8 @@ for epoch in range(params['num_epochs']):
 
         #get labels, targets
         true_labels, targets = get_targets(true_label, params['dis_c_dim'], device)
+        true_labels = true_labels.to(device)
+        targets = targets.to(device)
 
         #get noise sample
         noise, idx, c_nums = noise_sample_target(params['num_dis_c'], params['dis_c_dim'], params['num_con_c'], params['num_z'], b_size, device, targets)
