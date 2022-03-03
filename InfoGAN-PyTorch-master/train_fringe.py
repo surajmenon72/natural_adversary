@@ -179,7 +179,7 @@ for epoch in range(params['num_epochs']):
         output_c = classifier(real_data)
         probs_c = netS(output_c)
         probs_c = torch.squeeze(probs_c)
-        true_labels = true_labels.to(torch.float32)
+        #true_labels = true_labels.to(torch.float32)
         loss_c = criterionC(probs_c, true_labels)
         #Calculate gradients
         loss_c.backward()
