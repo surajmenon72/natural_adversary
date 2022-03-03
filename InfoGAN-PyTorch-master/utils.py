@@ -123,9 +123,10 @@ def get_targets(true_labels, num_classes, device):
     Takes in the true_labels and total classes and then outputs a tensor of random targets
     """
     b_size = true_labels.shape[0]
+    labels = nn.functional.one_hot(true_labels)
     targets = torch.randint(0, num_classes, (b_size, ), device=device)
 
-    return targets
+    return labels, targets
 
 def get_split_labels(true_label, targets, c_nums, num_classes, device):
     """

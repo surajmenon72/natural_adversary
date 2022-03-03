@@ -60,6 +60,25 @@ class DHead(nn.Module):
 
         return output
 
+class Classifier(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        self.conv1 = nn.Conv2d(1, 64, 4, 2, 1)
+
+        self.conv2 = nn.Conv2d(64, 128, 4, 2, 1, bias=False)
+        self.bn2 = nn.BatchNorm2d(128)
+
+        self.conv3 = nn.Conv2d(128, 1024, 7, bias=False)
+        self.bn3 = nn.BatchNorm2d(1024)
+
+    def forward(self, x):
+        x = F.leaky_relu(self.conv1(x), 0.1, inplace=True)
+        x = F.leaky_relu(self.bn2(self.conv2(x)), 0.1, inplace=True)
+        x = F.leaky_relu(self.bn3(self.conv3(x)), 0.1, inplace=True)
+
+        return x
+
 class SHead(nn.Module):
     def __init__(self):
         super().__init__()
@@ -67,7 +86,7 @@ class SHead(nn.Module):
         self.conv = nn.Conv2d(1024, 10, 1)
 
     def forward(self, x):
-        output = F.softmax(self.conv(x))
+        output = F.softmax(self.conv(x), dim=1)
 
         return output
 

@@ -8,13 +8,13 @@ import matplotlib.animation as animation
 import time
 import random
 
-from models.mnist_model_exp import Generator, Discriminator, DHead, SHead, QHead
+from models.mnist_model_exp import Generator, Discriminator, DHead, Classifier, SHead, QHead
 from dataloader import get_data
 from utils import *
 from config import params
 
 if(params['dataset'] == 'MNIST'):
-    from models.mnist_model_exp import Generator, Discriminator, DHead, SHead, QHead
+    from models.mnist_model_exp import Generator, Discriminator, DHead, Classifier, SHead, QHead
 elif(params['dataset'] == 'SVHN'):
     from models.svhn_model import Generator, Discriminator, DHead, QHead
 elif(params['dataset'] == 'CelebA'):
@@ -83,9 +83,13 @@ netD = DHead().to(device)
 netD.apply(weights_init)
 print(netD)
 
+classifier = Classifier().to(device)
+classifier.apply(weights_init)
+print(classifier)
+
 netS = SHead().to(device)
 netS.apply(weights_init)
-print (netS)
+print(netS)
 
 netQ = QHead().to(device)
 netQ.apply(weights_init)
@@ -94,6 +98,8 @@ print(netQ)
 
 # Loss for discrimination between real and fake images.
 criterionD = nn.BCELoss()
+# Loss for classifier
+criterionC = nn.CrossEntropyLoss()
 # Loss for split between identity and controversy
 criterionS = nn.KLDivLoss()
 # Loss for discrete latent code.
@@ -102,7 +108,7 @@ criterionQ_dis = nn.CrossEntropyLoss()
 criterionQ_con = NormalNLLLoss()
 
 # Adam optimiser is used.
-optimD = optim.Adam([{'params': discriminator.parameters()}, {'params': netD.parameters()}, {'params': netS.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimD = optim.Adam([{'params': discriminator.parameters()}, {'params': netD.parameters()}, {'params': classifier.parameters()}, {'params': netS.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 optimG = optim.Adam([{'params': netG.parameters()}, {'params': netQ.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 
 # Fixed Noise
@@ -129,6 +135,7 @@ fake_label = 0
 img_list = []
 G_losses = []
 D_losses = []
+C_losses = []
 
 print("-"*25)
 print("Starting Training Loop...\n")
@@ -149,8 +156,8 @@ for epoch in range(params['num_epochs']):
         # Transfer data tensor to GPU/CPU (device)
         real_data = data.to(device)
 
-        #get targets
-        targets = get_targets(true_label, params['dis_c_dim'], device)
+        #get labels, targets
+        true_labels, targets = get_targets(true_label, params['dis_c_dim'], device)
 
         #get noise sample
         noise, idx, c_nums = noise_sample_target(params['num_dis_c'], params['dis_c_dim'], params['num_con_c'], params['num_z'], b_size, device, targets)
@@ -166,14 +173,14 @@ for epoch in range(params['num_epochs']):
         # Calculate gradients.
         loss_real.backward()
 
-        #Split
-        split_labels = get_split_labels(true_label, targets, c_nums, params['dis_c_dim'], device)
-        output_s = discriminator(real_data)
-        probs_split = netS(output_s)
-        probs_split = torch.squeeze(probs_split) #TODO: consider if there are extra channels 
-        loss_split = criterionS(probs_split, split_labels)
-        # Calculate gradients
-        loss_split.backward()
+        #Train classifier
+        output_c = classifier(real_data)
+        probs_c = netS(output_c)
+        probs_c = torch.squeeze(probs_c)
+        true_labels = true_labels.to(torch.float32)
+        loss_c = criterionC(probs_c, true_labels)
+        #Calculate gradients
+        loss_c.backward()
 
         # Fake data
         label.fill_(fake_label)
@@ -186,15 +193,27 @@ for epoch in range(params['num_epochs']):
         # Calculate gradients.
         loss_fake.backward()
 
-        # Net Loss for the discriminator
+        # Net Loss for the discriminator and classifier
         D_loss = loss_real + loss_fake
+
         # Update parameters
         optimD.step()
 
         # Updating Generator and QHead
         optimG.zero_grad()
 
+        #Split loss
+        split_labels = get_split_labels(true_label, targets, c_nums, params['dis_c_dim'], device)
+        fake_data = netG(noise)
+        output_s = classifier(fake_data)
+        probs_split = netS(output_s)
+        probs_split = torch.squeeze(probs_split) #TODO: consider if there are extra channels 
+        loss_split = criterionS(probs_split, split_labels)
+        # Calculate gradients
+        loss_split.backward()
+
         # Fake data treated as real.
+        fake_data = netG(noise)
         output = discriminator(fake_data)
         label.fill_(real_label)
         probs_fake = netD(output).view(-1)
@@ -212,6 +231,8 @@ for epoch in range(params['num_epochs']):
         if (params['num_con_c'] != 0):
             con_loss = criterionQ_con(noise[:, params['num_z']+ params['num_dis_c']*params['dis_c_dim'] : ].view(-1, params['num_con_c']), q_mu, q_var)*0.1
 
+        #Net loss for classifier
+        C_loss = loss_c + loss_split
         # Net loss for generator.
         G_loss = gen_loss + dis_loss + con_loss
         # Calculate gradients.
@@ -228,6 +249,7 @@ for epoch in range(params['num_epochs']):
         # Save the losses for plotting.
         G_losses.append(G_loss.item())
         D_losses.append(D_loss.item())
+        C_losses.append(C_loss.item())
 
         iters += 1
 
