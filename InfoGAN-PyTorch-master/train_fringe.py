@@ -205,7 +205,7 @@ for epoch in range(params['num_epochs']):
         optimG.zero_grad()
 
         #Split loss
-        split_labels = get_split_labels(true_label, targets, c_nums, params['dis_c_dim'], device)
+        split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
         fake_data = netG(noise)
         output_s = classifier(fake_data)
         probs_split = netS(output_s)
