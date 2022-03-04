@@ -136,6 +136,7 @@ img_list = []
 G_losses = []
 D_losses = []
 C_losses = []
+S_losses = []
 
 print("-"*25)
 print("Starting Training Loop...\n")
@@ -234,7 +235,9 @@ for epoch in range(params['num_epochs']):
             con_loss = criterionQ_con(noise[:, params['num_z']+ params['num_dis_c']*params['dis_c_dim'] : ].view(-1, params['num_con_c']), q_mu, q_var)*0.1
 
         #Net loss for classifier
-        C_loss = loss_c + loss_split
+        C_loss = loss_c
+        #Loss for Split
+        S_loss = loss_split
         # Net loss for generator.
         G_loss = gen_loss + dis_loss + con_loss
         # Calculate gradients.
@@ -244,14 +247,15 @@ for epoch in range(params['num_epochs']):
 
         # Check progress of training.
         if i != 0 and i%100 == 0:
-            print('[%d/%d][%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f'
+            print('[%d/%d][%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f\tLoss_C: %.4f\tLoss_S: %.4f'
                   % (epoch+1, params['num_epochs'], i, len(dataloader), 
-                    D_loss.item(), G_loss.item()))
+                    D_loss.item(), G_loss.item(), C_loss.item(), S_loss.item()))
 
         # Save the losses for plotting.
         G_losses.append(G_loss.item())
         D_losses.append(D_loss.item())
         C_losses.append(C_loss.item())
+        S_losses.append(S_loss.item())
 
         iters += 1
 
