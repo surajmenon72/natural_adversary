@@ -32,6 +32,11 @@ print("Random Seed: ", seed)
 device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
+load_model = False
+if (load_model):
+    load_path = './checkpoints/model_load'
+    state_dict = torch.load(load_path, map_location=device)
+
 dataloader = get_data(params['dataset'], params['batch_size'])
 
 # Set appropriate hyperparameters depending on the dataset used.
@@ -94,6 +99,14 @@ print(netS)
 netQ = QHead().to(device)
 netQ.apply(weights_init)
 print(netQ)
+
+if (load_model):
+    netG.load_state_dict(state_dict['netG'])
+    discriminator.load_state_dict(state_dict['discriminator'])
+    netD.load_state_dict(state_dict['netD'])
+    classifier.load_state_dict(state_dict['classifier'])
+    netS.load_state_dict(state_dict['netS'])
+    netQ.load_state_dict(state_dict['netQ'])
 
 
 # Loss for discrimination between real and fake images.
