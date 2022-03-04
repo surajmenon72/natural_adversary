@@ -184,7 +184,7 @@ for epoch in range(params['num_epochs']):
         # loss_c = criterionC(probs_c, true_label_g)
         # #Calculate gradients
         # loss_c.backward()
-        loss_c = 0
+        loss_c = torch.zeros(1)
 
         # Fake data
         label.fill_(fake_label)
@@ -215,7 +215,7 @@ for epoch in range(params['num_epochs']):
         # loss_split = criterionS(probs_split, split_labels)
         # # Calculate gradients
         # loss_split.backward()
-        loss_split = 0
+        loss_split = torch.zeros(1)
 
         # Fake data treated as real.
         fake_data = netG(noise)
@@ -256,8 +256,8 @@ for epoch in range(params['num_epochs']):
         # Save the losses for plotting.
         G_losses.append(G_loss.item())
         D_losses.append(D_loss.item())
-        #C_losses.append(C_loss.item())
-        #S_losses.append(S_loss.item())
+        C_losses.append(C_loss.item())
+        S_losses.append(S_loss.item())
 
         iters += 1
 
