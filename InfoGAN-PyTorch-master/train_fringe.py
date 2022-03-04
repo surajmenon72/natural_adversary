@@ -177,13 +177,14 @@ for epoch in range(params['num_epochs']):
         loss_real.backward()
 
         #Train classifier
-        output_c = classifier(real_data)
-        probs_c = netS(output_c)
-        probs_c = torch.squeeze(probs_c)
-        #true_labels = true_labels.to(torch.float32)
-        loss_c = criterionC(probs_c, true_label_g)
-        #Calculate gradients
-        loss_c.backward()
+        # output_c = classifier(real_data)
+        # probs_c = netS(output_c)
+        # probs_c = torch.squeeze(probs_c)
+        # #true_labels = true_labels.to(torch.float32)
+        # loss_c = criterionC(probs_c, true_label_g)
+        # #Calculate gradients
+        # loss_c.backward()
+        loss_c = 0
 
         # Fake data
         label.fill_(fake_label)
@@ -206,14 +207,15 @@ for epoch in range(params['num_epochs']):
         optimG.zero_grad()
 
         #Split loss
-        split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
-        fake_data = netG(noise)
-        output_s = classifier(fake_data)
-        probs_split = netS(output_s)
-        probs_split = torch.squeeze(probs_split) #TODO: consider if there are extra channels 
-        loss_split = criterionS(probs_split, split_labels)
-        # Calculate gradients
-        loss_split.backward()
+        # split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
+        # fake_data = netG(noise)
+        # output_s = classifier(fake_data)
+        # probs_split = netS(output_s)
+        # probs_split = torch.squeeze(probs_split) #TODO: consider if there are extra channels 
+        # loss_split = criterionS(probs_split, split_labels)
+        # # Calculate gradients
+        # loss_split.backward()
+        loss_split = 0
 
         # Fake data treated as real.
         fake_data = netG(noise)
