@@ -256,8 +256,8 @@ for epoch in range(params['num_epochs']):
         # Save the losses for plotting.
         G_losses.append(G_loss.item())
         D_losses.append(D_loss.item())
-        C_losses.append(C_loss.item())
-        S_losses.append(S_loss.item())
+        #C_losses.append(C_loss.item())
+        #S_losses.append(S_loss.item())
 
         iters += 1
 
