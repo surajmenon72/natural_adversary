@@ -190,14 +190,14 @@ for epoch in range(params['num_epochs']):
         loss_real.backward()
 
         #Train classifier
-        # output_c = classifier(real_data)
-        # probs_c = netS(output_c)
-        # probs_c = torch.squeeze(probs_c)
-        # #true_labels = true_labels.to(torch.float32)
-        # loss_c = criterionC(probs_c, true_label_g)
-        # #Calculate gradients
-        # loss_c.backward()
-        loss_c = torch.zeros(1)
+        output_c = classifier(real_data)
+        probs_c = netS(output_c)
+        probs_c = torch.squeeze(probs_c)
+        #true_labels = true_labels.to(torch.float32)
+        loss_c = criterionC(probs_c, true_label_g)
+        #Calculate gradients
+        loss_c.backward()
+        #loss_c = torch.zeros(1)
 
         # Fake data
         label.fill_(fake_label)
@@ -228,7 +228,16 @@ for epoch in range(params['num_epochs']):
         # loss_split = criterionS(probs_split, split_labels)
         # # Calculate gradients
         # loss_split.backward()
-        loss_split = torch.zeros(1)
+        # loss_split = torch.zeros(1)
+
+        fake_labels = torch.zeros(true_label_g.shape[0])
+        fake_data = netG(noise)
+        output_s = classifier(fake_data)
+        probs_split = netS(output_s)
+        probs_split = torch.squeeze(probs_split)
+        loss_split = criterionC(probs_split, fake_labels)
+        loss_split.backward()
+
 
         # Fake data treated as real.
         fake_data = netG(noise)
