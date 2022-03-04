@@ -231,6 +231,7 @@ for epoch in range(params['num_epochs']):
         # loss_split = torch.zeros(1)
 
         fake_labels = torch.zeros(true_label_g.shape[0], device=device)
+        fake_labels = fake_labels.to(torch.int64)
         fake_data = netG(noise)
         output_s = classifier(fake_data)
         probs_split = netS(output_s)
