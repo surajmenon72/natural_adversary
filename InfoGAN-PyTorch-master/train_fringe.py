@@ -312,7 +312,7 @@ torch.save({
     'optimD' : optimD.state_dict(),
     'optimG' : optimG.state_dict(),
     'params' : params
-    }, 'checkpoint/model_final_{}'.format(params['dataset']))
+    }, 'checkpoint/model_final_fringe_{}'.format(params['dataset']))
 
 
 # Plot the training losses.
