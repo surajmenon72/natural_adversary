@@ -220,25 +220,25 @@ for epoch in range(params['num_epochs']):
         optimG.zero_grad()
 
         #Split loss
-        # split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
-        # fake_data = netG(noise)
-        # output_s = classifier(fake_data)
-        # probs_split = netS(output_s)
-        # probs_split = torch.squeeze(probs_split) #TODO: consider if there are extra channels 
-        # loss_split = criterionS(probs_split, split_labels)
-        # # Calculate gradients
-        # loss_split.backward()
-        # loss_split = torch.zeros(1)
-
-        fake_labels = torch.zeros(true_label_g.shape[0], device=device)
-        fake_labels = fake_labels.to(torch.int64)
+        split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
         fake_data = netG(noise)
         output_s = classifier(fake_data)
         probs_split = netS(output_s)
-        probs_split = torch.squeeze(probs_split)
-        loss_split = criterionC(probs_split, fake_labels)
+        probs_split = torch.squeeze(probs_split) #TODO: consider if there are extra channels 
+        loss_split = criterionS(probs_split, split_labels)
+        # Calculate gradients
         loss_split.backward()
+        # loss_split = torch.zeros(1)
 
+        #If we want classifier to force an output
+        # fake_labels = torch.zeros(true_label_g.shape[0], device=device)
+        # fake_labels = fake_labels.to(torch.int64)
+        # fake_data = netG(noise)
+        # output_s = classifier(fake_data)
+        # probs_split = netS(output_s)
+        # probs_split = torch.squeeze(probs_split)
+        # loss_split = criterionC(probs_split, fake_labels)
+        # loss_split.backward()
 
         # Fake data treated as real.
         fake_data = netG(noise)
