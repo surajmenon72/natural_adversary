@@ -4,12 +4,18 @@ import torch
 import torchvision.utils as vutils
 import numpy as np
 import matplotlib.pyplot as plt
+import random
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-load_path', required=True, help='Checkpoint to load path from')
 args = parser.parse_args()
 
 from models.mnist_model_exp import Generator
+
+seed = 1123
+random.seed(seed)
+torch.manual_seed(seed)
+print("Random Seed: ", seed)
 
 # Load the checkpoint file
 state_dict = torch.load(args.load_path, map_location=torch.device('cpu'))
@@ -25,7 +31,7 @@ netG = Generator().to(device)
 netG.load_state_dict(state_dict['netG'])
 print(netG)
 
-start = .5
+start = 0
 stop = 1
 #c = np.linspace(-2, 2, 10).reshape(1, -1)
 c = np.linspace(start, stop, 10).reshape(1, -1)
@@ -43,9 +49,9 @@ zeros = torch.zeros(100, 1, 1, 1, device=device)
 # for i in range(3, 10):
 # 	c2 = torch.cat((c2, zeros), dim=1)
 
-c_index = 10
+c_index = 0
 c2 = torch.zeros((10, 100, 1, 1), device=device)
-#c2[c_index] = c[:, :, 0]
+c2[c_index] = c[:, :, 0]
 c2 = c2.permute(1, 0, 2, 3)
 
 idx = np.arange(10).repeat(10)
@@ -63,6 +69,7 @@ noise1 = torch.cat((z, c1, c2), dim=1)
 # Generate image.
 with torch.no_grad():
     generated_img1 = netG(noise1).detach().cpu()
+
 # Display the generated image.
 fig = plt.figure(figsize=(10, 10))
 plt.axis("off")
