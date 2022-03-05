@@ -8,13 +8,13 @@ import matplotlib.animation as animation
 import time
 import random
 
-from models.mnist_model_exp import Generator, Discriminator, DHead, Classifier, SHead, QHead
+from models.mnist_model_exp import Generator, Discriminator, DHead, Classifier, CHead, SHead, QHead
 from dataloader import get_data
 from utils import *
 from config import params
 
 if(params['dataset'] == 'MNIST'):
-    from models.mnist_model_exp import Generator, Discriminator, DHead, Classifier, SHead, QHead
+    from models.mnist_model_exp import Generator, Discriminator, DHead, Classifier, CHead, SHead, QHead
 elif(params['dataset'] == 'SVHN'):
     from models.svhn_model import Generator, Discriminator, DHead, QHead
 elif(params['dataset'] == 'CelebA'):
@@ -92,6 +92,10 @@ classifier = Classifier().to(device)
 classifier.apply(weights_init)
 print(classifier)
 
+netC = CHead().to(device)
+netC.apply(weights_init)
+print(netC)
+
 netS = SHead().to(device)
 netS.apply(weights_init)
 print(netS)
@@ -105,6 +109,7 @@ if (load_model):
     discriminator.load_state_dict(state_dict['discriminator'])
     netD.load_state_dict(state_dict['netD'])
     classifier.load_state_dict(state_dict['classifier'])
+    netC.load_state_dict(state_dict['netC'])
     netS.load_state_dict(state_dict['netS'])
     netQ.load_state_dict(state_dict['netQ'])
 
@@ -121,7 +126,7 @@ criterionQ_dis = nn.CrossEntropyLoss()
 criterionQ_con = NormalNLLLoss()
 
 # Adam optimiser is used.
-optimD = optim.Adam([{'params': discriminator.parameters()}, {'params': netD.parameters()}, {'params': classifier.parameters()}, {'params': netS.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimD = optim.Adam([{'params': discriminator.parameters()}, {'params': netD.parameters()}, {'params': classifier.parameters()}, {'params': netC.parameters()}, {'params': netS.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 optimG = optim.Adam([{'params': netG.parameters()}, {'params': netQ.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 
 # Fixed Noise
@@ -191,7 +196,8 @@ for epoch in range(params['num_epochs']):
 
         #Train classifier
         output_c = classifier(real_data)
-        probs_c = netS(output_c)
+        #probs_c = netS(output_c)
+        probs_c = netC(output_c)
         probs_c = torch.squeeze(probs_c)
         #true_labels = true_labels.to(torch.float32)
         loss_c = criterionC(probs_c, true_label_g)
@@ -223,7 +229,8 @@ for epoch in range(params['num_epochs']):
         split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
         fake_data = netG(noise)
         output_s = classifier(fake_data)
-        probs_split = netS(output_s)
+        #probs_split = netS(output_s)
+        probs_split = netC(output_s)
         probs_split = torch.squeeze(probs_split) #TODO: consider if there are extra channels 
         loss_split = criterionS(probs_split, split_labels)
         # Calculate gradients
