@@ -12,7 +12,7 @@ args = parser.parse_args()
 
 from models.mnist_model_exp import Generator
 
-seed = 1123
+seed = 1125
 random.seed(seed)
 torch.manual_seed(seed)
 print("Random Seed: ", seed)
@@ -31,36 +31,16 @@ netG = Generator().to(device)
 netG.load_state_dict(state_dict['netG'])
 print(netG)
 
-start = 0
-stop = 1
-#c = np.linspace(-2, 2, 10).reshape(1, -1)
-c = np.linspace(start, stop, 10).reshape(1, -1)
-c = np.repeat(c, 10, 0).reshape(-1, 1)
-c = torch.from_numpy(c).float().to(device)
-c = c.view(-1, 1, 1, 1)
 
-zeros = torch.zeros(100, 1, 1, 1, device=device)
+z = torch.randn(2, 62, 1, 1, device=device)
+c1 = torch.zeros((2, 10, 1, 1))
+c2 = torch.zeros((2, 10, 1, 1))
 
-# Continuous latent code.
-# c2 = torch.cat((zeros, zeros), dim=1)
-# c2 = torch.cat((c2, zeros), dim=1)
-# c2 = torch.cat((c2, ), dim=1)
-
-# for i in range(3, 10):
-# 	c2 = torch.cat((c2, zeros), dim=1)
-
-c_index = 0
-c2 = torch.zeros((10, 100, 1, 1), device=device)
-c2[c_index] = c[:, :, 0]
-c2 = c2.permute(1, 0, 2, 3)
-
-idx = np.arange(10).repeat(10)
-dis_c = torch.zeros(100, 10, 1, 1, device=device)
-dis_c[torch.arange(0, 100), idx] = 1.0
-# Discrete latent code.
-c1 = dis_c.view(100, -1, 1, 1)
-
-z = torch.randn(100, 62, 1, 1, device=device)
+num_ind = 2
+cont_ind = 8
+cont_ind_val = 0
+c1[0, num_ind, 0, 0] = 1
+c2[0, cont_ind, 0, 0] = cont_ind_val
 
 # To see variation along c2 (Horizontally) and c1 (Vertically)
 noise1 = torch.cat((z, c1, c2), dim=1)
@@ -70,10 +50,8 @@ noise1 = torch.cat((z, c1, c2), dim=1)
 with torch.no_grad():
     generated_img1 = netG(noise1).detach().cpu()
 
-# Display the generated image.
-fig = plt.figure(figsize=(10, 10))
+img_to_show = generated_img1[0].permute(1, 2, 0)
+plt.figure(1)
 plt.axis("off")
-plt.imshow(np.transpose(vutils.make_grid(generated_img1, nrow=10, padding=2, normalize=True), (1,2,0)))
-save_str = str(c_index) + '.png'
-plt.savefig(save_str)
+plt.imshow(img_to_show)
 plt.show()
