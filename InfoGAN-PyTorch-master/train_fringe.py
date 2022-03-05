@@ -166,7 +166,7 @@ iters = 0
 
 #Realness vs. Classification Hyperparams
 alpha = 1
-beta = .5
+beta = 1
 
 for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
@@ -352,8 +352,10 @@ plt.savefig("Epoch_%d_{}".format(params['dataset']) %(params['num_epochs']))
 torch.save({
     'netG' : netG.state_dict(),
     'discriminator' : discriminator.state_dict(),
+    'classifier' : classifier.state_dict(),
     'netD' : netD.state_dict(),
     'netQ' : netQ.state_dict(),
+    'netC' : netC.state_dict(),
     'optimD' : optimD.state_dict(),
     'optimG' : optimG.state_dict(),
     'params' : params

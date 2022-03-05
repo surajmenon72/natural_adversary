@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-load_path', required=True, help='Checkpoint to load path from')
 args = parser.parse_args()
 
-from models.mnist_model_exp import Classifier, netC
+from models.mnist_model_exp import Classifier, CHead
 
 seed = 1123
 random.seed(seed)
@@ -22,6 +22,9 @@ print("Random Seed: ", seed)
 # Load the checkpoint file
 state_dict = torch.load(args.load_path, map_location=torch.device('cpu'))
 
+print (state_dict.keys())
+exit()
+
 # Set the device to run on: GPU or CPU.
 device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 # Get the 'params' dictionary from the loaded state_dict.
@@ -29,7 +32,7 @@ params = state_dict['params']
 
 # Create the generator network.
 classifier = Classifier().to(device)
-netC = netC().to(device)
+netC = CHead().to(device)
 # Load the trained generator weights.
 classifier.load_state_dict(state_dict['classifier'])
 netC.load_state_dict(state_dict['netC'])
