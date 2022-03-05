@@ -25,8 +25,10 @@ netG = Generator().to(device)
 netG.load_state_dict(state_dict['netG'])
 print(netG)
 
+start = .5
+stop = 1
 #c = np.linspace(-2, 2, 10).reshape(1, -1)
-c = np.linspace(0, 1, 10).reshape(1, -1)
+c = np.linspace(start, stop, 10).reshape(1, -1)
 c = np.repeat(c, 10, 0).reshape(-1, 1)
 c = torch.from_numpy(c).float().to(device)
 c = c.view(-1, 1, 1, 1)
@@ -41,11 +43,10 @@ zeros = torch.zeros(100, 1, 1, 1, device=device)
 # for i in range(3, 10):
 # 	c2 = torch.cat((c2, zeros), dim=1)
 
-c_index = 2
+c_index = 10
 c2 = torch.zeros((10, 100, 1, 1), device=device)
-c2[c_index] = c[:, :, 0]
+#c2[c_index] = c[:, :, 0]
 c2 = c2.permute(1, 0, 2, 3)
-
 
 idx = np.arange(10).repeat(10)
 dis_c = torch.zeros(100, 10, 1, 1, device=device)

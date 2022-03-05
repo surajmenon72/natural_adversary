@@ -164,6 +164,10 @@ print("-"*25)
 start_time = time.time()
 iters = 0
 
+#Realness vs. Classification Hyperparams
+alpha = 1
+beta = .5
+
 for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
 
@@ -191,6 +195,7 @@ for epoch in range(params['num_epochs']):
         probs_real = netD(output1).view(-1)
         label = label.to(torch.float32)
         loss_real = criterionD(probs_real, label)
+        loss_real = loss_real*alpha
         # Calculate gradients.
         loss_real.backward()
 
@@ -201,6 +206,7 @@ for epoch in range(params['num_epochs']):
         probs_c = torch.squeeze(probs_c)
         #true_labels = true_labels.to(torch.float32)
         loss_c = criterionC(probs_c, true_label_g)
+        loss_c = loss_c*beta
         #Calculate gradients
         loss_c.backward()
         #loss_c = torch.zeros(1)
@@ -213,6 +219,7 @@ for epoch in range(params['num_epochs']):
         output2 = discriminator(fake_data.detach())
         probs_fake = netD(output2).view(-1)
         loss_fake = criterionD(probs_fake, label)
+        loss_fake = loss_fake*alpha
         # Calculate gradients.
         loss_fake.backward()
 
@@ -233,6 +240,7 @@ for epoch in range(params['num_epochs']):
         probs_split = netC(output_s)
         probs_split = torch.squeeze(probs_split) #TODO: consider if there are extra channels 
         loss_split = criterionS(probs_split, split_labels)
+        loss_split = loss_split*beta
         # Calculate gradients
         loss_split.backward()
         # loss_split = torch.zeros(1)
@@ -272,6 +280,7 @@ for epoch in range(params['num_epochs']):
         S_loss = loss_split
         # Net loss for generator.
         G_loss = gen_loss + dis_loss + con_loss
+        G_loss = G_loss*alpha
         # Calculate gradients.
         G_loss.backward()
         # Update parameters.
