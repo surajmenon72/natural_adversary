@@ -49,7 +49,6 @@ for i, (data, true_label) in enumerate(dataloader, 0):
 	real_data = data.to(device)
 	output_c = classifier(real_data)
 	probs_c = netC(output_c)
-	probs_c = torch.squeeze(probs_c)
 
 	guess = torch.argmax(probs_c, dim=1)
 	 
