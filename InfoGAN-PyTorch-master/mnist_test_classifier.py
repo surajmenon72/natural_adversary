@@ -22,9 +22,6 @@ print("Random Seed: ", seed)
 # Load the checkpoint file
 state_dict = torch.load(args.load_path, map_location=torch.device('cpu'))
 
-print (state_dict.keys())
-exit()
-
 # Set the device to run on: GPU or CPU.
 device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 # Get the 'params' dictionary from the loaded state_dict.
@@ -42,14 +39,24 @@ netC.eval()
 
 dataloader = get_data('MNIST', 1)
 
+total_correct = 0
+total_samples = 0
 for i, (data, true_label) in enumerate(dataloader, 0):
 	real_data = data.to(device)
 	output_c = classifier(real_data)
 	probs_c = netC(output_c)
+	probs_c = torch.squeeze(probs_c)
 
-	print (probs_c.shape)
-	print (probs_c)
-	exit()
+	guess = torch.argmax(probs_c)
+	truth = true_label[0]
+
+	if (guess == truth):
+		total_correct += 1
+
+	total_samples += 1
+
+accuracy = (total_correct/total_samples)
+print (accuracy)
 
 
 
