@@ -37,23 +37,25 @@ netC.load_state_dict(state_dict['netC'])
 classifier.eval()
 netC.eval()
 
-dataloader = get_data('MNIST', 1)
+batch_size = 128
+
+dataloader = get_data('MNIST', batch_size)
 
 total_correct = 0
 total_samples = 0
 for i, (data, true_label) in enumerate(dataloader, 0):
+	print ('Batch')
+	print (i)
 	real_data = data.to(device)
 	output_c = classifier(real_data)
 	probs_c = netC(output_c)
 	probs_c = torch.squeeze(probs_c)
 
-	guess = torch.argmax(probs_c)
-	truth = true_label[0]
-
-	if (guess == truth):
-		total_correct += 1
-
-	total_samples += 1
+	guess = torch.argmax(probs_c, dim=1)
+	 
+	equal = (true_label == guess)
+	total_correct += torch.sum(equal)
+	total_samples += batch_size
 
 accuracy = (total_correct/total_samples)
 print (accuracy)
