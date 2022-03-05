@@ -31,6 +31,7 @@ netG = Generator().to(device)
 netG.load_state_dict(state_dict['netG'])
 print(netG)
 
+netG.eval()
 
 z = torch.randn(2, 62, 1, 1, device=device)
 c1 = torch.zeros((2, 10, 1, 1))
@@ -41,6 +42,8 @@ cont_ind = 8
 cont_ind_val = 0
 c1[0, num_ind, 0, 0] = 1
 c2[0, cont_ind, 0, 0] = cont_ind_val
+c1[1, 2, 0, 0] = 1
+c2[1, cont_ind, 0, 0] = 0
 
 # To see variation along c2 (Horizontally) and c1 (Vertically)
 noise1 = torch.cat((z, c1, c2), dim=1)

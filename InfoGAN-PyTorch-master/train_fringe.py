@@ -188,6 +188,10 @@ for epoch in range(params['num_epochs']):
         noise, idx, c_nums = noise_sample_target(params['num_dis_c'], params['dis_c_dim'], params['num_con_c'], params['num_z'], b_size, device, targets)
 
         # Updating discriminator and DHead
+        discriminator.train()
+        netD.train()
+        classifier.train()
+        netC.train()
         optimD.zero_grad()
         # Real data
         label = torch.full((b_size, ), real_label, device=device)
@@ -230,6 +234,8 @@ for epoch in range(params['num_epochs']):
         optimD.step()
 
         # Updating Generator and QHead
+        netG.train()
+        netQ.train()
         optimG.zero_grad()
 
         #Split loss
