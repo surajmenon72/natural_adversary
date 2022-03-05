@@ -5,7 +5,7 @@ import torchvision.datasets as dsets
 # Directory containing the data.
 root = 'data/'
 
-def get_data(dataset, batch_size):
+def get_data(dataset, batch_size, train_test='train'):
 
     # Get MNIST dataset.
     if dataset == 'MNIST':
@@ -14,7 +14,11 @@ def get_data(dataset, batch_size):
             transforms.CenterCrop(28),
             transforms.ToTensor()])
 
-        dataset = dsets.MNIST(root+'mnist/', train='train', 
+        if (train_test == 'train'):
+            dataset = dsets.MNIST(root+'mnist/', train='train', 
+                                download=True, transform=transform)
+        else:
+            dataset = dsets.MNIST(root+'mnist/', train=False, 
                                 download=True, transform=transform)
 
     # Get SVHN dataset.
