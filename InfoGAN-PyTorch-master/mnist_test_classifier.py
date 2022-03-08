@@ -39,7 +39,7 @@ netC.eval()
 
 batch_size = 128
 
-dataloader = get_data('MNIST', batch_size)
+dataloader = get_data('MNIST', batch_size, train_test='test')
 
 total_correct = 0
 total_samples = 0
