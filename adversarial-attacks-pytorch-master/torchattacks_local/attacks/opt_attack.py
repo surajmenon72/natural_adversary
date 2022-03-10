@@ -31,7 +31,7 @@ class OPTA(Attack):
 
     """
 
-    def __init__(self, model, data_loader, eps=8/255, alpha=2/255, steps=5, decay=1.0):
+    def __init__(self, model, data_loader, eps=8/255, alpha=2/255, steps=5, decay=1.0, model_extra=None):
         super().__init__("OPTA", model)
         self.eps = eps
         self.steps = steps
@@ -44,6 +44,7 @@ class OPTA(Attack):
         self.height = 28 #assume MNIST
         self.width = 28 #assume MNIST
         self.channels = 1 #assume MNIST
+        self.model_extra = model_extra
 
     def _feature_l1_norm(self, f1, f2):
         return torch.sum(torch.abs(f1-f2))
@@ -77,6 +78,23 @@ class OPTA(Attack):
 
         return grad_x, cost
 
+    def set_final_distribution(self, x, labels, target_labels, distribution):
+        output_c = self.model(x)
+        probs_c = self.model_extra(output_c)
+
+        ideal_distribution = torch.zeros(self.num_classes)
+        ideal_distribution[labels[0]] = distribution[0]
+        ideal_distribution[target_labels[0]] = distribution[1]
+
+        # print (probs_c)
+        # print (ideal_distribution)
+
+        kl_loss = nn.KLDivLoss(log_target=False)
+        cost = kl_loss(probs_c[0], ideal_distribution)
+
+        grad_x = torch.autograd.grad(cost, x, retain_graph=True, create_graph=True)[0]
+
+        return grad_x, cost
 
     def update_image_with_grad_translation(self, x_star, x, grad):
         x_star = x_star.detach() - self.alpha*grad.sign()
@@ -85,6 +103,11 @@ class OPTA(Attack):
 
         return adv_images
 
+    def get_random_target_label(self, labels):
+        b_size = labels.shape[0]
+        targets = torch.randint(0, self.num_classes, (b_size, ))
+
+        return targets
 
     def forward(self, images, labels):
         r"""
@@ -94,7 +117,9 @@ class OPTA(Attack):
         labels = labels.clone().detach().to(self.device)
 
         if self._targeted:
-            target_labels = self._get_target_label(images, labels)
+            #target_labels = self._get_target_label(images, labels)
+            target_labels = self.get_random_target_label(labels)
+            print (labels)
             print (target_labels)
 
         momentum = torch.zeros_like(images).detach().to(self.device)
@@ -106,7 +131,9 @@ class OPTA(Attack):
 
             #for now intercept here
             #grad, cost = self.set_grad_translation(adv_images)
-            grad, cost = self.set_grad_mixing(adv_images, images)
+            #grad, cost = self.set_grad_mixing(adv_images, images)
+            distribution = [0.5, 0.5]
+            grad, cost = self.set_final_distribution(adv_images, labels, target_labels, distribution)
             print (cost)
 
             grad = grad / torch.mean(torch.abs(grad), dim=(1,2,3), keepdim=True)
@@ -114,6 +141,6 @@ class OPTA(Attack):
             momentum = grad
 
             adv_images = self.update_image_with_grad_translation(adv_images, images, grad)
-            adv_images[1:] = images[1:] #reset adv_images target
+            #adv_images[1:] = images[1:] #reset adv_images target
 
         return adv_images

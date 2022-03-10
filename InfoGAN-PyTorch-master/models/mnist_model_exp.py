@@ -91,7 +91,8 @@ class CHead(nn.Module):
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
 
-        output = F.softmax(x, dim=1)
+        #output = F.softmax(x, dim=1)
+        output = F.log_softmax(x, dim=1)
 
         return output
 
@@ -102,7 +103,8 @@ class SHead(nn.Module):
         self.conv = nn.Conv2d(1024, 10, 1)
 
     def forward(self, x):
-        output = F.softmax(self.conv(x), dim=1)
+        #output = F.softmax(self.conv(x), dim=1)
+        output = F.log_softmax(self.conv(x), dim=1)
 
         return output
 

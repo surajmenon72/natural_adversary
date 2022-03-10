@@ -16,6 +16,8 @@ sys.path.append(os.path.abspath("/Users/surajmenon/Desktop/natural_adversary/adv
 from torchattacks_local import attack
 from torchattacks_local.attacks import opt_attack
 
+from models.mnist_model_exp import Classifier, CHead
+
 from six.moves import urllib
 opener = urllib.request.build_opener()
 opener.addheaders = [('User-agent', 'Mozilla/5.0')]
@@ -133,8 +135,17 @@ def test(test_image_path, model, dataset, batch_size):
     # Initialize the network
     model_path = 0
     if (model == 'le_net'):
-        model = LeNet().to(device)
-        model_path = './models/lenet_mnist_model.pth'
+        # model = LeNet().to(device)
+        # model_path = './models/lenet_mnist_model.pth'
+
+        model = Classifier().to(device)
+        model_extra = CHead().to(device)
+        model_path = './models/adv_pths_model_fringe8_epoch_25_MNIST'
+        state_dict = torch.load(model_path, map_location=torch.device('cpu'))
+
+        model.load_state_dict(state_dict['classifier'])
+        model_extra.load_state_dict(state_dict['netC'])
+
     elif (model == 'alex_net'):
         model = AlexNet().to(device)
         model_path = './models/alexnet_cifar10_model_best.pth.tar'
@@ -144,13 +155,14 @@ def test(test_image_path, model, dataset, batch_size):
         exit(())
 
     # Load the pretrained model
-    if (model_path != 0):
-        model.load_state_dict(torch.load(model_path, map_location=device))
+    # if (model_path != 0):
+    #     model.load_state_dict(torch.load(model_path, map_location=device))
 
     print ('Model Loaded')
 
     # Set the model in evaluation mode. In this case this is for the Dropout layers
     model.eval()
+    model_extra.eval()
 
     # Accuracy counter
     correct = 0
@@ -158,8 +170,9 @@ def test(test_image_path, model, dataset, batch_size):
 
     print ('Starting')
 
-    atk = opt_attack.OPTA(model, train_loader, eps=255/255, alpha=8/255, steps=500)
+    atk = opt_attack.OPTA(model, train_loader, eps=255/255, alpha=8/255, steps=100, model_extra=model_extra)
     #atk.set_mode_targeted_least_likely()
+    atk.set_mode_targeted_random()
 
     # Loop over all examples in test set
     for data, target in test_loader:
