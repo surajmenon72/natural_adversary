@@ -92,7 +92,9 @@ class CHead(nn.Module):
         x = self.fc2(x)
 
         #output = F.softmax(x, dim=1)
-        output = F.log_softmax(x, dim=1)
+        #output = F.log_softmax(x, dim=1)
+        #return logits, as using CE loss fn
+        output = x
 
         return output
 

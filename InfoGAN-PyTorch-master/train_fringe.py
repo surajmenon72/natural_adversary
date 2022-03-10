@@ -96,9 +96,9 @@ netC = CHead().to(device)
 netC.apply(weights_init)
 print(netC)
 
-netS = SHead().to(device)
-netS.apply(weights_init)
-print(netS)
+# netS = SHead().to(device)
+# netS.apply(weights_init)
+# print(netS)
 
 netQ = QHead().to(device)
 netQ.apply(weights_init)
@@ -110,7 +110,6 @@ if (load_model):
     netD.load_state_dict(state_dict['netD'])
     classifier.load_state_dict(state_dict['classifier'])
     netC.load_state_dict(state_dict['netC'])
-    netS.load_state_dict(state_dict['netS'])
     netQ.load_state_dict(state_dict['netQ'])
 
 
@@ -118,15 +117,15 @@ if (load_model):
 criterionD = nn.BCELoss()
 # Loss for classifier
 criterionC = nn.CrossEntropyLoss()
-# Loss for split between identity and controversy
-criterionS = nn.KLDivLoss()
+# Loss for split between identity and controversy, just use CrossEntropy
+#criterionS = nn.KLDivLoss()
 # Loss for discrete latent code.
 criterionQ_dis = nn.CrossEntropyLoss()
 # Loss for continuous latent code.
 criterionQ_con = NormalNLLLoss()
 
 # Adam optimiser is used.
-optimD = optim.Adam([{'params': discriminator.parameters()}, {'params': netD.parameters()}, {'params': classifier.parameters()}, {'params': netC.parameters()}, {'params': netS.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimD = optim.Adam([{'params': discriminator.parameters()}, {'params': netD.parameters()}, {'params': classifier.parameters()}, {'params': netC.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 optimG = optim.Adam([{'params': netG.parameters()}, {'params': netQ.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 
 # Fixed Noise
@@ -245,7 +244,8 @@ for epoch in range(params['num_epochs']):
         #probs_split = netS(output_s)
         probs_split = netC(output_s)
         probs_split = torch.squeeze(probs_split) #TODO: consider if there are extra channels 
-        loss_split = criterionS(probs_split, split_labels)
+        #loss_split = criterionS(probs_split, split_labels)
+        loss_split = criterionC(probs_split, split_labels)
         loss_split = loss_split*beta
         # Calculate gradients
         loss_split.backward()
