@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 import torchvision.utils as vutils
 import numpy as np
@@ -118,7 +119,7 @@ criterionD = nn.BCELoss()
 # Loss for classifier
 criterionC = nn.CrossEntropyLoss()
 # Loss for split between identity and controversy, just use CrossEntropy
-#criterionS = nn.KLDivLoss()
+criterionS = nn.KLDivLoss()
 # Loss for discrete latent code.
 criterionQ_dis = nn.CrossEntropyLoss()
 # Loss for continuous latent code.
@@ -243,9 +244,9 @@ for epoch in range(params['num_epochs']):
         output_s = classifier(fake_data)
         #probs_split = netS(output_s)
         probs_split = netC(output_s)
+        probs_split = F.log_softmax(probs_split, dim=1)
         probs_split = torch.squeeze(probs_split) #TODO: consider if there are extra channels 
-        #loss_split = criterionS(probs_split, split_labels)
-        loss_split = criterionC(probs_split, split_labels)
+        loss_split = criterionS(probs_split, split_labels)
         loss_split = loss_split*beta
         # Calculate gradients
         loss_split.backward()
