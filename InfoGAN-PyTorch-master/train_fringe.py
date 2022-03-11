@@ -182,7 +182,7 @@ for epoch in range(params['num_epochs']):
 
 
         #get labels, targets
-        true_labels, targets = get_targets(true_label_g, params['dis_c_dim'], device)
+        true_labels_hot, targets = get_targets(true_label_g, params['dis_c_dim'], device)
 
         #get noise sample
         noise, idx, c_nums = noise_sample_target(params['num_dis_c'], params['dis_c_dim'], params['num_con_c'], params['num_z'], b_size, device, targets)
@@ -273,8 +273,12 @@ for epoch in range(params['num_epochs']):
         target = torch.LongTensor(idx).to(device)
         # Calculating loss for discrete latent code.
         dis_loss = 0
+
+        #for MNIST, this is always 1
         for j in range(params['num_dis_c']):
             dis_loss += criterionQ_dis(q_logits[:, j*10 : j*10 + 10], target[j])
+
+        align_loss = criterionQ_dis(q_logits, true_label_g)
 
         # Calculating loss for continuous latent code.
         con_loss = 0
@@ -286,7 +290,8 @@ for epoch in range(params['num_epochs']):
         #Loss for Split
         S_loss = loss_split
         # Net loss for generator.
-        G_loss = gen_loss + dis_loss + con_loss
+        #G_loss = gen_loss + dis_loss + con_loss
+        G_loss = gen_loss + dis_loss + con_loss + align_loss
         G_loss = G_loss*alpha
         # Calculate gradients.
         G_loss.backward()
