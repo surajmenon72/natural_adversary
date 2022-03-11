@@ -227,6 +227,17 @@ for epoch in range(params['num_epochs']):
         # Calculate gradients.
         loss_fake.backward()
 
+        #Entropy train Classifier (Adversarial or Cooperative)
+        fake_data = netG(noise)
+        output_e = classifier(fake_data)
+        probs_e = netC(output_e)
+        probs_e = F.softmax(probs_e, dim=1)
+        probs_e = torch.squeeze(probs_e)
+        entropy_e = calc_entropy(probs_e)
+        loss_e = torch.mean(entropy_e, dim=0)
+        #Calculate gradients.
+        loss_e.backward()
+
         # Net Loss for the discriminator and classifier
         D_loss = loss_real + loss_fake
 
@@ -239,17 +250,17 @@ for epoch in range(params['num_epochs']):
         optimG.zero_grad()
 
         #Split loss
-        split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
-        fake_data = netG(noise)
-        output_s = classifier(fake_data)
-        #probs_split = netS(output_s)
-        probs_split = netC(output_s)
-        probs_split = F.log_softmax(probs_split, dim=1)
-        probs_split = torch.squeeze(probs_split) #TODO: consider if there are extra channels 
-        loss_split = criterionS(probs_split, split_labels)
-        loss_split = loss_split*beta
-        # Calculate gradients
-        loss_split.backward()
+        # split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
+        # fake_data = netG(noise)
+        # output_s = classifier(fake_data)
+        # #probs_split = netS(output_s)
+        # probs_split = netC(output_s)
+        # probs_split = F.log_softmax(probs_split, dim=1)
+        # probs_split = torch.squeeze(probs_split) #TODO: consider if there are extra channels 
+        # loss_split = criterionS(probs_split, split_labels)
+        # loss_split = loss_split*beta
+        # # Calculate gradients
+        # loss_split.backward()
         # loss_split = torch.zeros(1)
 
         #If we want classifier to force an output
@@ -261,6 +272,17 @@ for epoch in range(params['num_epochs']):
         # probs_split = torch.squeeze(probs_split)
         # loss_split = criterionC(probs_split, fake_labels)
         # loss_split.backward()
+
+        #Entropy Loss
+        fake_data = netG(noise)
+        output_s = classifier(fake_data)
+        probs_s = netC(output_s)
+        probs_s = F.softmax(probs_s, dim=1)
+        probs_s = torch.squeeze(probs_s)
+        entropy_s = calc_entropy(probs_s)
+        loss_s = -(torch.mean(entropy_s, dim=0))
+        #Calculate gradients
+        loss_s.backward()
 
         # Fake data treated as real.
         fake_data = netG(noise)
@@ -284,7 +306,8 @@ for epoch in range(params['num_epochs']):
         #Net loss for classifier
         C_loss = loss_c
         #Loss for Split
-        S_loss = loss_split
+        #S_loss = loss_split
+        S_loss = loss_s
         # Net loss for generator.
         G_loss = gen_loss + dis_loss + con_loss
         G_loss = G_loss*alpha

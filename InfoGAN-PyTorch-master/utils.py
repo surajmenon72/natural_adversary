@@ -150,3 +150,9 @@ def get_split_labels(true_label, targets, c_nums, num_classes, device):
 
     return labels
 
+def calc_entropy(dist):
+    log_dist = torch.log(dist)
+    mult = dist*log_dist
+    entropy = torch.sum(mult, dim=1)
+    return entropy
+
