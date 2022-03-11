@@ -284,8 +284,7 @@ for epoch in range(params['num_epochs']):
         #Net loss for classifier
         C_loss = loss_c
         #Loss for Split
-        #S_loss = loss_split
-        S_loss = loss_s
+        S_loss = loss_split
         # Net loss for generator.
         G_loss = gen_loss + dis_loss + con_loss
         G_loss = G_loss*alpha
