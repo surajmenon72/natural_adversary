@@ -204,16 +204,16 @@ for epoch in range(params['num_epochs']):
         loss_real.backward()
 
         #Train classifier
-        # output_c = classifier(real_data)
-        # #probs_c = netS(output_c)
-        # probs_c = netC(output_c)
-        # probs_c = torch.squeeze(probs_c)
-        # #true_labels = true_labels.to(torch.float32)
-        # loss_c = criterionC(probs_c, true_label_g)
-        # loss_c = loss_c*beta
-        # #Calculate gradients
-        # loss_c.backward()
-        loss_c = torch.zeros(1)
+        output_c = classifier(real_data)
+        #probs_c = netS(output_c)
+        probs_c = netC(output_c)
+        probs_c = torch.squeeze(probs_c)
+        #true_labels = true_labels.to(torch.float32)
+        loss_c = criterionC(probs_c, true_label_g)
+        loss_c = loss_c*beta
+        #Calculate gradients
+        loss_c.backward()
+        # loss_c = torch.zeros(1)
 
         # Fake data
         label.fill_(fake_label)
