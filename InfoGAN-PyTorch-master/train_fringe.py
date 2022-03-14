@@ -105,6 +105,10 @@ netQ = QHead().to(device)
 netQ.apply(weights_init)
 print(netQ)
 
+netQ2 = QHead().to(device)
+netQ2.apply(weights_init)
+print(netQ2)
+
 if (load_model):
     netG.load_state_dict(state_dict['netG'])
     discriminator.load_state_dict(state_dict['discriminator'])
@@ -127,7 +131,7 @@ criterionQ_con = NormalNLLLoss()
 
 # Adam optimiser is used.
 optimD = optim.Adam([{'params': discriminator.parameters()}, {'params': netD.parameters()}, {'params': classifier.parameters()}, {'params': netC.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
-optimG = optim.Adam([{'params': netG.parameters()}, {'params': netQ.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimG = optim.Adam([{'params': netG.parameters()}, {'params': netQ.parameters()}, {'params': netQ2.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 
 # Fixed Noise
 z = torch.randn(100, params['num_z'], 1, 1, device=device)
@@ -270,15 +274,16 @@ for epoch in range(params['num_epochs']):
         gen_loss = criterionD(probs_fake, label)
 
         q_logits, q_mu, q_var = netQ(output)
+        q_logits2, q_mu2, q_var2 = netQ2(output)
         target = torch.LongTensor(idx).to(device)
         # Calculating loss for discrete latent code.
         dis_loss = 0
 
         #for MNIST, this is always 1
-        for j in range(params['num_dis_c']):
-            dis_loss += criterionQ_dis(q_logits[:, j*10 : j*10 + 10], target[j])
+        # for j in range(params['num_dis_c']):
+        #     dis_loss += criterionQ_dis(q_logits[:, j*10 : j*10 + 10], target[j])
 
-        align_loss = criterionQ_dis(q_logits, true_label_g)
+        align_loss = criterionQ_dis(q_logits2, true_label_g)
 
         # Calculating loss for continuous latent code.
         con_loss = 0
