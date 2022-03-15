@@ -139,6 +139,7 @@ print("Number of features: ", list(feature_extr.parameters())[-1].shape[0])
 
 W = list(netC.fc2.parameters())[0]
 shape_W = W.shape
+shape_W = shape_W.to(device)
 print (W.shape)
 
 _ = extend(netC.fc2)
@@ -279,7 +280,6 @@ for epoch in range(params['num_epochs']):
 
         A, B = W.kfac
         prec0 = 5e-4
-        prec0 = prec0.to(device)
 
         A = A.to(device)
         B = B.to(device)
