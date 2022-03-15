@@ -14,6 +14,10 @@ from dataloader import get_data
 from utils import *
 from config import params
 
+from math import *
+from backpack import extend, backpack, extensions
+from torch.distributions.multivariate_normal import MultivariateNormal
+
 if(params['dataset'] == 'MNIST'):
     from models.mnist_model_exp import Generator, Discriminator, DHead, Classifier, CHead, SHead, QHead
 elif(params['dataset'] == 'SVHN'):
@@ -105,9 +109,6 @@ netQ = QHead().to(device)
 netQ.apply(weights_init)
 print(netQ)
 
-netQ2 = QHead().to(device)
-netQ2.apply(weights_init)
-print(netQ2)
 
 if (load_model):
     netG.load_state_dict(state_dict['netG'])
@@ -131,7 +132,17 @@ criterionQ_con = NormalNLLLoss()
 
 # Adam optimiser is used.
 optimD = optim.Adam([{'params': discriminator.parameters()}, {'params': netD.parameters()}, {'params': classifier.parameters()}, {'params': netC.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
-optimG = optim.Adam([{'params': netG.parameters()}, {'params': netQ.parameters()}, {'params': netQ2.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimG = optim.Adam([{'params': netG.parameters()}, {'params': netQ.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+
+feature_extr = nn.Sequential(*list(netC.children())[:-1])
+print("Number of features: ", list(feature_extr.parameters())[-1].shape[0])
+
+W = list(netC.fc2.parameters())[0]
+shape_W = W.shape
+print (W.shape)
+
+_ = extend(netC.fc2)
+class_loss_func = extend(nn.CrossEntropyLoss(reduction='sum'))
 
 # Fixed Noise
 z = torch.randn(100, params['num_z'], 1, 1, device=device)
@@ -176,8 +187,8 @@ for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
 
     for i, (data, true_label) in enumerate(dataloader, 0):
-        # print ('Batch')
-        # print (i)
+        print ('Batch')
+        print (i)
         # Get batch size
         b_size = data.size(0)
         # Transfer data tensor to GPU/CPU (device)
@@ -243,18 +254,63 @@ for epoch in range(params['num_epochs']):
         optimG.zero_grad()
 
         #Split loss
+        # split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
+        # fake_data = netG(noise)
+        # output_s = classifier(fake_data)
+        # #probs_split = netS(output_s)
+        # probs_split = netC(output_s)
+        # probs_split = F.log_softmax(probs_split, dim=1)
+        # probs_split = torch.squeeze(probs_split) #TODO: consider if there are extra channels 
+        # loss_split = criterionS(probs_split, split_labels)
+        # loss_split = loss_split*beta
+        # # Calculate gradients
+        # loss_split.backward()
+        # loss_split = torch.zeros(1)
+
+        #Split loss w/ LLLA
         split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
         fake_data = netG(noise)
         output_s = classifier(fake_data)
-        #probs_split = netS(output_s)
-        probs_split = netC(output_s)
-        probs_split = F.log_softmax(probs_split, dim=1)
-        probs_split = torch.squeeze(probs_split) #TODO: consider if there are extra channels 
+        probs_s = netC(output_s)
+        loss_first = class_loss_func(probs_s, true_label_g)
+
+        with backpack(extensions.KFAC()):
+            loss_first.backward(retain_graph=True)
+
+        A, B = W.kfac
+        prec0 = 5e-4
+
+        U = torch.inverse(A + sqrt(prec0)*torch.eye(shape_W[0]))
+        V = torch.inverse(B + sqrt(prec0)*torch.eye(shape_W[1]))
+
+        output_s = output_s.squeeze()
+        phi = feature_extr(output_s)
+        # MAP prediction
+        m = phi @ W.T
+    
+        # v is the induced covariance. 
+        # See Appendix B.1 of https://arxiv.org/abs/2002.10118 for the detail of the derivation.
+        v = torch.diag(phi @ V @ phi.T).reshape(-1, 1, 1) * U
+            
+        # The induced distribution over the output (pre-softmax)
+        output_dist = MultivariateNormal(m, v)
+
+        # MC-integral
+        n_sample = 1000
+        probs_split = 0
+
+        for _ in range(n_sample):
+            out_s = output_dist.rsample()
+            probs_split += torch.softmax(out_s, 1)
+
+        probs_split /= n_sample
+
+        optimG.zero_grad()
         loss_split = criterionS(probs_split, split_labels)
         loss_split = loss_split*beta
-        # Calculate gradients
+        #Calculate Gradients
         loss_split.backward()
-        # loss_split = torch.zeros(1)
+        #loss_split = torch.zeros(1)
 
         #If we want classifier to force an output
         # fake_labels = torch.zeros(true_label_g.shape[0], device=device)
@@ -274,7 +330,6 @@ for epoch in range(params['num_epochs']):
         gen_loss = criterionD(probs_fake, label)
 
         q_logits, q_mu, q_var = netQ(output)
-        q_logits2, q_mu2, q_var2 = netQ2(output)
         target = torch.LongTensor(idx).to(device)
         # Calculating loss for discrete latent code.
         dis_loss = 0
@@ -283,7 +338,7 @@ for epoch in range(params['num_epochs']):
         # for j in range(params['num_dis_c']):
         #     dis_loss += criterionQ_dis(q_logits[:, j*10 : j*10 + 10], target[j])
 
-        align_loss = criterionQ_dis(q_logits2, true_label_g)
+        align_loss = criterionQ_dis(q_logits, true_label_g)
 
         # Calculating loss for continuous latent code.
         con_loss = 0
@@ -342,7 +397,6 @@ for epoch in range(params['num_epochs']):
             'classifier' : classifier.state_dict(),
             'netD' : netD.state_dict(),
             'netQ' : netQ.state_dict(),
-            'netQ2' : netQ2.state_dict(),
             'netC' : netC.state_dict(),
             'optimD' : optimD.state_dict(),
             'optimG' : optimG.state_dict(),
@@ -369,7 +423,6 @@ torch.save({
     'classifier' : classifier.state_dict(),
     'netD' : netD.state_dict(),
     'netQ' : netQ.state_dict(),
-    'netQ2' : netQ2.state_dict(),
     'netC' : netC.state_dict(),
     'optimD' : optimD.state_dict(),
     'optimG' : optimG.state_dict(),
