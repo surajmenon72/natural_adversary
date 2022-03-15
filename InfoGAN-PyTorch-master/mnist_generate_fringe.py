@@ -51,9 +51,9 @@ zeros = torch.zeros(100, 1, 1, 1, device=device)
 # for i in range(3, 10):
 # 	c2 = torch.cat((c2, zeros), dim=1)
 
-c_index = 0
+c_index = 10
 c2 = torch.zeros((10, 100, 1, 1), device=device)
-c2[c_index] = c[:, :, 0]
+#c2[c_index] = c[:, :, 0]
 c2 = c2.permute(1, 0, 2, 3)
 
 idx = np.arange(10).repeat(10)
@@ -66,7 +66,6 @@ z = torch.randn(100, 62, 1, 1, device=device)
 
 # To see variation along c2 (Horizontally) and c1 (Vertically)
 noise1 = torch.cat((z, c1, c2), dim=1)
-
 
 # Generate image.
 with torch.no_grad():
