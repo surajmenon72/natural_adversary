@@ -279,6 +279,9 @@ for epoch in range(params['num_epochs']):
 
         A, B = W.kfac
         prec0 = 5e-4
+        
+        A = A.to(device)
+        B = B.to(device)
 
         U = torch.inverse(A + sqrt(prec0)*torch.eye(shape_W[0]))
         V = torch.inverse(B + sqrt(prec0)*torch.eye(shape_W[1]))
