@@ -139,7 +139,6 @@ print("Number of features: ", list(feature_extr.parameters())[-1].shape[0])
 
 W = list(netC.fc2.parameters())[0]
 shape_W = W.shape
-shape_W = shape_W.to(device)
 print (W.shape)
 
 _ = extend(netC.fc2)
@@ -284,8 +283,11 @@ for epoch in range(params['num_epochs']):
         A = A.to(device)
         B = B.to(device)
 
-        U = torch.inverse(A + sqrt(prec0)*torch.eye(shape_W[0]))
-        V = torch.inverse(B + sqrt(prec0)*torch.eye(shape_W[1]))
+        eye1 = torch.eye(shape_W[0], device=device)
+        eye2 = torch.eye(shape_W[1], device=device)
+
+        U = torch.inverse(A + sqrt(prec0)*eye1)
+        V = torch.inverse(B + sqrt(prec0)*eye2)
 
         output_s = output_s.squeeze()
         phi = feature_extr(output_s)
