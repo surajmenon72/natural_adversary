@@ -279,7 +279,8 @@ for epoch in range(params['num_epochs']):
 
         A, B = W.kfac
         prec0 = 5e-4
-        
+        prec0 = prec0.to(device)
+
         A = A.to(device)
         B = B.to(device)
 
