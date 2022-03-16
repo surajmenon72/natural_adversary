@@ -37,7 +37,7 @@ print("Random Seed: ", seed)
 device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
-load_model = True
+load_model = False
 if (load_model):
     load_path = './checkpoint/model_load'
     state_dict = torch.load(load_path, map_location=device)
