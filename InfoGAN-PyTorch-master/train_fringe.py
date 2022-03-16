@@ -37,9 +37,9 @@ print("Random Seed: ", seed)
 device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
-load_model = False
+load_model = True
 if (load_model):
-    load_path = './checkpoints/model_load'
+    load_path = './checkpoint/model_load'
     state_dict = torch.load(load_path, map_location=device)
 
 dataloader = get_data(params['dataset'], params['batch_size'])
@@ -187,8 +187,8 @@ for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
 
     for i, (data, true_label) in enumerate(dataloader, 0):
-        # print ('Batch')
-        # print (i)
+        print ('Batch')
+        print (i)
         # Get batch size
         b_size = data.size(0)
         # Transfer data tensor to GPU/CPU (device)
