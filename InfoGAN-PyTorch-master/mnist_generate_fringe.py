@@ -51,9 +51,9 @@ zeros = torch.zeros(100, 1, 1, 1, device=device)
 # for i in range(3, 10):
 # 	c2 = torch.cat((c2, zeros), dim=1)
 
-c_index = 10
+c_index = 4
 c2 = torch.zeros((10, 100, 1, 1), device=device)
-#c2[c_index] = c[:, :, 0]
+c2[c_index] = c[:, :, 0]
 c2 = c2.permute(1, 0, 2, 3)
 
 idx = np.arange(10).repeat(10)
@@ -71,6 +71,7 @@ noise1 = torch.cat((z, c1, c2), dim=1)
 with torch.no_grad():
     generated_img1 = netG(noise1).detach().cpu()
 
+print (generated_img1.shape)
 # Display the generated image.
 fig = plt.figure(figsize=(10, 10))
 plt.axis("off")
@@ -78,3 +79,9 @@ plt.imshow(np.transpose(vutils.make_grid(generated_img1, nrow=10, padding=2, nor
 save_str = str(c_index) + '.png'
 plt.savefig(save_str)
 plt.show()
+
+# fig_save = np.transpose(generated_img1[49], (1, 2, 0))
+
+# plt.imshow(fig_save)
+# plt.savefig('8-8.png')
+# plt.show()
