@@ -8,6 +8,7 @@ import random
 
 from dataloader import get_data
 
+
 parser = argparse.ArgumentParser()
 parser.add_argument('-load_path', required=True, help='Checkpoint to load path from')
 args = parser.parse_args()

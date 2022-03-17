@@ -80,8 +80,11 @@ save_str = str(c_index) + '.png'
 plt.savefig(save_str)
 plt.show()
 
-# fig_save = np.transpose(generated_img1[49], (1, 2, 0))
+# fig_save = np.transpose(generated_img1[65], (1, 2, 0))
 
 # plt.imshow(fig_save)
-# plt.savefig('8-8.png')
 # plt.show()
+
+# img_to_save = generated_img1[65]
+# print (img_to_save.shape)
+# torch.save(img_to_save, '7-8.pt')
