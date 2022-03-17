@@ -298,6 +298,10 @@ for epoch in range(params['num_epochs']):
         # v is the induced covariance. 
         # See Appendix B.1 of https://arxiv.org/abs/2002.10118 for the detail of the derivation.
         v = torch.diag(phi @ V @ phi.T).reshape(-1, 1, 1) * U
+
+        #arbitrary, found through testing
+        scale_factor = 1000
+        v /= scale_factor
             
         # The induced distribution over the output (pre-softmax)
         output_dist = MultivariateNormal(m, v)
@@ -341,11 +345,12 @@ for epoch in range(params['num_epochs']):
         # Calculating loss for discrete latent code.
         dis_loss = 0
 
-        #for MNIST, this is always 1
-        # for j in range(params['num_dis_c']):
-        #     dis_loss += criterionQ_dis(q_logits[:, j*10 : j*10 + 10], target[j])
+        # for MNIST, this is always 1
+        for j in range(params['num_dis_c']):
+            dis_loss += criterionQ_dis(q_logits[:, j*10 : j*10 + 10], target[j])
 
-        align_loss = criterionQ_dis(q_logits, true_label_g)
+        # align_loss = criterionQ_dis(q_logits, true_label_g)
+        align_loss = 0
 
         # Calculating loss for continuous latent code.
         con_loss = 0
