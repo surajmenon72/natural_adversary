@@ -320,6 +320,7 @@ for epoch in range(params['num_epochs']):
         probs_split = torch.log(probs_split)
 
         optimG.zero_grad()
+        print (split_labels)
         loss_split = criterionS(probs_split, split_labels)
         loss_split = loss_split*beta
         #Calculate Gradients
