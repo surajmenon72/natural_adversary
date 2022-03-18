@@ -214,6 +214,13 @@ for epoch in range(params['num_epochs']):
         output1 = discriminator(real_data)
         probs_real = netD(output1).view(-1)
         label = label.to(torch.float32)
+
+        #check for NaN
+        isnan1 = torch.sum(torch.isnan(probs_real))
+        isnan2 = torch.sum(torch.isnan(label))
+        if ((isnan1 > 0) or (isnan2 > 0)):
+            print ('NAN VALUE in Discriminator Real Loss')
+
         loss_real = criterionD(probs_real, label)
         loss_real = loss_real*alpha
         # Calculate gradients.
@@ -225,6 +232,13 @@ for epoch in range(params['num_epochs']):
         probs_c = netC(output_c)
         probs_c = torch.squeeze(probs_c)
         #true_labels = true_labels.to(torch.float32)
+
+        #check for NaN
+        isnan1 = torch.sum(torch.isnan(probs_c))
+        isnan2 = torch.sum(torch.isnan(true_label_g))
+        if ((isnan1 > 0) or (isnan2 > 0)):
+            print ('NAN VALUE in Classifier Loss')
+
         loss_c = criterionC(probs_c, true_label_g)
         loss_c = loss_c*beta
         #Calculate gradients
@@ -238,6 +252,12 @@ for epoch in range(params['num_epochs']):
         fake_data = netG(noise)
         output2 = discriminator(fake_data.detach())
         probs_fake = netD(output2).view(-1)
+
+        isnan1 = torch.sum(torch.isnan(probs_fake))
+        isnan2 = torch.sum(torch.isnan(label))
+        if ((isnan1 > 0) or (isnan2 > 0)):
+            print ('NAN VALUE in Discriminator Fake Loss')
+
         loss_fake = criterionD(probs_fake, label)
         loss_fake = loss_fake*alpha
         # Calculate gradients.
@@ -273,6 +293,13 @@ for epoch in range(params['num_epochs']):
         fake_data = netG(noise)
         output_s = classifier(fake_data)
         probs_s = netC(output_s)
+
+        #check for NaN
+        isnan1 = torch.sum(torch.isnan(probs_s))
+        isnan2 = torch.sum(torch.isnan(true_label_g))
+        if ((isnan1 > 0) or (isnan2 > 0)):
+            print ('NAN VALUE in Classifier Split Loss')
+
         loss_first = class_loss_func(probs_s, true_label_g)
 
         with backpack(extensions.KFAC()):
@@ -320,7 +347,13 @@ for epoch in range(params['num_epochs']):
         probs_split = torch.log(probs_split)
 
         optimG.zero_grad()
-        print (split_labels)
+
+        #check for NaN
+        isnan1 = torch.sum(torch.isnan(probs_split))
+        isnan2 = torch.sum(torch.isnan(split_labels))
+        if ((isnan1 > 0) or (isnan2 > 0)):
+            print ('NAN VALUE in Split Loss')
+
         loss_split = criterionS(probs_split, split_labels)
         loss_split = loss_split*beta
         #Calculate Gradients
@@ -342,6 +375,12 @@ for epoch in range(params['num_epochs']):
         output = discriminator(fake_data)
         label.fill_(real_label)
         probs_fake = netD(output).view(-1)
+
+        isnan1 = torch.sum(torch.isnan(probs_fake))
+        isnan2 = torch.sum(torch.isnan(label))
+        if ((isnan1 > 0) or (isnan2 > 0)):
+            print ('NAN VALUE in Generator Real Loss')
+
         gen_loss = criterionD(probs_fake, label)
 
         q_logits, q_mu, q_var = netQ(output)
@@ -349,12 +388,23 @@ for epoch in range(params['num_epochs']):
         # Calculating loss for discrete latent code.
         dis_loss = 0
 
+        isnan1 = torch.sum(torch.isnan(q_logits))
+        isnan2 = torch.sum(torch.isnan(target))
+        if ((isnan1 > 0) or (isnan2 > 0)):
+            print ('NAN VALUE in Q Discrete Loss')
+
         # for MNIST, this is always 1
         for j in range(params['num_dis_c']):
             dis_loss += criterionQ_dis(q_logits[:, j*10 : j*10 + 10], target[j])
 
         # align_loss = criterionQ_dis(q_logits, true_label_g)
         align_loss = 0
+
+        isnan1 = torch.sum(torch.isnan(noise))
+        isnan2 = torch.sum(torch.isnan(q_mu))
+        isnan3 = torch.sum(torch.isnan(q_var))
+        if ((isnan1 > 0) or (isnan2 > 0) or (isnan3 > 0)):
+            print ('NAN VALUE in Q Continuous Loss')
 
         # Calculating loss for continuous latent code.
         con_loss = 0

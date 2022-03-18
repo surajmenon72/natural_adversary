@@ -51,9 +51,14 @@ zeros = torch.zeros(100, 1, 1, 1, device=device)
 # for i in range(3, 10):
 # 	c2 = torch.cat((c2, zeros), dim=1)
 
-c_index = 4
+c_index = 5
+c_index2 = 2
+reduction_factor = 1.5
 c2 = torch.zeros((10, 100, 1, 1), device=device)
-c2[c_index] = c[:, :, 0]
+#primary
+c2[c_index] = c[:, :, 0]*reduction_factor
+#secondary
+c2[c_index2] = (c[:, :, 0])/reduction_factor
 c2 = c2.permute(1, 0, 2, 3)
 
 idx = np.arange(10).repeat(10)
