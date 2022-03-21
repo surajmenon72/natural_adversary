@@ -258,7 +258,14 @@ for epoch in range(params['num_epochs']):
         isnan1 = torch.sum(torch.isnan(probs_fake))
         isnan2 = torch.sum(torch.isnan(label))
         if ((isnan1 > 0) or (isnan2 > 0)):
+            isnang = torch.sum(torch.isnan(netG.parameters()))
+            isnand = torch.sum(torch.isnan(discriminator.parameters()))
             print ('NAN VALUE in Discriminator Fake Loss')
+
+            if (isnang > 0):
+                print ('Generator has nan')
+            if (isnand > 0):
+                print ('Discriminator has nan')
 
         loss_fake = criterionD(probs_fake, label)
         loss_fake = loss_fake*alpha
