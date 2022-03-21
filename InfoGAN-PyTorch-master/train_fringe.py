@@ -332,7 +332,7 @@ for epoch in range(params['num_epochs']):
         v = torch.diag(phi @ V @ phi.T).reshape(-1, 1, 1) * U
 
         #arbitrary, found through testing
-        scale_factor = 1000
+        scale_factor = 1
         v /= scale_factor
             
         # The induced distribution over the output (pre-softmax)
