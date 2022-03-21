@@ -278,6 +278,7 @@ for epoch in range(params['num_epochs']):
         netG.train()
         netQ.train()
         optimG.zero_grad()
+        optimD.zero_grad() #for the Hessian for LLLA
 
         #Split loss
         # split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
