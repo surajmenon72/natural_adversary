@@ -335,7 +335,6 @@ for epoch in range(params['num_epochs']):
         scale_factor = 1
         v /= scale_factor
 
-        print (v.shape)
         isnanv = torch.sum(torch.isnan(v))
         if (isnanv > 0):
             print ('NAN value in v')
