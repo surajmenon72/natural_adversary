@@ -117,7 +117,7 @@ V = torch.inverse(B + sqrt(prec0)*eye2)
 # img_tensor.resize_(1, 1, 28, 28)
 # img_tensor = img_tensor.float()
 
-image = torch.load('8-8.pt')
+image = torch.load('3-8.pt')
 image.resize_(1, 1, 28, 28)
 img_tensor = image.float()
 img_label = 8
@@ -139,11 +139,11 @@ for i, (data, true_label) in enumerate(dataloader_test, 0):
 	# See Appendix B.1 of https://arxiv.org/abs/2002.10118 for the detail of the derivation.
 	v = torch.diag(phi @ V @ phi.T).reshape(-1, 1, 1) * U
 
-	scale_factor = 1000
+	scale_factor = 10000
 	v /= scale_factor
 
-	v = torch.eye(10)
-	v /= scale_factor
+	v = torch.bmm(v, torch.transpose(v, 1, 2))
+	v.add(torch.eye(10))
 	    
 	# The induced distribution over the output (pre-softmax)
 	output_dist = MultivariateNormal(m, v)

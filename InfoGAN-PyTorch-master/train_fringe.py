@@ -270,8 +270,8 @@ for epoch in range(params['num_epochs']):
         # Update parameters
         nn.utils.clip_grad_value_(discriminator.parameters(), clip_value)
         nn.utils.clip_grad_value_(netD.parameters(), clip_value)
-        #nn.utils.clip_grad_value_(classifier.parameters(), clip_value)
-        #nn.utils.clip_grad_value_(netC.parameters(), clip_value)
+        nn.utils.clip_grad_value_(classifier.parameters(), clip_value)
+        nn.utils.clip_grad_value_(netC.parameters(), clip_value)
         optimD.step()
 
         # Updating Generator and QHead
@@ -333,8 +333,12 @@ for epoch in range(params['num_epochs']):
         v = torch.diag(phi @ V @ phi.T).reshape(-1, 1, 1) * U
 
         #arbitrary, found through testing
-        scale_factor = 1000
+        scale_factor = 10000
         v /= scale_factor
+
+        #guarantee v is Positive Definite
+        v = torch.bmm(v, torch.transpose(v, 1, 2))
+        v.add(torch.eye(10))
 
         isnanv = torch.sum(torch.isnan(v))
         if (isnanv > 0):
