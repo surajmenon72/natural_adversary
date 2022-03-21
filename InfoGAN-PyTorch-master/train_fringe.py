@@ -270,8 +270,8 @@ for epoch in range(params['num_epochs']):
         # Update parameters
         nn.utils.clip_grad_value_(discriminator.parameters(), clip_value)
         nn.utils.clip_grad_value_(netD.parameters(), clip_value)
-        nn.utils.clip_grad_value_(classifier.parameters(), clip_value)
-        nn.utils.clip_grad_value_(netC.parameters(), clip_value)
+        #nn.utils.clip_grad_value_(classifier.parameters(), clip_value)
+        #nn.utils.clip_grad_value_(netC.parameters(), clip_value)
         optimD.step()
 
         # Updating Generator and QHead
@@ -309,7 +309,7 @@ for epoch in range(params['num_epochs']):
         loss_first = class_loss_func(probs_s, true_label_g)
 
         with backpack(extensions.KFAC()):
-            loss_first.backward(retain_graph=True)
+            loss_first.backward(retain_graph=False)
 
         A, B = W.kfac
         prec0 = 5e-4
@@ -333,7 +333,7 @@ for epoch in range(params['num_epochs']):
         v = torch.diag(phi @ V @ phi.T).reshape(-1, 1, 1) * U
 
         #arbitrary, found through testing
-        scale_factor = 1
+        scale_factor = 1000
         v /= scale_factor
 
         isnanv = torch.sum(torch.isnan(v))
