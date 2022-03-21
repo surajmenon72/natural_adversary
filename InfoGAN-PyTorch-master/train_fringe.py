@@ -309,7 +309,7 @@ for epoch in range(params['num_epochs']):
         loss_first = class_loss_func(probs_s, true_label_g)
 
         with backpack(extensions.KFAC()):
-            loss_first.backward(retain_graph=False)
+            loss_first.backward(retain_graph=True)
 
         A, B = W.kfac
         prec0 = 5e-4
@@ -340,7 +340,6 @@ for epoch in range(params['num_epochs']):
         if (isnanv > 0):
             print ('NAN value in v')
 
-            
         # The induced distribution over the output (pre-softmax)
         output_dist = MultivariateNormal(m, v.detach())
 
