@@ -102,8 +102,8 @@ def noise_sample_target(n_dis_c, dis_c_dim, n_con_c, n_z, batch_size, device, ta
         for i in range(batch_size):
             t = targets[i]
 
-            full_num = torch.rand(1, n_con_c, 1, 1)
-            con_c[i, :, :, :] = full_num
+            # full_num = torch.rand(1, n_con_c, 1, 1)
+            # con_c[i, :, :, :] = full_num
 
             num = torch.rand(1, 1, 1, 1)
             con_c[i, t, :, :] = num
@@ -140,10 +140,10 @@ def get_split_labels(true_label, targets, c_nums, num_classes, device):
     b_size = true_label.shape[0]
     labels = torch.zeros((b_size, num_classes), device=device)
     for i in range(b_size):
-        #c_num = c_nums[i]
-        #c_num /= 2 #divide in half as original is between 0-1, we want between 0-0.5
-        c_num = torch.rand(1)
-        c_num /= 2
+        c_num = c_nums[i]
+        c_num /= 2 #divide in half as original is between 0-1, we want between 0-0.5
+        # c_num = torch.rand(1)
+        # c_num /= 2
 
         tl = true_label[i]
         t = targets[i]

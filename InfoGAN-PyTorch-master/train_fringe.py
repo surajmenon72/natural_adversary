@@ -183,8 +183,8 @@ iters = 0
 #Realness vs. Classification Hyperparams
 alpha = 1
 beta = 1
-clip_value_1 = .1
-clip_value_2 = 2
+clip_value_1 = 1
+clip_value_2 = 1
 
 for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
