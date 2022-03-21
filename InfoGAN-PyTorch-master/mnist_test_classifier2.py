@@ -143,7 +143,8 @@ for i, (data, true_label) in enumerate(dataloader_test, 0):
 	v /= scale_factor
 
 	v = torch.bmm(v, torch.transpose(v, 1, 2))
-	v.add(torch.eye(10))
+	eye3 = torch.eye(v.shape[1], device=device)
+	v.add(eye3)
 	    
 	# The induced distribution over the output (pre-softmax)
 	output_dist = MultivariateNormal(m, v)

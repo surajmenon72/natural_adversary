@@ -338,7 +338,8 @@ for epoch in range(params['num_epochs']):
 
         #guarantee v is Positive Definite
         v = torch.bmm(v, torch.transpose(v, 1, 2))
-        v.add(torch.eye(10))
+        eye3 = torch.eye(v.shape[1], device=device)
+        v.add(eye3)
 
         isnanv = torch.sum(torch.isnan(v))
         if (isnanv > 0):
