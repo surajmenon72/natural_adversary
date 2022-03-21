@@ -183,6 +183,7 @@ iters = 0
 #Realness vs. Classification Hyperparams
 alpha = 1
 beta = 1
+clip_value = 1
 
 for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
@@ -267,6 +268,10 @@ for epoch in range(params['num_epochs']):
         D_loss = loss_real + loss_fake
 
         # Update parameters
+        nn.utils.clip_grad_value_(discriminator.parameters(), clip_value)
+        nn.utils.clip_grad_value_(netD.parameters(), clip_value)
+        nn.utils.clip_grad_value_(classifier.parameters(), clip_value)
+        nn.utils.clip_grad_value_(netC.parameters(), clip_value)
         optimD.step()
 
         # Updating Generator and QHead
@@ -422,6 +427,8 @@ for epoch in range(params['num_epochs']):
         # Calculate gradients.
         G_loss.backward()
         # Update parameters.
+        nn.utils.clip_grad_value_(netG.parameters(), clip_value)
+        nn.utils.clip_grad_value_(netQ.parameters(), clip_value)
         optimG.step()
 
         # Check progress of training.
