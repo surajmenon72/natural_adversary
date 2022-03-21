@@ -342,7 +342,7 @@ for epoch in range(params['num_epochs']):
 
             
         # The induced distribution over the output (pre-softmax)
-        output_dist = MultivariateNormal(m, v)
+        output_dist = MultivariateNormal(m, v.detach())
 
         # MC-integral
         n_sample = 1000
