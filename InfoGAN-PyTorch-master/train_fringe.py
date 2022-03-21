@@ -437,8 +437,8 @@ for epoch in range(params['num_epochs']):
         # Calculate gradients.
         G_loss.backward()
         # Update parameters.
-        nn.utils.clip_grad_value_(netG.parameters(), clip_value)
-        nn.utils.clip_grad_value_(netQ.parameters(), clip_value)
+        #nn.utils.clip_grad_value_(netG.parameters(), clip_value)
+        #nn.utils.clip_grad_value_(netQ.parameters(), clip_value)
         optimG.step()
 
         # Check progress of training.
