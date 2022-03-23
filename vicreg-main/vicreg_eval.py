@@ -301,7 +301,7 @@ def main_worker(args):
         k_means_r = k_means.view((1, k_size, e_size))
         k_means_r = k_means_r.repeat(b_size, 1, 1)
 
-        distances = torch.cdist(model_output_r, k_means_r, p=2)
+        distances = torch.cdist(model_output_r, k_means_r, p=2) #verified this works
         distances = distances.view((b_size, k_size))
 
         sm_probs = torch.nn.functional.softmax(distances, dim=1)
