@@ -87,6 +87,12 @@ def get_arguments():
         metavar="B",
         help="batch training/val size"
         )
+    parser.add_argument(
+        "--train_k_means",
+        default="True",
+        type=str,
+        choices=("True", "False"),
+        help="should reset the k-means")
 
     # Running
     parser.add_argument(
@@ -148,8 +154,8 @@ def main_worker(args):
     assert missing_keys == [] and unexpected_keys == []
 
     batch_size = args.batch_size
-
-    head = nn.Linear(embedding, 1000)
+    embedding_size = 1000
+    head = nn.Linear(embedding, embedding_size)
     head.weight.data.normal_(mean=0.0, std=0.01)
     head.bias.data.zero_()
     model = nn.Sequential(backbone, head)
@@ -170,16 +176,17 @@ def main_worker(args):
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs)
 
     # automatically resume from checkpoint if it exists
-    if (args.exp_dir / "checkpoint.pth").is_file():
-        ckpt = torch.load(args.exp_dir / "checkpoint.pth", map_location="cpu")
-        start_epoch = ckpt["epoch"]
-        best_acc = ckpt["best_acc"]
-        model.load_state_dict(ckpt["model"])
-        optimizer.load_state_dict(ckpt["optimizer"])
-        scheduler.load_state_dict(ckpt["scheduler"])
-    else:
-        start_epoch = 0
-        best_acc = argparse.Namespace(top1=0, top5=0)
+    # if (args.exp_dir / "checkpoint.pth").is_file():
+    #     ckpt = torch.load(args.exp_dir / "checkpoint.pth", map_location="cpu")
+    #     start_epoch = ckpt["epoch"]
+    #     best_acc = ckpt["best_acc"]
+    #     k_means = ckpt["k_means"]
+    #     model.load_state_dict(ckpt["model"])
+    #     optimizer.load_state_dict(ckpt["optimizer"])
+    #     scheduler.load_state_dict(ckpt["scheduler"])
+    # else:
+    #     start_epoch = 0
+    #     best_acc = argparse.Namespace(top1=0, top5=0)
 
     # Data loading code
     # traindir = args.data_dir / "train"
@@ -253,130 +260,77 @@ def main_worker(args):
                                             batch_size=batch_size, 
                                             shuffle=True)
 
-    start_time = time.time()
-    for epoch in range(start_epoch, args.epochs):
-        # train
-        if args.weights == "finetune":
-            model.train()
-        elif args.weights == "freeze":
-            model.eval()
-        else:
-            assert False
-        #train_sampler.set_epoch(epoch)
-        for step, (images, target) in enumerate(
-            train_loader, start=epoch * len(train_loader)
-        ):
-            #output = model(images.cuda(gpu, non_blocking=True))
-            #loss = criterion(output, target.cuda(gpu, non_blocking=True))
+    #Set the k-means
+    model.eval()
+    num_classes = 10
+    k_means = torch.zeros((num_classes, embedding_size))
+    if (args.train_k_means == "True"):
+        batches_to_avg = 100
+        totals = torch.zeros((num_classes, 1))
+        for i, (images, target) in enumerate(train_loader):
+            print ('Batch')
+            print (i)
             output = model(images.to(device))
-            loss = criterion(output, target.to(device))
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            if step % args.print_freq == 0:
-                torch.distributed.reduce(loss.div_(args.world_size), 0)
-                if args.rank == 0:
-                    pg = optimizer.param_groups
-                    lr_head = pg[0]["lr"]
-                    lr_backbone = pg[1]["lr"] if len(pg) == 2 else 0
-                    stats = dict(
-                        epoch=epoch,
-                        step=step,
-                        lr_backbone=lr_backbone,
-                        lr_head=lr_head,
-                        loss=loss.item(),
-                        time=int(time.time() - start_time),
-                    )
-                    print(json.dumps(stats))
-                    print(json.dumps(stats), file=stats_file)
+            for j in range(batch_size):
+                k_means[target[j], :] += output[j, :]
+                totals[target[j], :] += 1
 
-        # evaluate
-        model.eval()
-        if args.rank == 0:
-            top1 = AverageMeter("Acc@1")
-            top5 = AverageMeter("Acc@5")
-            with torch.no_grad():
-                for images, target in val_loader:
-                    output = model(images.cuda(gpu, non_blocking=True))
-                    acc1, acc5 = accuracy(
-                        output, target.cuda(gpu, non_blocking=True), topk=(1, 5)
-                    )
-                    top1.update(acc1[0].item(), images.size(0))
-                    top5.update(acc5[0].item(), images.size(0))
-            best_acc.top1 = max(best_acc.top1, top1.avg)
-            best_acc.top5 = max(best_acc.top5, top5.avg)
-            stats = dict(
-                epoch=epoch,
-                acc1=top1.avg,
-                acc5=top5.avg,
-                best_acc1=best_acc.top1,
-                best_acc5=best_acc.top5,
-            )
-            print(json.dumps(stats))
-            print(json.dumps(stats), file=stats_file)
+            if (i == batches_to_avg):
+                break
 
-        scheduler.step()
-        if args.rank == 0:
-            state = dict(
-                epoch=epoch + 1,
-                best_acc=best_acc,
-                model=model.state_dict(),
-                optimizer=optimizer.state_dict(),
-                scheduler=scheduler.state_dict(),
-            )
-            torch.save(state, args.exp_dir / "checkpoint.pth")
+        k_means = k_means/totals
+        state = dict(
+            k_means=k_means,
+        )
+        torch.save(state, args.exp_dir / "k_means.pth")
+    else:
+        k_dict = torch.load(args.exp_dir / "k_means.pth")
+        k_means = k_dict["k_means"]
+        print ('K_means loaded')
 
+    print (k_means.shape)
 
-def handle_sigusr1(signum, frame):
-    os.system(f'scontrol requeue {os.getenv("SLURM_JOB_ID")}')
-    exit()
+    def calculate_fuzzy_k_means(model_output, k_means):
+        b_size = model_output.shape[0]
+        e_size = model_output.shape[1]
+        k_size = k_means.shape[0]
 
+        model_output_r = model_output.view((b_size, 1, e_size))
+        k_means_r = k_means.view((1, k_size, e_size))
+        k_means_r = k_means_r.repeat(b_size, 1, 1)
 
-def handle_sigterm(signum, frame):
-    pass
+        distances = torch.cdist(model_output_r, k_means_r, p=2)
+        distances = distances.view((b_size, k_size))
 
+        sm_probs = torch.nn.functional.softmax(distances, dim=1)
 
-class AverageMeter(object):
-    """Computes and stores the average and current value"""
+        return sm_probs
 
-    def __init__(self, name, fmt=":f"):
-        self.name = name
-        self.fmt = fmt
-        self.reset()
+    #Now see how well the K-means work
+    total_correct = 0
+    total_samples = 0
+    batches_to_test = 10
+    for i, (images, target) in enumerate(val_loader):
+        print ('Val Batch')
+        print (i)
+        output = model(images.to(device))
+        fuzzy_guesses = calculate_fuzzy_k_means(output, k_means)
 
-    def reset(self):
-        self.val = 0
-        self.avg = 0
-        self.sum = 0
-        self.count = 0
+        guesses = torch.argmax(fuzzy_guesses, dim=1)
+        
+        correct = (guesses == target)
+        num_correct = torch.sum(correct, dim=0)
 
-    def update(self, val, n=1):
-        self.val = val
-        self.sum += val * n
-        self.count += n
-        self.avg = self.sum / self.count
+        total_correct += num_correct
+        total_samples += batch_size
 
-    def __str__(self):
-        fmtstr = "{name} {val" + self.fmt + "} ({avg" + self.fmt + "})"
-        return fmtstr.format(**self.__dict__)
+        if (i == batches_to_test):
+            break
 
+    accuracy = total_correct/total_samples
 
-def accuracy(output, target, topk=(1,)):
-    """Computes the accuracy over the k top predictions for the specified values of k"""
-    with torch.no_grad():
-        maxk = max(topk)
-        batch_size = target.size(0)
-
-        _, pred = output.topk(maxk, 1, True, True)
-        pred = pred.t()
-        correct = pred.eq(target.view(1, -1).expand_as(pred))
-
-        res = []
-        for k in topk:
-            correct_k = correct[:k].reshape(-1).float().sum(0, keepdim=True)
-            res.append(correct_k.mul_(100.0 / batch_size))
-        return res
-
+    print ('Validation Accuracy')
+    print (accuracy)
 
 if __name__ == "__main__":
     main()
