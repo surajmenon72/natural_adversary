@@ -158,8 +158,10 @@ def main_worker(args):
     head = nn.Linear(embedding, embedding_size)
     head.weight.data.normal_(mean=0.0, std=0.01)
     head.bias.data.zero_()
-    model = nn.Sequential(backbone, head)
+    #model = nn.Sequential(backbone, head)
     #model.cuda(gpu)
+    model = backbone
+    embedding_size = embedding
     model.to(device)
 
     if args.weights == "freeze":
