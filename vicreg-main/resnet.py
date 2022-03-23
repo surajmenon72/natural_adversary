@@ -304,6 +304,8 @@ def resnet34(**kwargs):
 def resnet50(**kwargs):
     return ResNet(Bottleneck, [3, 4, 6, 3], **kwargs), 2048
 
+def resnet50_1(**kwaargs):
+    return ResNet(Bottleneck, [3, 4, 6, 3], num_channels=1, **kwargs), 2048
 
 def resnet101(**kwargs):
     return ResNet(Bottleneck, [3, 4, 23, 3], **kwargs), 2048

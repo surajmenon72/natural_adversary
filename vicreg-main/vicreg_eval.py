@@ -80,6 +80,13 @@ def get_arguments():
         choices=("finetune", "freeze"),
         help="finetune or freeze resnet weights",
     )
+    parser.add_argument(
+        "--batch_size",
+        default=128,
+        type=int,
+        metavar="B",
+        help="batch training/val size"
+        )
 
     # Running
     parser.add_argument(
@@ -96,56 +103,65 @@ def get_arguments():
 def main():
     parser = get_arguments()
     args = parser.parse_args()
-    if args.train_percent in {1, 10}:
-        args.train_files = urllib.request.urlopen(
-            f"https://raw.githubusercontent.com/google-research/simclr/master/imagenet_subsets/{args.train_percent}percent.txt"
-        ).readlines()
-    args.ngpus_per_node = torch.cuda.device_count()
-    if "SLURM_JOB_ID" in os.environ:
-        signal.signal(signal.SIGUSR1, handle_sigusr1)
-        signal.signal(signal.SIGTERM, handle_sigterm)
+    # if args.train_percent in {1, 10}:
+    #     args.train_files = urllib.request.urlopen(
+    #         f"https://raw.githubusercontent.com/google-research/simclr/master/imagenet_subsets/{args.train_percent}percent.txt"
+    #     ).readlines()
+    # args.ngpus_per_node = torch.cuda.device_count()
+    # if "SLURM_JOB_ID" in os.environ:
+    #     signal.signal(signal.SIGUSR1, handle_sigusr1)
+    #     signal.signal(signal.SIGTERM, handle_sigterm)
     # single-node distributed training
-    args.rank = 0
-    args.dist_url = f"tcp://localhost:{random.randrange(49152, 65535)}"
-    args.world_size = args.ngpus_per_node
-    torch.multiprocessing.spawn(main_worker, (args,), args.ngpus_per_node)
+    # args.rank = 0
+    # args.dist_url = f"tcp://localhost:{random.randrange(49152, 65535)}"
+    # args.world_size = args.ngpus_per_node
+    #torch.multiprocessing.spawn(main_worker, (args,), args.ngpus_per_node)
+    main_worker(args)
 
 
-def main_worker(gpu, args):
-    args.rank += gpu
-    torch.distributed.init_process_group(
-        backend="nccl",
-        init_method=args.dist_url,
-        world_size=args.world_size,
-        rank=args.rank,
-    )
 
-    if args.rank == 0:
-        args.exp_dir.mkdir(parents=True, exist_ok=True)
-        stats_file = open(args.exp_dir / "stats.txt", "a", buffering=1)
-        print(" ".join(sys.argv))
-        print(" ".join(sys.argv), file=stats_file)
 
-    torch.cuda.set_device(gpu)
-    torch.backends.cudnn.benchmark = True
+#def main_worker(gpu, args):
+def main_worker(args):
+    # args.rank += gpu
+    # torch.distributed.init_process_group(
+    #     backend="nccl",
+    #     init_method=args.dist_url,
+    #     world_size=args.world_size,
+    #     rank=args.rank,
+    # )
+
+    # if args.rank == 0:
+    #     args.exp_dir.mkdir(parents=True, exist_ok=True)
+    #     stats_file = open(args.exp_dir / "stats.txt", "a", buffering=1)
+    #     print(" ".join(sys.argv))
+    #     print(" ".join(sys.argv), file=stats_file)
+
+    # torch.cuda.set_device(gpu)
+    # torch.backends.cudnn.benchmark = True
+
+    device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 
     backbone, embedding = resnet.__dict__[args.arch](zero_init_residual=True)
     state_dict = torch.load(args.pretrained, map_location="cpu")
     missing_keys, unexpected_keys = backbone.load_state_dict(state_dict, strict=False)
     assert missing_keys == [] and unexpected_keys == []
 
+    batch_size = args.batch_size
+
     head = nn.Linear(embedding, 1000)
     head.weight.data.normal_(mean=0.0, std=0.01)
     head.bias.data.zero_()
     model = nn.Sequential(backbone, head)
-    model.cuda(gpu)
+    #model.cuda(gpu)
+    model.to(device)
 
     if args.weights == "freeze":
         backbone.requires_grad_(False)
         head.requires_grad_(True)
-    model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[gpu])
+    #model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[gpu])
 
-    criterion = nn.CrossEntropyLoss().cuda(gpu)
+    criterion = nn.CrossEntropyLoss()
 
     param_groups = [dict(params=head.parameters(), lr=args.lr_head)]
     if args.weights == "finetune":
@@ -166,54 +182,76 @@ def main_worker(gpu, args):
         best_acc = argparse.Namespace(top1=0, top5=0)
 
     # Data loading code
-    traindir = args.data_dir / "train"
-    valdir = args.data_dir / "val"
-    normalize = transforms.Normalize(
-        mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-    )
+    # traindir = args.data_dir / "train"
+    # valdir = args.data_dir / "val"
+    # normalize = transforms.Normalize(
+    #     mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+    # )
 
-    train_dataset = datasets.ImageFolder(
-        traindir,
-        transforms.Compose(
-            [
-                transforms.RandomResizedCrop(224),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                normalize,
-            ]
-        ),
-    )
-    val_dataset = datasets.ImageFolder(
-        valdir,
-        transforms.Compose(
-            [
-                transforms.Resize(256),
-                transforms.CenterCrop(224),
-                transforms.ToTensor(),
-                normalize,
-            ]
-        ),
-    )
+    # train_dataset = datasets.ImageFolder(
+    #     traindir,
+    #     transforms.Compose(
+    #         [
+    #             transforms.RandomResizedCrop(224),
+    #             transforms.RandomHorizontalFlip(),
+    #             transforms.ToTensor(),
+    #             normalize,
+    #         ]
+    #     ),
+    # )
+    # val_dataset = datasets.ImageFolder(
+    #     valdir,
+    #     transforms.Compose(
+    #         [
+    #             transforms.Resize(256),
+    #             transforms.CenterCrop(224),
+    #             transforms.ToTensor(),
+    #             normalize,
+    #         ]
+    #     ),
+    # )
 
-    if args.train_percent in {1, 10}:
-        train_dataset.samples = []
-        for fname in args.train_files:
-            fname = fname.decode().strip()
-            cls = fname.split("_")[0]
-            train_dataset.samples.append(
-                (traindir / cls / fname, train_dataset.class_to_idx[cls])
-            )
 
-    train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
-    kwargs = dict(
-        batch_size=args.batch_size // args.world_size,
-        num_workers=args.workers,
-        pin_memory=True,
-    )
-    train_loader = torch.utils.data.DataLoader(
-        train_dataset, sampler=train_sampler, **kwargs
-    )
-    val_loader = torch.utils.data.DataLoader(val_dataset, **kwargs)
+
+    # if args.train_percent in {1, 10}:
+    #     train_dataset.samples = []
+    #     for fname in args.train_files:
+    #         fname = fname.decode().strip()
+    #         cls = fname.split("_")[0]
+    #         train_dataset.samples.append(
+    #             (traindir / cls / fname, train_dataset.class_to_idx[cls])
+    #         )
+
+    # train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
+    # kwargs = dict(
+    #     batch_size=args.batch_size // args.world_size,
+    #     num_workers=args.workers,
+    #     pin_memory=True,
+    # )
+    # train_loader = torch.utils.data.DataLoader(
+    #     train_dataset, sampler=train_sampler, **kwargs
+    # )
+    # val_loader = torch.utils.data.DataLoader(val_dataset, **kwargs)
+
+    #Load MNIST
+    transform = transforms.Compose([
+        transforms.Resize(28),
+        transforms.CenterCrop(28),
+        transforms.Grayscale(3), #hack to fit resnet to mnist
+        transforms.ToTensor()])
+
+    root = 'data/'
+    train_dataset = datasets.MNIST(root+'mnist/', train='train', 
+                            download=True, transform=transform)
+    val_dataset = datasets.MNIST(root+'mnist/', train=False, 
+                            download=True, transform=transform)
+
+    train_loader = torch.utils.data.DataLoader(train_dataset, 
+                                            batch_size=batch_size, 
+                                            shuffle=True)
+    val_loader = torch.utils.data.DataLoader(val_dataset, 
+                                            batch_size=batch_size, 
+                                            shuffle=True)
 
     start_time = time.time()
     for epoch in range(start_epoch, args.epochs):
@@ -224,12 +262,14 @@ def main_worker(gpu, args):
             model.eval()
         else:
             assert False
-        train_sampler.set_epoch(epoch)
+        #train_sampler.set_epoch(epoch)
         for step, (images, target) in enumerate(
             train_loader, start=epoch * len(train_loader)
         ):
-            output = model(images.cuda(gpu, non_blocking=True))
-            loss = criterion(output, target.cuda(gpu, non_blocking=True))
+            #output = model(images.cuda(gpu, non_blocking=True))
+            #loss = criterion(output, target.cuda(gpu, non_blocking=True))
+            output = model(images.to(device))
+            loss = criterion(output, target.to(device))
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
