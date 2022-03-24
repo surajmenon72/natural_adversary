@@ -176,7 +176,6 @@ def main(args):
         print (epoch)
         epoch_start_time = time.time()
         scheduler.step()
-
         for step, ((x, y), _) in enumerate(loader):
             # x = x.cuda(gpu, non_blocking=True)
             # y = y.cuda(gpu, non_blocking=True)
@@ -196,8 +195,9 @@ def main(args):
 
             loss = model.forward(x, y)
 
-            print ('Training Loss')
-            print (loss)
+            if ((step % 50) == 0):
+                print ('Current Loss')
+                print (loss)
             loss.backward()
             optimizer.step()
 
