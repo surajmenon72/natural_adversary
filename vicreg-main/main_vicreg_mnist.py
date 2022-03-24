@@ -169,12 +169,14 @@ def main(args):
 
     #start_time = last_logging = time.time()
     start_time = time.time()
-    scaler = torch.cuda.amp.GradScaler()
+    #scaler = torch.cuda.amp.GradScaler()
     for epoch in range(start_epoch, args.epochs):
         #sampler.set_epoch(epoch)
         print ('Epoch')
         print (epoch)
         epoch_start_time = time.time()
+        scheduler.step()
+
         for step, ((x, y), _) in enumerate(loader):
             # x = x.cuda(gpu, non_blocking=True)
             # y = y.cuda(gpu, non_blocking=True)
@@ -183,17 +185,21 @@ def main(args):
             y = y.to(device)
 
             #lr = adjust_learning_rate(args, optimizer, loader, step)
-            scheduler.step()
 
             optimizer.zero_grad()
-            with torch.cuda.amp.autocast():
-                loss = model.forward(x, y)
+            # with torch.cuda.amp.autocast():
+            #     loss = model.forward(x, y)
+
+            # scaler.scale(loss).backward()
+            # scaler.step(optimizer)
+            # scaler.update()
+
+            loss = model.forward(x, y)
 
             print ('Training Loss')
             print (loss)
-            scaler.scale(loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
+            loss.backward()
+            optimizer.step()
 
             # if args.rank == 0 and current_time - last_logging > args.log_freq_time:
             #     stats = dict(
