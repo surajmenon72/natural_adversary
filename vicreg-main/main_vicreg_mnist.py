@@ -186,6 +186,9 @@ def main(args):
             optimizer.zero_grad()
             with torch.cuda.amp.autocast():
                 loss = model.forward(x, y)
+
+            print ('Training Loss')
+            print (loss)
             scaler.scale(loss).backward()
             scaler.step(optimizer)
             scaler.update()
