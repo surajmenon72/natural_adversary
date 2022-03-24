@@ -18,6 +18,7 @@ import torch.nn.functional as F
 from torch import nn, optim
 import torch.distributed as dist
 import torchvision.datasets as datasets
+from torchvision import transforms
 
 import augmentations as aug
 from distributed import init_distributed_mode
@@ -117,6 +118,8 @@ def main(args):
     args.rank = 0 #hack for now
 
     device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
+    print ('Using device')
+    print (device)
 
     transform = transforms.Compose([
         transforms.Resize(28),
