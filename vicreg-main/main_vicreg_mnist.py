@@ -150,7 +150,7 @@ def main(args):
     #     lars_adaptation_filter=exclude_bias_and_norm,
     # )
 
-    optimizer = optim.SGD(model.parameters(), lr=args.base_lr, momentum=0.9, weight_decay=args.weight_decay)
+    optimizer = optim.SGD(model.parameters(), lr=args.base_lr, momentum=0.9, weight_decay=args.wd)
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[30,80], gamma=0.1)
 
     if (args.exp_dir / "model.pth").is_file():
