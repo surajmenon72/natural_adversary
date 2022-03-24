@@ -25,6 +25,9 @@ from distributed import init_distributed_mode
 
 import resnet
 
+import numpy as np
+import matplotlib.pyplot as plt
+
 
 def get_arguments():
     parser = argparse.ArgumentParser(description="Pretrain a resnet model with VICReg", add_help=False)
@@ -95,6 +98,7 @@ class Encoder(nn.Module):
         x = F.leaky_relu(self.conv1(x), 0.1, inplace=True)
         x = F.leaky_relu(self.bn2(self.conv2(x)), 0.1, inplace=True)
         x = F.leaky_relu(self.bn3(self.conv3(x)), 0.1, inplace=True)
+        x = x.view(-1, 1024)
         x = F.relu(self.fc1(x))
 
         return x
@@ -111,7 +115,7 @@ def main(args):
     #     print(" ".join(sys.argv))
     #     print(" ".join(sys.argv), file=stats_file)
 
-    # transforms = aug.TrainTransform()
+    transforms = aug.TrainTransformMNIST()
 
     # dataset = datasets.ImageFolder(args.data_dir / "train", transforms)
 
@@ -121,14 +125,14 @@ def main(args):
     print ('Using device')
     print (device)
 
-    transform = transforms.Compose([
-        transforms.Resize(28),
-        transforms.CenterCrop(28),
-        transforms.ToTensor()])
+    # transform = transforms.Compose([
+    #     transforms.Resize(28),
+    #     transforms.CenterCrop(28),
+    #     transforms.ToTensor()])
 
     root = 'data/'
     dataset = datasets.MNIST(root+'mnist/', train='train', 
-                            download=True, transform=transform)
+                            download=True, transform=transforms)
 
     #sampler = torch.utils.data.distributed.DistributedSampler(dataset, shuffle=True)
     assert args.batch_size % args.world_size == 0
@@ -167,9 +171,13 @@ def main(args):
     scaler = torch.cuda.amp.GradScaler()
     for epoch in range(start_epoch, args.epochs):
         #sampler.set_epoch(epoch)
-        for step, ((x, y), _) in enumerate(loader, start=epoch * len(loader)):
+        for step, ((x, y), _) in enumerate(loader):
             # x = x.cuda(gpu, non_blocking=True)
             # y = y.cuda(gpu, non_blocking=True)
+
+            x = x.detach().cpu()
+            y = y.detach().cpu()
+
             x = x.to(device)
             y = y.to(device)
 
@@ -242,8 +250,9 @@ class VICReg(nn.Module):
 
         repr_loss = F.mse_loss(x, y)
 
-        x = torch.cat(FullGatherLayer.apply(x), dim=0)
-        y = torch.cat(FullGatherLayer.apply(y), dim=0)
+        #x = torch.cat(FullGatherLayer.apply(x), dim=0)
+        #y = torch.cat(FullGatherLayer.apply(y), dim=0)
+
         x = x - x.mean(dim=0)
         y = y - y.mean(dim=0)
 
