@@ -171,6 +171,8 @@ def main(args):
     scaler = torch.cuda.amp.GradScaler()
     for epoch in range(start_epoch, args.epochs):
         #sampler.set_epoch(epoch)
+        print ('Epoch')
+        print (epoch)
         for step, ((x, y), _) in enumerate(loader):
             # x = x.cuda(gpu, non_blocking=True)
             # y = y.cuda(gpu, non_blocking=True)
@@ -195,7 +197,7 @@ def main(args):
                     step=step,
                     loss=loss.item(),
                     time=int(current_time - start_time),
-                    lr=lr,
+                    lr=args.base_lr,
                 )
                 print(json.dumps(stats))
                 print(json.dumps(stats), file=stats_file)
