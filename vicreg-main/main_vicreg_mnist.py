@@ -41,7 +41,7 @@ def get_arguments():
     # Model
     parser.add_argument("--arch", type=str, default="resnet50",
                         help='Architecture of the backbone encoder network')
-    parser.add_argument("--mlp", default="8192-8192-8192",
+    parser.add_argument("--mlp", default="1024-1024-1024",
                         help='Size and number of layers of the MLP expander head')
 
     # Optim
@@ -207,9 +207,11 @@ class VICReg(nn.Module):
         super().__init__()
         self.args = args
         self.num_features = int(args.mlp.split("-")[-1])
-        self.backbone, self.embedding = resnet.__dict__[args.arch](
-            zero_init_residual=True
-        )
+        # self.backbone, self.embedding = resnet.__dict__[args.arch](
+        #     zero_init_residual=True
+        # )
+        self.backbone = Encoder()
+        self.embedding = 100
         self.projector = Projector(args, self.embedding)
 
     def forward(self, x, y):
