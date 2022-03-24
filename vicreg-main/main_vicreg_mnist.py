@@ -175,9 +175,6 @@ def main(args):
             # x = x.cuda(gpu, non_blocking=True)
             # y = y.cuda(gpu, non_blocking=True)
 
-            x = x.detach().cpu()
-            y = y.detach().cpu()
-
             x = x.to(device)
             y = y.to(device)
 
