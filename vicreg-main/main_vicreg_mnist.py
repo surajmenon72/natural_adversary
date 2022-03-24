@@ -167,12 +167,14 @@ def main(args):
     else:
         start_epoch = 0
 
-    start_time = last_logging = time.time()
+    #start_time = last_logging = time.time()
+    start_time = time.time()
     scaler = torch.cuda.amp.GradScaler()
     for epoch in range(start_epoch, args.epochs):
         #sampler.set_epoch(epoch)
         print ('Epoch')
         print (epoch)
+        epoch_start_time = time.time()
         for step, ((x, y), _) in enumerate(loader):
             # x = x.cuda(gpu, non_blocking=True)
             # y = y.cuda(gpu, non_blocking=True)
@@ -193,7 +195,6 @@ def main(args):
             scaler.step(optimizer)
             scaler.update()
 
-            current_time = time.time()
             # if args.rank == 0 and current_time - last_logging > args.log_freq_time:
             #     stats = dict(
             #         epoch=epoch,
@@ -212,9 +213,12 @@ def main(args):
                 optimizer=optimizer.state_dict(),
             )
             torch.save(state, args.exp_dir / "model.pth")
+
+        current_time = time.time()
+        epoch_time = current_time - epoch_start_time
+        print ("Time taken for Epoch %d: %.2fs" %(epoch + 1, epoch_time))
     if args.rank == 0:
         torch.save(model.module.backbone.state_dict(), args.exp_dir / "resnet50.pth")
-
 
 def adjust_learning_rate(args, optimizer, loader, step):
     max_steps = args.epochs * len(loader)
