@@ -29,7 +29,7 @@ def get_arguments():
     parser = argparse.ArgumentParser(description="Pretrain a resnet model with VICReg", add_help=False)
 
     # Data
-    parser.add_argument("--data-dir", type=Path, default="/path/to/imagenet", required=True,
+    parser.add_argument("--data-dir", type=Path, default="/path/to/imagenet", required=False,
                         help='Path to the image net dataset')
 
     # Checkpoints
@@ -47,7 +47,7 @@ def get_arguments():
     # Optim
     parser.add_argument("--epochs", type=int, default=100,
                         help='Number of epochs')
-    parser.add_argument("--batch-size", type=int, default=2048,
+    parser.add_argument("--batch-size", type=int, default=128,
                         help='Effective batch size (per worker batch size is [batch-size] / world-size)')
     parser.add_argument("--base-lr", type=float, default=0.2,
                         help='Base learning rate, effective learning after warmup is [base-lr] * [batch-size] / 256')
@@ -63,7 +63,7 @@ def get_arguments():
                         help='Covariance regularization loss coefficient')
 
     # Running
-    parser.add_argument("--num-workers", type=int, default=10)
+    parser.add_argument("--num-workers", type=int, default=1)
     parser.add_argument('--device', default='cuda',
                         help='device to use for training / testing')
 
@@ -99,41 +99,56 @@ class Encoder(nn.Module):
         return x
 
 def main(args):
-    torch.backends.cudnn.benchmark = True
-    init_distributed_mode(args)
-    print(args)
-    gpu = torch.device(args.device)
+    # torch.backends.cudnn.benchmark = True
+    # init_distributed_mode(args)
+    # print(args)
+    # gpu = torch.device(args.device)
 
-    if args.rank == 0:
-        args.exp_dir.mkdir(parents=True, exist_ok=True)
-        stats_file = open(args.exp_dir / "stats.txt", "a", buffering=1)
-        print(" ".join(sys.argv))
-        print(" ".join(sys.argv), file=stats_file)
+    # if args.rank == 0:
+    #     args.exp_dir.mkdir(parents=True, exist_ok=True)
+    #     stats_file = open(args.exp_dir / "stats.txt", "a", buffering=1)
+    #     print(" ".join(sys.argv))
+    #     print(" ".join(sys.argv), file=stats_file)
 
-    transforms = aug.TrainTransform()
+    # transforms = aug.TrainTransform()
 
-    dataset = datasets.ImageFolder(args.data_dir / "train", transforms)
-    sampler = torch.utils.data.distributed.DistributedSampler(dataset, shuffle=True)
+    # dataset = datasets.ImageFolder(args.data_dir / "train", transforms)
+
+    args.rank = 0 #hack for now
+
+    device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
+
+    transform = transforms.Compose([
+        transforms.Resize(28),
+        transforms.CenterCrop(28),
+        transforms.ToTensor()])
+
+    root = 'data/'
+    dataset = datasets.MNIST(root+'mnist/', train='train', 
+                            download=True, transform=transform)
+
+    #sampler = torch.utils.data.distributed.DistributedSampler(dataset, shuffle=True)
     assert args.batch_size % args.world_size == 0
     per_device_batch_size = args.batch_size // args.world_size
     loader = torch.utils.data.DataLoader(
         dataset,
-        batch_size=per_device_batch_size,
-        num_workers=args.num_workers,
-        pin_memory=True,
-        sampler=sampler,
+        batch_size=args.batch_size,
+        shuffle=True
     )
 
-    model = VICReg(args).cuda(gpu)
-    model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
-    model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[gpu])
-    optimizer = LARS(
-        model.parameters(),
-        lr=0,
-        weight_decay=args.wd,
-        weight_decay_filter=exclude_bias_and_norm,
-        lars_adaptation_filter=exclude_bias_and_norm,
-    )
+    model = VICReg(args).to(device)
+    # model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
+    # model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[gpu])
+    # optimizer = LARS(
+    #     model.parameters(),
+    #     lr=0,
+    #     weight_decay=args.wd,
+    #     weight_decay_filter=exclude_bias_and_norm,
+    #     lars_adaptation_filter=exclude_bias_and_norm,
+    # )
+
+    optimizer = optim.SGD(param_groups, lr=args.base_lr, momentum=0.9, weight_decay=args.weight_decay)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[30,80], gamma=0.1)
 
     if (args.exp_dir / "model.pth").is_file():
         if args.rank == 0:
@@ -148,12 +163,15 @@ def main(args):
     start_time = last_logging = time.time()
     scaler = torch.cuda.amp.GradScaler()
     for epoch in range(start_epoch, args.epochs):
-        sampler.set_epoch(epoch)
+        #sampler.set_epoch(epoch)
         for step, ((x, y), _) in enumerate(loader, start=epoch * len(loader)):
-            x = x.cuda(gpu, non_blocking=True)
-            y = y.cuda(gpu, non_blocking=True)
+            # x = x.cuda(gpu, non_blocking=True)
+            # y = y.cuda(gpu, non_blocking=True)
+            x = x.to(device)
+            y = y.to(device)
 
-            lr = adjust_learning_rate(args, optimizer, loader, step)
+            #lr = adjust_learning_rate(args, optimizer, loader, step)
+            scheduler.step()
 
             optimizer.zero_grad()
             with torch.cuda.amp.autocast():
@@ -199,6 +217,7 @@ def adjust_learning_rate(args, optimizer, loader, step):
         lr = base_lr * q + end_lr * (1 - q)
     for param_group in optimizer.param_groups:
         param_group["lr"] = lr
+
     return lr
 
 
