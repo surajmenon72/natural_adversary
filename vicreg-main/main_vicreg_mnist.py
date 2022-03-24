@@ -191,17 +191,17 @@ def main(args):
             scaler.update()
 
             current_time = time.time()
-            if args.rank == 0 and current_time - last_logging > args.log_freq_time:
-                stats = dict(
-                    epoch=epoch,
-                    step=step,
-                    loss=loss.item(),
-                    time=int(current_time - start_time),
-                    lr=args.base_lr,
-                )
-                print(json.dumps(stats))
-                print(json.dumps(stats), file=stats_file)
-                last_logging = current_time
+            # if args.rank == 0 and current_time - last_logging > args.log_freq_time:
+            #     stats = dict(
+            #         epoch=epoch,
+            #         step=step,
+            #         loss=loss.item(),
+            #         time=int(current_time - start_time),
+            #         lr=args.base_lr,
+            #     )
+            #     print(json.dumps(stats))
+            #     print(json.dumps(stats), file=stats_file)
+            #     last_logging = current_time
         if args.rank == 0:
             state = dict(
                 epoch=epoch + 1,
