@@ -13,6 +13,7 @@ from torchvision import datasets, transforms
 import torch
 
 import resnet
+import main_vicreg_mnist 
 
 def get_arguments():
     parser = argparse.ArgumentParser(
@@ -148,7 +149,9 @@ def main_worker(args):
 
     device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 
-    backbone, embedding = resnet.__dict__[args.arch](zero_init_residual=True)
+    #backbone, embedding = resnet.__dict__[args.arch](zero_init_residual=True)
+    backbone = main_vicreg_mnist.Encoder()
+    embedding = 100 
     state_dict = torch.load(args.pretrained, map_location="cpu")
     missing_keys, unexpected_keys = backbone.load_state_dict(state_dict, strict=False)
     assert missing_keys == [] and unexpected_keys == []
@@ -246,7 +249,7 @@ def main_worker(args):
     transform = transforms.Compose([
         transforms.Resize(28),
         transforms.CenterCrop(28),
-        transforms.Grayscale(3), #hack to fit resnet to mnist
+        #transforms.Grayscale(3), #hack to fit resnet to mnist
         transforms.ToTensor()])
 
     root = 'data/'
@@ -319,6 +322,7 @@ def main_worker(args):
         fuzzy_guesses = calculate_fuzzy_k_means(output, k_means)
 
         guesses = torch.argmax(fuzzy_guesses, dim=1)
+        print (guesses)
         
         correct = (guesses == target)
         num_correct = torch.sum(correct, dim=0)

@@ -144,6 +144,13 @@ def main(args):
     )
 
     model = VICReg(args).to(device)
+
+    #to extract backbone if necessary
+    # ckpt = torch.load(args.exp_dir / "model.pth", map_location="cpu")
+    # model.load_state_dict(ckpt["model"])
+    # torch.save(model.backbone.state_dict(), args.exp_dir / "resnet50.pth")
+    # exit()
+
     # model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
     # model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[gpu])
     # optimizer = LARS(
@@ -224,7 +231,8 @@ def main(args):
         epoch_time = current_time - epoch_start_time
         print ("Time taken for Epoch %d: %.2fs" %(epoch + 1, epoch_time))
     if args.rank == 0:
-        torch.save(model.module.backbone.state_dict(), args.exp_dir / "resnet50.pth")
+        torch.save(model.backbone.state_dict(), args.exp_dir / "resnet50.pth")
+        #torch.save(model.module.backbone.state_dict(), args.exp_dir / "resnet50.pth")
 
 def adjust_learning_rate(args, optimizer, loader, step):
     max_steps = args.epochs * len(loader)
