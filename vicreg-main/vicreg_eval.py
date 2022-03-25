@@ -90,10 +90,16 @@ def get_arguments():
         )
     parser.add_argument(
         "--train_k_means",
-        default="True",
+        default="False",
         type=str,
         choices=("True", "False"),
         help="should reset the k-means")
+    parser.add_argument(
+        "--train_knn",
+        default="False",
+        type=str,
+        choices=("True", "False"),
+        help="should train the knn"),
 
     # Running
     parser.add_argument(
@@ -151,7 +157,7 @@ def main_worker(args):
 
     #backbone, embedding = resnet.__dict__[args.arch](zero_init_residual=True)
     backbone = main_vicreg_mnist.Encoder()
-    embedding = 100 
+    embedding = 256 
     state_dict = torch.load(args.pretrained, map_location="cpu")
     missing_keys, unexpected_keys = backbone.load_state_dict(state_dict, strict=False)
     assert missing_keys == [] and unexpected_keys == []
@@ -268,9 +274,10 @@ def main_worker(args):
     #Set the k-means
     model.eval()
     num_classes = 10
+    batches_to_avg = 100
     k_means = torch.zeros((num_classes, embedding_size))
     if (args.train_k_means == "True"):
-        batches_to_avg = 100
+        print ('Training K-Means')
         totals = torch.zeros((num_classes, 1))
         for i, (images, target) in enumerate(train_loader):
             print ('Batch')
@@ -280,7 +287,7 @@ def main_worker(args):
                 k_means[target[j], :] += output[j, :]
                 totals[target[j], :] += 1
 
-            if (i == batches_to_avg):
+            if (i == (batches_to_avg-1)):
                 break
 
         k_means = k_means/totals
@@ -294,6 +301,38 @@ def main_worker(args):
         print ('K_means loaded')
 
     print (k_means.shape)
+
+    #Set knn,works only if targets are about evenly distributed in training set
+    batches_for_knn = 100
+    knn_e = torch.zeros((batches_for_knn*batch_size, embedding_size))
+    knn_t = torch.zeros(batches_for_knn*batch_size)
+
+    if (args.train_knn == "True"):
+        print ('Training KNN')
+        for i, (images, target) in enumerate(train_loader):
+            print ('Batch')
+            print (i)
+            output = model(images.to(device))
+
+            start_index = i*batch_size
+            end_index = (i+1)*batch_size
+
+            knn_e[start_index:end_index, :] = output[:, :]
+            knn_t[start_index:end_index] = target[:]
+
+            if (i == (batches_for_knn-1)):
+                break
+
+        state = dict(
+            knn_e = knn_e,
+            knn_t = knn_t,
+        )
+        torch.save(state, args.exp_dir / "knn.pth")
+    else:
+        knn_dict = torch.load(args.exp_dir / "knn.pth")
+        knn_e = knn_dict["knn_e"]
+        knn_t = knn_dict["knn_t"]
+        print ('KNN loaded')
 
     def calculate_fuzzy_k_means(model_output, k_means):
         b_size = model_output.shape[0]
@@ -311,18 +350,72 @@ def main_worker(args):
 
         return sm_probs
 
-    #Now see how well the K-means work
+    #Validation tasks
+
+    # #Now see how well the K-means work
+    # batches_to_test = 10
+    # total_correct = 0
+    # total_samples = 0
+    # print ('Validating on K-Means')
+    # for i, (images, target) in enumerate(val_loader):
+    #     print ('Val Batch')
+    #     print (i)
+    #     output = model(images.to(device))
+    #     fuzzy_guesses = calculate_fuzzy_k_means(output, k_means)
+
+    #     guesses = torch.argmax(fuzzy_guesses, dim=1)
+    #     print (guesses)
+        
+    #     correct = (guesses == target)
+    #     num_correct = torch.sum(correct, dim=0)
+
+    #     total_correct += num_correct
+    #     total_samples += batch_size
+
+    #     if (i == batches_to_test):
+    #         break
+
+    # accuracy = total_correct/total_samples
+
+    # print ('Validation Accuracy w/ K-Means')
+    # print (accuracy)
+
+    def calculate_fuzzy_knn(model_output, knn_e, knn_t, k=50, num_classes=10):
+        b_size = model_output.shape[0]
+        e_size = model_output.shape[1]
+        knn_size = knn_e.shape[0]
+
+        model_output_r = model_output.view((b_size, 1, e_size))
+        knn_e_r = knn_e.view((1, knn_size, e_size))
+        knn_e_r = knn_e_r.repeat(b_size, 1, 1)
+
+        distances = torch.cdist(model_output_r, knn_e_r, p=2) #verified this works
+        distances = distances.view((b_size, knn_size))
+
+        knn_guesses = torch.zeros((b_size, num_classes))
+        for i in range(b_size):
+            d = distances[i, :]
+            d_s, d_s_i = torch.sort(d)
+            max_val = torch.max(d_s)
+            for j in range(k):
+                knn_guesses[i, int(knn_t[d_s_i[j]])] += max_val - d_s[j]
+
+        sm_knn = torch.nn.functional.softmax(knn_guesses, dim=1)
+
+        return sm_knn
+
+    #Now lets validate w/ KNN
+    batches_to_test = 10
     total_correct = 0
     total_samples = 0
-    batches_to_test = 10
+    print ('Validating w/ KNN')
     for i, (images, target) in enumerate(val_loader):
         print ('Val Batch')
         print (i)
         output = model(images.to(device))
-        fuzzy_guesses = calculate_fuzzy_k_means(output, k_means)
+        fuzzy_guesses = calculate_fuzzy_knn(output, knn_e, knn_t)
 
         guesses = torch.argmax(fuzzy_guesses, dim=1)
-        print (guesses)
         
         correct = (guesses == target)
         num_correct = torch.sum(correct, dim=0)
@@ -335,7 +428,7 @@ def main_worker(args):
 
     accuracy = total_correct/total_samples
 
-    print ('Validation Accuracy')
+    print ('Validation Accuracy w/ KNN')
     print (accuracy)
 
 if __name__ == "__main__":
