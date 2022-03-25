@@ -400,6 +400,8 @@ def main_worker(args):
             for j in range(k):
                 knn_guesses[i, int(knn_t[d_s_i[j]])] += max_val - d_s[j]
 
+            knn_guesses[i, :] /= torch.max(knn_guesses[i, :])
+
         sm_knn = torch.nn.functional.softmax(knn_guesses, dim=1)
 
         return sm_knn
