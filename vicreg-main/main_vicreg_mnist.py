@@ -45,7 +45,7 @@ def get_arguments():
     # Model
     parser.add_argument("--arch", type=str, default="resnet50",
                         help='Architecture of the backbone encoder network')
-    parser.add_argument("--mlp", default="1024-1024-1024",
+    parser.add_argument("--mlp", default="2048-2048-2048",
                         help='Size and number of layers of the MLP expander head')
 
     # Optim
@@ -92,7 +92,7 @@ class Encoder(nn.Module):
         self.conv3 = nn.Conv2d(128, 1024, 7, bias=False)
         self.bn3 = nn.BatchNorm2d(1024)
 
-        self.fc1 = nn.Linear(1024, 100)
+        self.fc1 = nn.Linear(1024, 256)
 
     def forward(self, x):
         x = F.leaky_relu(self.conv1(x), 0.1, inplace=True)
@@ -261,7 +261,7 @@ class VICReg(nn.Module):
         #     zero_init_residual=True
         # )
         self.backbone = Encoder()
-        self.embedding = 100
+        self.embedding = 256
         self.projector = Projector(args, self.embedding)
 
     def forward(self, x, y):
