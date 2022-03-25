@@ -182,7 +182,7 @@ def main(args):
         print ('Epoch')
         print (epoch)
         epoch_start_time = time.time()
-        scheduler.step()
+        #scheduler.step()
         for step, ((x, y), _) in enumerate(loader):
             # x = x.cuda(gpu, non_blocking=True)
             # y = y.cuda(gpu, non_blocking=True)
