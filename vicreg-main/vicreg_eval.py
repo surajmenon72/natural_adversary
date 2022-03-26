@@ -155,9 +155,9 @@ def main_worker(args):
 
     device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 
-    #backbone, embedding = resnet.__dict__[args.arch](zero_init_residual=True)
-    backbone = main_vicreg_mnist.Encoder()
-    embedding = 256 
+    backbone, embedding = resnet.__dict__[args.arch](zero_init_residual=True)
+    # backbone = main_vicreg_mnist.Encoder()
+    # embedding = 256 
     state_dict = torch.load(args.pretrained, map_location="cpu")
     missing_keys, unexpected_keys = backbone.load_state_dict(state_dict, strict=False)
     assert missing_keys == [] and unexpected_keys == []
@@ -255,7 +255,7 @@ def main_worker(args):
     transform = transforms.Compose([
         transforms.Resize(28),
         transforms.CenterCrop(28),
-        #transforms.Grayscale(3), #hack to fit resnet to mnist
+        transforms.Grayscale(3), #hack to fit resnet to mnist
         transforms.ToTensor()])
 
     root = 'data/'
