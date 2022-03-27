@@ -303,7 +303,7 @@ def main_worker(args):
     print (k_means.shape)
 
     #Set knn,works only if targets are about evenly distributed in training set
-    batches_for_knn = 100
+    batches_for_knn = 300
     knn_e = torch.zeros((batches_for_knn*batch_size, embedding_size))
     knn_t = torch.zeros(batches_for_knn*batch_size)
 
@@ -380,7 +380,7 @@ def main_worker(args):
     # print ('Validation Accuracy w/ K-Means')
     # print (accuracy)
 
-    def calculate_fuzzy_knn(model_output, knn_e, knn_t, k=50, num_classes=10):
+    def calculate_fuzzy_knn(model_output, knn_e, knn_t, k=100, num_classes=10):
         b_size = model_output.shape[0]
         e_size = model_output.shape[1]
         knn_size = knn_e.shape[0]
@@ -402,9 +402,15 @@ def main_worker(args):
 
             knn_guesses[i, :] /= torch.max(knn_guesses[i, :])
 
+        print (knn_guesses[0])
+
         sm_knn = torch.nn.functional.softmax(knn_guesses, dim=1)
 
         return sm_knn
+
+    image = torch.load('3-8.pt')
+    image.resize_(1, 1, 28, 28)
+    img_tensor = image.float()
 
     #Now lets validate w/ KNN
     batches_to_test = 10
@@ -414,8 +420,14 @@ def main_worker(args):
     for i, (images, target) in enumerate(val_loader):
         print ('Val Batch')
         print (i)
-        output = model(images.to(device))
+        img_test = img_tensor
+        #output = model(images.to(device))
+        output = model(img_test.to(device))
         fuzzy_guesses = calculate_fuzzy_knn(output, knn_e, knn_t)
+
+        print (fuzzy_guesses.shape)
+        print (fuzzy_guesses[0])
+        exit()
 
         guesses = torch.argmax(fuzzy_guesses, dim=1)
         
