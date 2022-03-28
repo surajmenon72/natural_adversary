@@ -185,8 +185,8 @@ for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
 
     for i, (data, true_label) in enumerate(dataloader, 0):
-        print ('Batch')
-        print (i)
+        # print ('Batch')
+        # print (i)
         # Get batch size
         b_size = data.size(0)
         # Transfer data tensor to GPU/CPU (device)
