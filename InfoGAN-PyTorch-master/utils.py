@@ -100,7 +100,8 @@ def noise_sample_target(n_dis_c, dis_c_dim, n_con_c, n_z, batch_size, device, ta
         con_c = torch.zeros((batch_size, n_con_c, 1, 1), device=device)
         #Random uniform between 0 and 1 IF the target is set for that batch
         for i in range(batch_size):
-            t = targets[i]
+            #t = targets[i]
+            t = 0 #hack for only 1 cont
 
             # full_num = torch.rand(1, n_con_c, 1, 1)
             # con_c[i, :, :, :] = full_num
