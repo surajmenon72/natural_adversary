@@ -161,7 +161,7 @@ def calc_entropy(dist):
     entropy = -torch.sum(mult, dim=1)
     return entropy
 
-def calculate_fuzzy_knn(model_output, knn_e, knn_t, device, k=100, num_classes=10):
+def calculate_fuzzy_knn(model_output, knn_e, knn_t, device, k=10, num_classes=10):
     b_size = model_output.shape[0]
     e_size = model_output.shape[1]
     knn_size = knn_e.shape[0]
