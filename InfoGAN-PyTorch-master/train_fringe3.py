@@ -117,8 +117,8 @@ else:
 #load knn dict
 path = './checkpoints/knn.pth'
 knn_dict = torch.load(path)
-knn_e = knn_dict["knn_e"]
-knn_t = knn_dict["knn_t"]
+knn_e = knn_dict["knn_e"].to(device)
+knn_t = knn_dict["knn_t"].to(device)
 print ('Loaded KNN')
 
 # Loss for discrimination between real and fake images.
