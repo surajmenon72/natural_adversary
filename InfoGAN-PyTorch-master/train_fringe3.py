@@ -15,7 +15,7 @@ from utils import *
 from config import params
 
 if(params['dataset'] == 'MNIST'):
-    from models.mnist_model_smooth import Generator, Discriminator, DHead, Encoder, QHead
+    from models.mnist_model_smooth import Generator, Discriminator, DHead, Encoder, CHead, QHead
 elif(params['dataset'] == 'SVHN'):
     from models.svhn_model import Generator, Discriminator, DHead, QHead
 elif(params['dataset'] == 'CelebA'):
@@ -94,6 +94,10 @@ classifier = Encoder().to(device)
 classifier.apply(weights_init)
 print(classifier)
 
+netC = CHead().to(device)
+netC.apply(weights_init)
+print (netC)
+
 netQ = QHead().to(device)
 netQ.apply(weights_init)
 print(netQ)
@@ -104,6 +108,7 @@ if (load_model):
     discriminator.load_state_dict(state_dict['discriminator'])
     netD.load_state_dict(state_dict['netD'])
     classifier.load_state_dict(state_dict['classifier'])
+    netC.load_state_dict(state_dict['netC'])
     netQ.load_state_dict(state_dict['netQ'])
     print ('Model successfully loaded')
 else:
@@ -124,7 +129,8 @@ print ('Loaded KNN')
 # Loss for discrimination between real and fake images.
 criterionD = nn.BCELoss()
 # Loss for classifier
-criterionC = nn.CrossEntropyLoss()
+# criterionC = nn.CrossEntropyLoss()
+criterionC = nn.KLDivLoss()
 # Loss for split between identity and controversy, just use CrossEntropy
 criterionS = nn.KLDivLoss()
 # Loss for discrete latent code.
@@ -137,7 +143,7 @@ classifier.requires_grad_(False)
 classifier.eval()
 
 # Adam optimiser is used.
-optimD = optim.Adam([{'params': discriminator.parameters()}, {'params': netD.parameters()}, {'params': classifier.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimD = optim.Adam([{'params': discriminator.parameters()}, {'params': netD.parameters()}, {'params': classifier.parameters()}, {'params': netC.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 optimG = optim.Adam([{'params': netG.parameters()}, {'params': netQ.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 
 # Fixed Noise
@@ -185,8 +191,8 @@ for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
 
     for i, (data, true_label) in enumerate(dataloader, 0):
-        # print ('Batch')
-        # print (i)
+        print ('Batch')
+        print (i)
         # Get batch size
         b_size = data.size(0)
         # Transfer data tensor to GPU/CPU (device)
@@ -204,6 +210,7 @@ for epoch in range(params['num_epochs']):
         discriminator.train()
         netD.train()
         #classifier.train()
+        netC.train()
         optimD.zero_grad()
         # Real data
         label = torch.full((b_size, ), real_label, device=device)
@@ -223,21 +230,41 @@ for epoch in range(params['num_epochs']):
         loss_real.backward()
 
         #Train classifier
-        # output_c = classifier(real_data)
-        # probs_c = netC(output_c)
-        # probs_c = torch.squeeze(probs_c)
+        output_c = classifier(real_data)
+        probs_c = netC(output_c)
+        probs_c = torch.squeeze(probs_c)
+        probs_c = F.log_softmax(probs_c, dim=1)
 
-        # #check for NaN
-        # isnan1 = torch.sum(torch.isnan(probs_c))
-        # isnan2 = torch.sum(torch.isnan(true_label_g))
-        # if ((isnan1 > 0) or (isnan2 > 0)):
-        #     print ('NAN VALUE in Classifier Loss')
+        # if we want to sample the knn embeddings
+        # knn_batches = 1
+        # knn_e = torch.zeros((params['knn_batch_size']*knn_batches, output_s.shape[1])).to(device)
+        # knn_t = torch.zeros(params['knn_batch_size']*knn_batches).to(device)
+        # for j, (data_knn, labels_knn) in enumerate(dataloader_knn, 0):
+        #     output = classifier(data_knn.to(device))
+        #     labels_knn = labels_knn.to(device)
 
-        # loss_c = criterionC(probs_c, true_label_g)
-        # loss_c = loss_c*beta
-        #Calculate gradients
-        # loss_c.backward()
-        loss_c = torch.zeros(1)
+        #     start_index = j*params['knn_batch_size']
+        #     end_index = (j+1)*params['knn_batch_size']
+
+        #     knn_e[start_index:end_index, :] = output[:, :]
+        #     knn_t[start_index:end_index] = labels_knn[:]
+
+        #     if (j == (knn_batches-1)):
+        #         break
+
+        soft_probs_c = calculate_fuzzy_knn(output_c, knn_e, knn_t, device, k=50, num_classes=10)
+
+        #check for NaN
+        isnan1 = torch.sum(torch.isnan(probs_c))
+        isnan2 = torch.sum(torch.isnan(soft_probs_c))
+        if ((isnan1 > 0) or (isnan2 > 0)):
+            print ('NAN VALUE in Classifier Loss')
+
+        loss_c = criterionC(probs_c, soft_probs_c)
+        loss_c = loss_c*beta
+        # Calculate gradients
+        loss_c.backward()
+        # loss_c = torch.zeros(1)
 
         # Fake data
         label.fill_(fake_label)
@@ -262,6 +289,7 @@ for epoch in range(params['num_epochs']):
         nn.utils.clip_grad_value_(discriminator.parameters(), clip_value_1)
         nn.utils.clip_grad_value_(netD.parameters(), clip_value_1)
         # nn.utils.clip_grad_value_(classifier.parameters(), clip_value_1)
+        nn.utils.clip_grad_value_(netC.parameters(), clip_value_1)
         optimD.step()
 
         # Updating Generator and QHead
@@ -275,26 +303,11 @@ for epoch in range(params['num_epochs']):
         fake_data = netG(noise)
         output_s = classifier(fake_data)
 
-        # if we want to sample the knn embeddings
-        # knn_batches = 1
-        # knn_e = torch.zeros((params['knn_batch_size']*knn_batches, output_s.shape[1])).to(device)
-        # knn_t = torch.zeros(params['knn_batch_size']*knn_batches).to(device)
-        # for j, (data_knn, labels_knn) in enumerate(dataloader_knn, 0):
-        #     output = classifier(data_knn.to(device))
-        #     labels_knn = labels_knn.to(device)
-
-        #     start_index = j*params['knn_batch_size']
-        #     end_index = (j+1)*params['knn_batch_size']
-
-        #     knn_e[start_index:end_index, :] = output[:, :]
-        #     knn_t[start_index:end_index] = labels_knn[:]
-
-        #     if (j == (knn_batches-1)):
-        #         break
-
-        probs_split = calculate_fuzzy_knn(output_s, knn_e, knn_t, device, k=10, num_classes=10)
+        #probs_split = calculate_fuzzy_knn(output_s, knn_e, knn_t, device, k=100, num_classes=10)
 
         #KLDiv expects log space, already in softmax
+        probs_split = netC(output_s)
+        probs_split = F.log_softmax(probs_split, dim=1)
         #probs_split = torch.log(probs_split)
 
         #check for NaN
@@ -402,6 +415,7 @@ for epoch in range(params['num_epochs']):
             'netG' : netG.state_dict(),
             'discriminator' : discriminator.state_dict(),
             'classifier' : classifier.state_dict(),
+            'netC' : netC.state_dict(),
             'netD' : netD.state_dict(),
             'netQ' : netQ.state_dict(),
             'optimD' : optimD.state_dict(),
@@ -427,6 +441,7 @@ torch.save({
     'netG' : netG.state_dict(),
     'discriminator' : discriminator.state_dict(),
     'classifier' : classifier.state_dict(),
+    'netC' : netC.state_dict(),
     'netD' : netD.state_dict(),
     'netQ' : netQ.state_dict(),
     'optimD' : optimD.state_dict(),
