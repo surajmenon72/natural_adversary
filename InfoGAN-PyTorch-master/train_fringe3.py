@@ -292,10 +292,10 @@ for epoch in range(params['num_epochs']):
         #     if (j == (knn_batches-1)):
         #         break
 
-        probs_s = calculate_fuzzy_knn(output_s, knn_e, knn_t, device, k=50, num_classes=10)
+        probs_split = calculate_fuzzy_knn(output_s, knn_e, knn_t, device, k=50, num_classes=10)
 
         #KLDiv expects log space, already in softmax
-        #probs_split = torch.log(probs_s)
+        #probs_split = torch.log(probs_split)
 
         #check for NaN
         isnan1 = torch.sum(torch.isnan(probs_split))
