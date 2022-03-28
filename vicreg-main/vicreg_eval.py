@@ -303,7 +303,7 @@ def main_worker(args):
     print (k_means.shape)
 
     #Set knn,works only if targets are about evenly distributed in training set
-    batches_for_knn = 400
+    batches_for_knn = 100
     knn_e = torch.zeros((batches_for_knn*batch_size, embedding_size))
     knn_t = torch.zeros(batches_for_knn*batch_size)
 
