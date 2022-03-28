@@ -19,7 +19,7 @@ from backpack import extend, backpack, extensions
 from torch.distributions.multivariate_normal import MultivariateNormal
 
 if(params['dataset'] == 'MNIST'):
-    from models.mnist_model_exp import Generator, Discriminator, DHead, Classifier, CHead, SHead, QHead
+    from models.mnist_model_smooth import Generator, Discriminator, DHead, Encoder, QHead
 elif(params['dataset'] == 'SVHN'):
     from models.svhn_model import Generator, Discriminator, DHead, QHead
 elif(params['dataset'] == 'CelebA'):
@@ -39,10 +39,11 @@ print(device, " will be used.\n")
 
 load_model = False
 if (load_model):
-    load_path = './checkpoint/model_load'
+    load_path = './checkpoints/model_load'
     state_dict = torch.load(load_path, map_location=device)
 
 dataloader = get_data(params['dataset'], params['batch_size'])
+dataloader_knn = get_data(params['dataset'], params['knn_batch_size'])
 
 # Set appropriate hyperparameters depending on the dataset used.
 # The values given in the InfoGAN paper are used.
@@ -93,17 +94,9 @@ netD = DHead().to(device)
 netD.apply(weights_init)
 print(netD)
 
-classifier = Classifier().to(device)
+classifier = Encoder().to(device)
 classifier.apply(weights_init)
 print(classifier)
-
-netC = CHead().to(device)
-netC.apply(weights_init)
-print(netC)
-
-# netS = SHead().to(device)
-# netS.apply(weights_init)
-# print(netS)
 
 netQ = QHead().to(device)
 netQ.apply(weights_init)
@@ -115,9 +108,13 @@ if (load_model):
     discriminator.load_state_dict(state_dict['discriminator'])
     netD.load_state_dict(state_dict['netD'])
     classifier.load_state_dict(state_dict['classifier'])
-    netC.load_state_dict(state_dict['netC'])
     netQ.load_state_dict(state_dict['netQ'])
     print ('Model successfully loaded')
+else:
+    #need to load classifier regardless
+    './checkpoints/mnist_encoder-256.pth'
+    state_dict = torch.load(args.pretrained, map_location=device)
+    missing_keys, unexpected_keys = classifier.load_state_dict(state_dict, strict=False)
 
 
 # Loss for discrimination between real and fake images.
@@ -132,18 +129,8 @@ criterionQ_dis = nn.CrossEntropyLoss()
 criterionQ_con = NormalNLLLoss()
 
 # Adam optimiser is used.
-optimD = optim.Adam([{'params': discriminator.parameters()}, {'params': netD.parameters()}, {'params': classifier.parameters()}, {'params': netC.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimD = optim.Adam([{'params': discriminator.parameters()}, {'params': netD.parameters()}, {'params': classifier.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 optimG = optim.Adam([{'params': netG.parameters()}, {'params': netQ.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
-
-feature_extr = nn.Sequential(*list(netC.children())[:-1])
-print("Number of features: ", list(feature_extr.parameters())[-1].shape[0])
-
-W = list(netC.fc2.parameters())[0]
-shape_W = W.shape
-print (W.shape)
-
-_ = extend(netC.fc2)
-class_loss_func = extend(nn.CrossEntropyLoss(reduction='sum'))
 
 # Fixed Noise
 z = torch.randn(100, params['num_z'], 1, 1, device=device)
@@ -209,7 +196,6 @@ for epoch in range(params['num_epochs']):
         discriminator.train()
         netD.train()
         classifier.train()
-        netC.train()
         optimD.zero_grad()
         # Real data
         label = torch.full((b_size, ), real_label, device=device)
@@ -229,28 +215,24 @@ for epoch in range(params['num_epochs']):
         loss_real.backward()
 
         #Train classifier
-        output_c = classifier(real_data)
-        #probs_c = netS(output_c)
-        probs_c = netC(output_c)
-        probs_c = torch.squeeze(probs_c)
-        #true_labels = true_labels.to(torch.float32)
+        # output_c = classifier(real_data)
+        # probs_c = netC(output_c)
+        # probs_c = torch.squeeze(probs_c)
 
-        #check for NaN
-        isnan1 = torch.sum(torch.isnan(probs_c))
-        isnan2 = torch.sum(torch.isnan(true_label_g))
-        if ((isnan1 > 0) or (isnan2 > 0)):
-            print ('NAN VALUE in Classifier Loss')
+        # #check for NaN
+        # isnan1 = torch.sum(torch.isnan(probs_c))
+        # isnan2 = torch.sum(torch.isnan(true_label_g))
+        # if ((isnan1 > 0) or (isnan2 > 0)):
+        #     print ('NAN VALUE in Classifier Loss')
 
-        loss_c = criterionC(probs_c, true_label_g)
-        loss_c = loss_c*beta
+        # loss_c = criterionC(probs_c, true_label_g)
+        # loss_c = loss_c*beta
         #Calculate gradients
-        loss_c.backward()
-        # loss_c = torch.zeros(1)
+        # loss_c.backward()
+        loss_c = torch.zeros(1)
 
         # Fake data
         label.fill_(fake_label)
-        #noise, idx = noise_sample(params['num_dis_c'], params['dis_c_dim'], params['num_con_c'], params['num_z'], b_size, device)
-        #noise, idx, c_nums = noise_sample_target(params['num_dis_c'], params['dis_c_dim'], params['num_con_c'], params['num_z'], b_size, device, targets)
         fake_data = netG(noise)
         output2 = discriminator(fake_data.detach())
         probs_fake = netD(output2).view(-1)
@@ -261,11 +243,6 @@ for epoch in range(params['num_epochs']):
             isnang = torch.sum(torch.isnan(netG.parameters()))
             isnand = torch.sum(torch.isnan(discriminator.parameters()))
             print ('NAN VALUE in Discriminator Fake Loss')
-
-            if (isnang > 0):
-                print ('Generator has nan')
-            if (isnand > 0):
-                print ('Discriminator has nan')
 
         loss_fake = criterionD(probs_fake, label)
         loss_fake = loss_fake*alpha
@@ -278,98 +255,40 @@ for epoch in range(params['num_epochs']):
         # Update parameters
         nn.utils.clip_grad_value_(discriminator.parameters(), clip_value_1)
         nn.utils.clip_grad_value_(netD.parameters(), clip_value_1)
-        nn.utils.clip_grad_value_(classifier.parameters(), clip_value_1)
-        nn.utils.clip_grad_value_(netC.parameters(), clip_value_1)
+        # nn.utils.clip_grad_value_(classifier.parameters(), clip_value_1)
         optimD.step()
 
         # Updating Generator and QHead
         netG.train()
         netQ.train()
         optimG.zero_grad()
-        optimD.zero_grad() #for the Hessian for LLLA
+        optimD.zero_grad() 
 
-        #Split loss
-        # split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
-        # fake_data = netG(noise)
-        # output_s = classifier(fake_data)
-        # #probs_split = netS(output_s)
-        # probs_split = netC(output_s)
-        # probs_split = F.log_softmax(probs_split, dim=1)
-        # probs_split = torch.squeeze(probs_split) #TODO: consider if there are extra channels 
-        # loss_split = criterionS(probs_split, split_labels)
-        # loss_split = loss_split*beta
-        # # Calculate gradients
-        # loss_split.backward()
-        # loss_split = torch.zeros(1)
-
-        #Split loss w/ LLLA
+        #Split loss 
         split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
         fake_data = netG(noise)
         output_s = classifier(fake_data)
-        probs_s = netC(output_s)
 
-        #check for NaN
-        isnan1 = torch.sum(torch.isnan(probs_s))
-        isnan2 = torch.sum(torch.isnan(true_label_g))
-        if ((isnan1 > 0) or (isnan2 > 0)):
-            print ('NAN VALUE in Classifier Split Loss')
+        knn_batches = 1
+        knn_e = torch.zeros((params['knn_batch_size'], output_s.shape[1])).to(device)
+        knn_t = torch.zeros().to(device)
+        for j, (data_knn, labels_knn) in enumerate(dataloader_knn, 0):
+            output = classifier(data_knn.to(device))
+            labels_knn = labels_knn.to(device)
 
-        loss_first = class_loss_func(probs_s, true_label_g)
+            start_index = j*params['knn_batch_size']
+            end_index = (j+1)*params['knn_batch_size']
 
-        with backpack(extensions.KFAC()):
-            loss_first.backward(retain_graph=True)
+            knn_e[start_index:end_index, :] = output[:, :]
+            knn_t[start_index:end_index] = target[:]
 
-        A, B = W.kfac
-        prec0 = 5e-4
+            if (j == (knn_batches-1)):
+                break
 
-        A = A.to(device)
-        B = B.to(device)
-
-        eye1 = torch.eye(shape_W[0], device=device)
-        eye2 = torch.eye(shape_W[1], device=device)
-
-        U = torch.inverse(A + sqrt(prec0)*eye1)
-        V = torch.inverse(B + sqrt(prec0)*eye2)
-
-        output_s = output_s.squeeze()
-        phi = feature_extr(output_s)
-        # MAP prediction
-        m = phi @ W.T
-    
-        # v is the induced covariance. 
-        # See Appendix B.1 of https://arxiv.org/abs/2002.10118 for the detail of the derivation.
-        v = torch.diag(phi @ V @ phi.T).reshape(-1, 1, 1) * U
-
-        #arbitrary, found through testing
-        scale_factor = 10000
-        v /= scale_factor
-
-        #guarantee v is Positive Definite
-        v = torch.bmm(v, torch.transpose(v, 1, 2))
-        eye3 = torch.eye(v.shape[1], device=device)
-        v.add(eye3)
-
-        isnanv = torch.sum(torch.isnan(v))
-        if (isnanv > 0):
-            print ('NAN value in v')
-
-        # The induced distribution over the output (pre-softmax)
-        output_dist = MultivariateNormal(m, v.detach())
-
-        # MC-integral
-        n_sample = 1000
-        probs_split = 0
-
-        for _ in range(n_sample):
-            out_s = output_dist.rsample()
-            probs_split += torch.softmax(out_s, 1)
-
-        probs_split /= n_sample
+        probs_s = calculate_fuzzy_knn(output_s, train_images, train_labels, k=50, num_classes=10)
 
         #KLDiv expects log space, already in softmax
-        probs_split = torch.log(probs_split)
-
-        optimG.zero_grad()
+        probs_split = torch.log(probs_s)
 
         #check for NaN
         isnan1 = torch.sum(torch.isnan(probs_split))
@@ -382,16 +301,6 @@ for epoch in range(params['num_epochs']):
         #Calculate Gradients
         loss_split.backward()
         #loss_split = torch.zeros(1)
-
-        #If we want classifier to force an output
-        # fake_labels = torch.zeros(true_label_g.shape[0], device=device)
-        # fake_labels = fake_labels.to(torch.int64)
-        # fake_data = netG(noise)
-        # output_s = classifier(fake_data)
-        # probs_split = netS(output_s)
-        # probs_split = torch.squeeze(probs_split)
-        # loss_split = criterionC(probs_split, fake_labels)
-        # loss_split.backward()
 
         # Fake data treated as real.
         fake_data = netG(noise)

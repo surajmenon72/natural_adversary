@@ -161,3 +161,32 @@ def calc_entropy(dist):
     entropy = -torch.sum(mult, dim=1)
     return entropy
 
+def calculate_fuzzy_knn(model_output, knn_e, knn_t, k=100, num_classes=10):
+    b_size = model_output.shape[0]
+    e_size = model_output.shape[1]
+    knn_size = knn_e.shape[0]
+
+    model_output_r = model_output.view((b_size, 1, e_size))
+    knn_e_r = knn_e.view((1, knn_size, e_size))
+    knn_e_r = knn_e_r.repeat(b_size, 1, 1)
+
+    distances = torch.cdist(model_output_r, knn_e_r, p=2) #verified this works
+    distances = distances.view((b_size, knn_size))
+
+    knn_guesses = torch.zeros((b_size, num_classes))
+    for i in range(b_size):
+        d = distances[i, :]
+        d_s, d_s_i = torch.sort(d)
+        max_val = torch.max(d_s)
+        for j in range(k):
+            knn_guesses[i, int(knn_t[d_s_i[j]])] += max_val - d_s[j]
+
+        knn_guesses[i, :] /= torch.max(knn_guesses[i, :])
+
+    sm_knn = torch.nn.functional.softmax(knn_guesses, dim=1)
+
+    #if we don't use softmax, remove the max normalizing and then just normalize like this
+    #sm_knn = knn_guesses/torch.sum(knn_guesses, dim=1)
+
+    return sm_knn
+

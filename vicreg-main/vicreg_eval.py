@@ -303,7 +303,7 @@ def main_worker(args):
     print (k_means.shape)
 
     #Set knn,works only if targets are about evenly distributed in training set
-    batches_for_knn = 300
+    batches_for_knn = 1
     knn_e = torch.zeros((batches_for_knn*batch_size, embedding_size))
     knn_t = torch.zeros(batches_for_knn*batch_size)
 
@@ -400,15 +400,16 @@ def main_worker(args):
             for j in range(k):
                 knn_guesses[i, int(knn_t[d_s_i[j]])] += max_val - d_s[j]
 
-            knn_guesses[i, :] /= torch.max(knn_guesses[i, :])
+            #knn_guesses[i, :] /= torch.max(knn_guesses[i, :])
 
         print (knn_guesses[0])
 
-        sm_knn = torch.nn.functional.softmax(knn_guesses, dim=1)
+        #sm_knn = torch.nn.functional.softmax(knn_guesses, dim=1)
+        sm_knn = knn_guesses/torch.sum(knn_guesses, dim=1)
 
         return sm_knn
 
-    image = torch.load('3-8.pt')
+    image = torch.load('7-8.pt')
     image.resize_(1, 1, 28, 28)
     img_tensor = image.float()
 
