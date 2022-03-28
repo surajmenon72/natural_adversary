@@ -14,10 +14,6 @@ from dataloader import get_data
 from utils import *
 from config import params
 
-from math import *
-from backpack import extend, backpack, extensions
-from torch.distributions.multivariate_normal import MultivariateNormal
-
 if(params['dataset'] == 'MNIST'):
     from models.mnist_model_smooth import Generator, Discriminator, DHead, Encoder, QHead
 elif(params['dataset'] == 'SVHN'):
