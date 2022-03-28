@@ -404,7 +404,6 @@ for epoch in range(params['num_epochs']):
             'classifier' : classifier.state_dict(),
             'netD' : netD.state_dict(),
             'netQ' : netQ.state_dict(),
-            'netC' : netC.state_dict(),
             'optimD' : optimD.state_dict(),
             'optimG' : optimG.state_dict(),
             'params' : params
@@ -430,7 +429,6 @@ torch.save({
     'classifier' : classifier.state_dict(),
     'netD' : netD.state_dict(),
     'netQ' : netQ.state_dict(),
-    'netC' : netC.state_dict(),
     'optimD' : optimD.state_dict(),
     'optimG' : optimG.state_dict(),
     'params' : params
