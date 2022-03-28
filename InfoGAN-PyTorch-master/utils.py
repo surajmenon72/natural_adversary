@@ -181,12 +181,12 @@ def calculate_fuzzy_knn(model_output, knn_e, knn_t, k=100, num_classes=10):
         for j in range(k):
             knn_guesses[i, int(knn_t[d_s_i[j]])] += max_val - d_s[j]
 
-        knn_guesses[i, :] /= torch.max(knn_guesses[i, :])
+        #knn_guesses[i, :] /= torch.max(knn_guesses[i, :])
 
-    sm_knn = torch.nn.functional.softmax(knn_guesses, dim=1)
+    #sm_knn = torch.nn.functional.softmax(knn_guesses, dim=1)
 
     #if we don't use softmax, remove the max normalizing and then just normalize like this
-    #sm_knn = knn_guesses/torch.sum(knn_guesses, dim=1)
+    sm_knn = knn_guesses/(torch.sum(knn_guesses, dim=1).view((knn_guesses.shape[0], 1)))
 
     return sm_knn
 

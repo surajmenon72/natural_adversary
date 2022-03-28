@@ -112,10 +112,18 @@ if (load_model):
     print ('Model successfully loaded')
 else:
     #need to load classifier regardless
-    './checkpoints/mnist_encoder-256.pth'
-    state_dict = torch.load(args.pretrained, map_location=device)
+    path = './checkpoints/mnist_encoder-256.pth'
+    state_dict = torch.load(path, map_location=device)
     missing_keys, unexpected_keys = classifier.load_state_dict(state_dict, strict=False)
+    print ('Loaded classifier')
 
+
+#load knn dict
+path = './checkpoints/knn.pth'
+knn_dict = torch.load(path)
+knn_e = knn_dict["knn_e"]
+knn_t = knn_dict["knn_t"]
+print ('Loaded KNN')
 
 # Loss for discrimination between real and fake images.
 criterionD = nn.BCELoss()
@@ -127,6 +135,10 @@ criterionS = nn.KLDivLoss()
 criterionQ_dis = nn.CrossEntropyLoss()
 # Loss for continuous latent code.
 criterionQ_con = NormalNLLLoss()
+
+#which networks don't require grad
+classifier.requires_grad_(False)
+classifier.eval()
 
 # Adam optimiser is used.
 optimD = optim.Adam([{'params': discriminator.parameters()}, {'params': netD.parameters()}, {'params': classifier.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
@@ -177,8 +189,8 @@ for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
 
     for i, (data, true_label) in enumerate(dataloader, 0):
-        # print ('Batch')
-        # print (i)
+        print ('Batch')
+        print (i)
         # Get batch size
         b_size = data.size(0)
         # Transfer data tensor to GPU/CPU (device)
@@ -195,7 +207,7 @@ for epoch in range(params['num_epochs']):
         # Updating discriminator and DHead
         discriminator.train()
         netD.train()
-        classifier.train()
+        #classifier.train()
         optimD.zero_grad()
         # Real data
         label = torch.full((b_size, ), real_label, device=device)
@@ -240,8 +252,6 @@ for epoch in range(params['num_epochs']):
         isnan1 = torch.sum(torch.isnan(probs_fake))
         isnan2 = torch.sum(torch.isnan(label))
         if ((isnan1 > 0) or (isnan2 > 0)):
-            isnang = torch.sum(torch.isnan(netG.parameters()))
-            isnand = torch.sum(torch.isnan(discriminator.parameters()))
             print ('NAN VALUE in Discriminator Fake Loss')
 
         loss_fake = criterionD(probs_fake, label)
@@ -269,26 +279,27 @@ for epoch in range(params['num_epochs']):
         fake_data = netG(noise)
         output_s = classifier(fake_data)
 
-        knn_batches = 1
-        knn_e = torch.zeros((params['knn_batch_size'], output_s.shape[1])).to(device)
-        knn_t = torch.zeros().to(device)
-        for j, (data_knn, labels_knn) in enumerate(dataloader_knn, 0):
-            output = classifier(data_knn.to(device))
-            labels_knn = labels_knn.to(device)
+        # if we want to sample the knn embeddings
+        # knn_batches = 1
+        # knn_e = torch.zeros((params['knn_batch_size']*knn_batches, output_s.shape[1])).to(device)
+        # knn_t = torch.zeros(params['knn_batch_size']*knn_batches).to(device)
+        # for j, (data_knn, labels_knn) in enumerate(dataloader_knn, 0):
+        #     output = classifier(data_knn.to(device))
+        #     labels_knn = labels_knn.to(device)
 
-            start_index = j*params['knn_batch_size']
-            end_index = (j+1)*params['knn_batch_size']
+        #     start_index = j*params['knn_batch_size']
+        #     end_index = (j+1)*params['knn_batch_size']
 
-            knn_e[start_index:end_index, :] = output[:, :]
-            knn_t[start_index:end_index] = target[:]
+        #     knn_e[start_index:end_index, :] = output[:, :]
+        #     knn_t[start_index:end_index] = labels_knn[:]
 
-            if (j == (knn_batches-1)):
-                break
+        #     if (j == (knn_batches-1)):
+        #         break
 
-        probs_s = calculate_fuzzy_knn(output_s, train_images, train_labels, k=50, num_classes=10)
+        probs_s = calculate_fuzzy_knn(output_s, knn_e, knn_t, k=50, num_classes=10)
 
         #KLDiv expects log space, already in softmax
-        probs_split = torch.log(probs_s)
+        #probs_split = torch.log(probs_s)
 
         #check for NaN
         isnan1 = torch.sum(torch.isnan(probs_split))
