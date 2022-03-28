@@ -173,7 +173,7 @@ def calculate_fuzzy_knn(model_output, knn_e, knn_t, k=100, num_classes=10):
     distances = torch.cdist(model_output_r, knn_e_r, p=2) #verified this works
     distances = distances.view((b_size, knn_size))
 
-    knn_guesses = torch.zeros((b_size, num_classes))
+    knn_guesses = torch.zeros((b_size, num_classes)).to(device)
     for i in range(b_size):
         d = distances[i, :]
         d_s, d_s_i = torch.sort(d)
