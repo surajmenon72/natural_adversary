@@ -33,9 +33,9 @@ print("Random Seed: ", seed)
 device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
-load_model = False
+load_model = True
 if (load_model):
-    load_path = './checkpoints/model_load'
+    load_path = './checkpoint/model_load'
     state_dict = torch.load(load_path, map_location=device)
 
 dataloader = get_data(params['dataset'], params['batch_size'])
@@ -185,7 +185,7 @@ iters = 0
 #Realness vs. Classification Hyperparams
 alpha = 1
 beta = 1
-d_loose = .5
+d_loose = 1
 clip_value_1 = 1
 clip_value_2 = 1
 
@@ -229,7 +229,7 @@ for epoch in range(params['num_epochs']):
         loss_real = criterionD(probs_real, label)
         loss_real = loss_real*alpha
         # Calculate gradients.
-        loss_real.backward()
+        #loss_real.backward()
 
         #Train classifier
         output_c = classifier(real_data)
@@ -265,7 +265,7 @@ for epoch in range(params['num_epochs']):
         loss_c = criterionC(probs_c, soft_probs_c)
         loss_c = loss_c*beta
         # Calculate gradients
-        loss_c.backward()
+        # loss_c.backward()
         # loss_c = torch.zeros(1)
 
         # Fake data
@@ -282,7 +282,7 @@ for epoch in range(params['num_epochs']):
         loss_fake = criterionD(probs_fake, label)
         loss_fake = loss_fake*alpha*d_loose
         # Calculate gradients.
-        loss_fake.backward()
+        # loss_fake.backward()
 
         # Net Loss for the discriminator and classifier
         D_loss = loss_real + loss_fake
@@ -371,7 +371,8 @@ for epoch in range(params['num_epochs']):
         S_loss = loss_split
         # Net loss for generator.
         #G_loss = gen_loss + dis_loss + con_loss
-        G_loss = gen_loss + dis_loss + con_loss + align_loss
+        #G_loss = gen_loss + dis_loss + con_loss + align_loss
+        G_loss = dis_loss + con_loss
         G_loss = G_loss*alpha
         # Calculate gradients.
         G_loss.backward()
