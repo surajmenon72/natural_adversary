@@ -193,8 +193,8 @@ for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
 
     for i, (data, true_label) in enumerate(dataloader, 0):
-        print ('Batch')
-        print (i)
+        # print ('Batch')
+        # print (i)
         # Get batch size
         b_size = data.size(0)
         # Transfer data tensor to GPU/CPU (device)
@@ -327,7 +327,7 @@ for epoch in range(params['num_epochs']):
         probs_e = F.softmax(probs_e, dim=1)
 
         entropies = calc_targeted_entropy(probs_e, true_label_g, targets, params['dis_c_dim'], device)
-        loss_e = -torch.sum(entropies)
+        loss_e = -torch.sum(entropies) #trying to maximize entropies
         #Calculate Gradients
         loss_e.backward()
 
