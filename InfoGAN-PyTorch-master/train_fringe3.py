@@ -186,7 +186,7 @@ iters = 0
 alpha = 1
 beta = 1
 d_loose = 1
-e_loose = .1
+e_loose = .5
 clip_value_1 = 1
 clip_value_2 = 1
 
