@@ -186,6 +186,7 @@ iters = 0
 alpha = 1
 beta = 1
 d_loose = 1
+e_loose = .1
 clip_value_1 = 1
 clip_value_2 = 1
 
@@ -328,6 +329,7 @@ for epoch in range(params['num_epochs']):
 
         entropies = calc_targeted_entropy(probs_e, true_label_g, targets, params['dis_c_dim'], device)
         loss_e = -torch.sum(entropies) #trying to maximize entropies
+        loss_e = loss_e*beta*e_loose
         #Calculate Gradients
         loss_e.backward()
 
