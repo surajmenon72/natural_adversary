@@ -150,8 +150,11 @@ def get_split_labels(true_label, targets, c_nums, num_classes, device):
         #t = targets[i]
         t = 7
         if (tl != t):
-            labels[i, tl] = 1-c_num
-            labels[i, t] = c_num
+            #labels[i, tl] = 1-c_num
+            #labels[i, t] = c_num
+            labels[i, tl] = 0.5
+            labels[i, t] = 0.5
+
         else:
             labels[i, tl] = 1
 
