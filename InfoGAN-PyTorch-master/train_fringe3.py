@@ -56,8 +56,8 @@ if(params['dataset'] == 'MNIST'):
     params['num_z'] = 62
     params['num_dis_c'] = 1
     params['dis_c_dim'] = 10
-    params['num_con_c'] = 10 #continuous variable allocated for each class
-    #params['num_con_c'] = 1
+    #params['num_con_c'] = 10 #continuous variable allocated for each class
+    params['num_con_c'] = 1
 elif(params['dataset'] == 'SVHN'):
     params['num_z'] = 124
     params['num_dis_c'] = 4
@@ -179,6 +179,7 @@ fake_label = 0
 # List variables to store results pf training.
 img_list = []
 G_losses = []
+Q_losses = []
 D_losses = []
 C_losses = []
 S_losses = []
@@ -388,12 +389,15 @@ for epoch in range(params['num_epochs']):
         #S_loss = loss_split
         S_loss = loss_e
         # Net loss for generator.
-        G_loss = gen_loss + dis_loss + con_loss
+        #G_loss = gen_loss + dis_loss + con_loss
         #G_loss = gen_loss + dis_loss + con_loss + align_loss
         #G_loss = dis_loss + con_loss
+        G_loss = gen_loss
         G_loss = G_loss*alpha
+        Q_loss = dis_loss + con_loss
         # Calculate gradients.
         G_loss.backward()
+        Q_loss.backward()
         # Update parameters.
         nn.utils.clip_grad_value_(netG.parameters(), clip_value_2)
         nn.utils.clip_grad_value_(netQ.parameters(), clip_value_2)
@@ -401,12 +405,13 @@ for epoch in range(params['num_epochs']):
 
         # Check progress of training.
         if i != 0 and i%100 == 0:
-            print('[%d/%d][%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f\tLoss_C: %.4f\tLoss_S: %.4f'
+            print('[%d/%d][%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f\tLoss_C: %.4f\tLoss_S: %.4f\t Loss_Q: %.4f'
                   % (epoch+1, params['num_epochs'], i, len(dataloader), 
-                    D_loss.item(), G_loss.item(), C_loss.item(), S_loss.item()))
+                    D_loss.item(), G_loss.item(), C_loss.item(), S_loss.item(), Q_loss.item()))
 
         # Save the losses for plotting.
         G_losses.append(G_loss.item())
+        Q_losses.append(Q_loss.item())
         D_losses.append(D_loss.item())
         C_losses.append(C_loss.item())
         S_losses.append(S_loss.item())

@@ -14,7 +14,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-load_path', required=True, help='Checkpoint to load path from')
 args = parser.parse_args()
 
+#from models.mnist_model_exp import Classifier, CHead
 from models.mnist_model_smooth import Encoder, CHead
+
 
 seed = 1123
 random.seed(seed)
@@ -31,6 +33,7 @@ params = state_dict['params']
 
 # Create the generator network.
 classifier = Encoder().to(device)
+#classifier = Classifier().to(device)
 netC = CHead().to(device)
 # Load the trained generator weights.
 classifier.load_state_dict(state_dict['classifier'])
@@ -39,7 +42,7 @@ netC.load_state_dict(state_dict['netC'])
 classifier.eval()
 netC.eval()
 
-image = torch.load('3-8.pt')
+image = torch.load('8-8.pt')
 image.resize_(1, 1, 28, 28)
 img_tensor = image.float()
 
