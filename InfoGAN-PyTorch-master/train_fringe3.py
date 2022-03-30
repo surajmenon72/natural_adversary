@@ -340,7 +340,7 @@ for epoch in range(params['num_epochs']):
         loss_e = -torch.sum(entropies) #trying to maximize entropies
         loss_e = loss_e*beta*e_loose
         #Calculate Gradients
-        #loss_e.backward()
+        loss_e.backward()
 
 
         # Fake data treated as real.
