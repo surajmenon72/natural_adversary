@@ -34,6 +34,7 @@ device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
 load_model = False
+load_classifier = False
 if (load_model):
     load_path = './checkpoint/model_load'
     state_dict = torch.load(load_path, map_location=device)
@@ -230,7 +231,7 @@ for epoch in range(params['num_epochs']):
         loss_real = criterionD(probs_real, label)
         loss_real = loss_real*alpha
         # Calculate gradients.
-        loss_real.backward()
+        #loss_real.backward()
 
         #Train classifier
         output_c = classifier(real_data)
@@ -283,7 +284,7 @@ for epoch in range(params['num_epochs']):
         loss_fake = criterionD(probs_fake, label)
         loss_fake = loss_fake*alpha*d_loose
         # Calculate gradients.
-        loss_fake.backward()
+        #loss_fake.backward()
 
         # Net Loss for the discriminator and classifier
         D_loss = loss_real + loss_fake
@@ -331,7 +332,7 @@ for epoch in range(params['num_epochs']):
         loss_e = -torch.sum(entropies) #trying to maximize entropies
         loss_e = loss_e*beta*e_loose
         #Calculate Gradients
-        loss_e.backward()
+        #loss_e.backward()
 
 
         # Fake data treated as real.
@@ -387,7 +388,7 @@ for epoch in range(params['num_epochs']):
         #G_loss = dis_loss + con_loss
         G_loss = G_loss*alpha
         # Calculate gradients.
-        G_loss.backward()
+        #G_loss.backward()
         # Update parameters.
         nn.utils.clip_grad_value_(netG.parameters(), clip_value_2)
         nn.utils.clip_grad_value_(netQ.parameters(), clip_value_2)
