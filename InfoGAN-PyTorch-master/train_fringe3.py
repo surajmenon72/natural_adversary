@@ -194,8 +194,6 @@ iters = 0
 #Realness vs. Classification Hyperparams
 alpha = 1
 beta = 1
-d_loose = 1
-e_loose = .5
 clip_value_1 = 1
 clip_value_2 = 1
 
@@ -290,7 +288,7 @@ for epoch in range(params['num_epochs']):
             print ('NAN VALUE in Discriminator Fake Loss')
 
         loss_fake = criterionD(probs_fake, label)
-        loss_fake = loss_fake*alpha*d_loose
+        loss_fake = loss_fake*alpha
         # Calculate gradients.
         loss_fake.backward()
 
@@ -338,7 +336,7 @@ for epoch in range(params['num_epochs']):
 
         entropies = calc_targeted_entropy(probs_e, true_label_g, targets, params['dis_c_dim'], device)
         loss_e = -torch.sum(entropies) #trying to maximize entropies
-        loss_e = loss_e*beta*e_loose
+        loss_e = loss_e*beta
         #Calculate Gradients
         loss_e.backward()
 
@@ -390,7 +388,6 @@ for epoch in range(params['num_epochs']):
         #S_loss = loss_split
         S_loss = loss_e
         # Net loss for generator.
-        gen_loss = gen_loss*d_loose
         G_loss = gen_loss + dis_loss + con_loss
         #G_loss = gen_loss + dis_loss + con_loss + align_loss
         #G_loss = dis_loss + con_loss
