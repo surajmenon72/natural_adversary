@@ -395,9 +395,10 @@ for epoch in range(params['num_epochs']):
         G_loss = gen_loss
         G_loss = G_loss*alpha
         Q_loss = dis_loss + con_loss
+        GQ_loss = G_loss + Q_loss
         # Calculate gradients.
-        G_loss.backward()
-        Q_loss.backward()
+        #G_loss.backward()
+        GQ_loss.backward()
         # Update parameters.
         nn.utils.clip_grad_value_(netG.parameters(), clip_value_2)
         nn.utils.clip_grad_value_(netQ.parameters(), clip_value_2)
