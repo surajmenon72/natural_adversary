@@ -120,6 +120,7 @@ if (load_model):
 elif (load_classifier):
     classifier.load_state_dict(state_dict['classifier'])
     netC.load_state_dict(state_dict['netC'])
+    print ('Loaded Classifer and CHead')
 else:
     #need to load classifier regardless
     path = './checkpoints/mnist_encoder-256.pth'
@@ -339,7 +340,7 @@ for epoch in range(params['num_epochs']):
         loss_e = -torch.sum(entropies) #trying to maximize entropies
         loss_e = loss_e*beta*e_loose
         #Calculate Gradients
-        loss_e.backward()
+        #loss_e.backward()
 
 
         # Fake data treated as real.
