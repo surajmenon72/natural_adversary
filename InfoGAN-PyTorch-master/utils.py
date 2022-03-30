@@ -176,15 +176,13 @@ def calc_targeted_entropy(dist, true_label, targets, num_classes, device):
         t = 7
         f_dist[0] = dist[i, l]
         f_dist[1] = dist[i, t]
+        f_dist /= torch.sum(f_dist)
         log_dist = torch.log(f_dist)
         mult = f_dist*log_dist
         entropy = -torch.sum(mult, dim=0)
         entropies[i] = entropy
 
     return entropies
-
-
-
 
 
 def calculate_fuzzy_knn(model_output, knn_e, knn_t, device, k=10, num_classes=10):
