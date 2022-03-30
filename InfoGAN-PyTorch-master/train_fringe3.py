@@ -35,12 +35,13 @@ print(device, " will be used.\n")
 
 load_model = False
 load_classifier = True
+state_dict = {}
 if (load_model):
     load_path = './checkpoint/model_load'
     state_dict = torch.load(load_path, map_location=device)
 elif (load_classifier):
     load_path = './checkpoint/model_c_load'
-    state_c_dict = torch.load(load_path, map_location=device)
+    state_dict = torch.load(load_path, map_location=device)
 
 dataloader = get_data(params['dataset'], params['batch_size'])
 dataloader_knn = get_data(params['dataset'], params['knn_batch_size'])
