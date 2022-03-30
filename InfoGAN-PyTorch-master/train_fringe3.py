@@ -34,10 +34,13 @@ device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
 load_model = False
-load_classifier = False
+load_classifier = True
 if (load_model):
     load_path = './checkpoint/model_load'
     state_dict = torch.load(load_path, map_location=device)
+elif (load_classifier):
+    load_path = './checkpoint/model_c_load'
+    state_c_dict = torch.load(load_path, map_location=device)
 
 dataloader = get_data(params['dataset'], params['batch_size'])
 dataloader_knn = get_data(params['dataset'], params['knn_batch_size'])
@@ -113,6 +116,9 @@ if (load_model):
     netC.load_state_dict(state_dict['netC'])
     netQ.load_state_dict(state_dict['netQ'])
     print ('Model successfully loaded')
+elif (load_classifier):
+    classifier.load_state_dict(state_dict['classifier'])
+    netC.load_state_dict(state_dict['netC'])
 else:
     #need to load classifier regardless
     path = './checkpoints/mnist_encoder-256.pth'
@@ -231,13 +237,13 @@ for epoch in range(params['num_epochs']):
         loss_real = criterionD(probs_real, label)
         loss_real = loss_real*alpha
         # Calculate gradients.
-        #loss_real.backward()
+        loss_real.backward()
 
         #Train classifier
-        output_c = classifier(real_data)
-        probs_c = netC(output_c)
-        probs_c = torch.squeeze(probs_c)
-        probs_c = F.log_softmax(probs_c, dim=1)
+        # output_c = classifier(real_data)
+        # probs_c = netC(output_c)
+        # probs_c = torch.squeeze(probs_c)
+        # probs_c = F.log_softmax(probs_c, dim=1)
 
         # if we want to sample the knn embeddings
         # knn_batches = 1
@@ -256,19 +262,19 @@ for epoch in range(params['num_epochs']):
         #     if (j == (knn_batches-1)):
         #         break
 
-        soft_probs_c = calculate_fuzzy_knn(output_c, knn_e, knn_t, device, k=50, num_classes=10)
+        # soft_probs_c = calculate_fuzzy_knn(output_c, knn_e, knn_t, device, k=50, num_classes=10)
 
         #check for NaN
-        isnan1 = torch.sum(torch.isnan(probs_c))
-        isnan2 = torch.sum(torch.isnan(soft_probs_c))
-        if ((isnan1 > 0) or (isnan2 > 0)):
-            print ('NAN VALUE in Classifier Loss')
+        # isnan1 = torch.sum(torch.isnan(probs_c))
+        # isnan2 = torch.sum(torch.isnan(soft_probs_c))
+        # if ((isnan1 > 0) or (isnan2 > 0)):
+        #     print ('NAN VALUE in Classifier Loss')
 
-        loss_c = criterionC(probs_c, soft_probs_c)
-        loss_c = loss_c*beta
-        # Calculate gradients
-        loss_c.backward()
-        # loss_c = torch.zeros(1)
+        # loss_c = criterionC(probs_c, soft_probs_c)
+        # loss_c = loss_c*beta
+        # # Calculate gradients
+        # loss_c.backward()
+        loss_c = torch.zeros(1)
 
         # Fake data
         label.fill_(fake_label)
@@ -284,7 +290,7 @@ for epoch in range(params['num_epochs']):
         loss_fake = criterionD(probs_fake, label)
         loss_fake = loss_fake*alpha*d_loose
         # Calculate gradients.
-        #loss_fake.backward()
+        loss_fake.backward()
 
         # Net Loss for the discriminator and classifier
         D_loss = loss_real + loss_fake
@@ -332,7 +338,7 @@ for epoch in range(params['num_epochs']):
         loss_e = -torch.sum(entropies) #trying to maximize entropies
         loss_e = loss_e*beta*e_loose
         #Calculate Gradients
-        #loss_e.backward()
+        loss_e.backward()
 
 
         # Fake data treated as real.
@@ -388,7 +394,7 @@ for epoch in range(params['num_epochs']):
         #G_loss = dis_loss + con_loss
         G_loss = G_loss*alpha
         # Calculate gradients.
-        #G_loss.backward()
+        G_loss.backward()
         # Update parameters.
         nn.utils.clip_grad_value_(netG.parameters(), clip_value_2)
         nn.utils.clip_grad_value_(netQ.parameters(), clip_value_2)
