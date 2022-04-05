@@ -142,7 +142,7 @@ def get_split_labels(true_label, targets, c_nums, num_classes, device):
     labels = torch.zeros((b_size, num_classes), device=device)
     for i in range(b_size):
         c_num = c_nums[i]
-        c_num /= 2 #divide in half as original is between 0-1, we want between 0-0.5
+        # c_num /= 2 #divide in half as original is between 0-1, we want between 0-0.5
         # c_num = torch.rand(1)
         # c_num /= 2
 
