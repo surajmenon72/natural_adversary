@@ -311,36 +311,36 @@ for epoch in range(params['num_epochs']):
         optimD.zero_grad() 
 
         #Split loss 
-        # split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
-        # fake_data = netG(noise)
-        # output_s = classifier(fake_data)
+        split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
+        fake_data = netG(noise)
+        output_s = classifier(fake_data)
 
-        # #KLDiv expects log space, already in softmax
-        # probs_split = netC(output_s)
-        # probs_split = F.log_softmax(probs_split, dim=1)
+        #KLDiv expects log space, already in softmax
+        probs_split = netC(output_s)
+        probs_split = F.log_softmax(probs_split, dim=1)
 
-        # #check for NaN
-        # isnan1 = torch.sum(torch.isnan(probs_split))
-        # isnan2 = torch.sum(torch.isnan(split_labels))
-        # if ((isnan1 > 0) or (isnan2 > 0)):
-        #     print ('NAN VALUE in Split Loss')
+        #check for NaN
+        isnan1 = torch.sum(torch.isnan(probs_split))
+        isnan2 = torch.sum(torch.isnan(split_labels))
+        if ((isnan1 > 0) or (isnan2 > 0)):
+            print ('NAN VALUE in Split Loss')
 
-        # loss_split = criterionS(probs_split, split_labels)
-        # loss_split = loss_split*beta
-        # #Calculate Gradients
-        # loss_split.backward()
+        loss_split = criterionS(probs_split, split_labels)
+        loss_split = loss_split*beta
+        #Calculate Gradients
+        loss_split.backward()
         # loss_split = torch.zeros(1)
 
-        fake_data = netG(noise)
-        output_e = classifier(fake_data)
-        probs_e = netC(output_e)
-        probs_e = F.softmax(probs_e, dim=1)
+        # fake_data = netG(noise)
+        # output_e = classifier(fake_data)
+        # probs_e = netC(output_e)
+        # probs_e = F.softmax(probs_e, dim=1)
 
-        entropies = calc_targeted_entropy(probs_e, true_label_g, targets, params['dis_c_dim'], device)
-        loss_e = -torch.sum(entropies) #trying to maximize entropies
-        loss_e = loss_e*beta
-        #Calculate Gradients
-        loss_e.backward()
+        # entropies = calc_targeted_entropy(probs_e, true_label_g, targets, params['dis_c_dim'], device)
+        # loss_e = -torch.sum(entropies) #trying to maximize entropies
+        # loss_e = loss_e*beta
+        # #Calculate Gradients
+        # loss_e.backward()
 
 
         # Fake data treated as real.
@@ -387,8 +387,8 @@ for epoch in range(params['num_epochs']):
         #Net loss for classifier
         C_loss = loss_c
         #Loss for Split
-        #S_loss = loss_split
-        S_loss = loss_e
+        S_loss = loss_split
+        #S_loss = loss_e
         # Net loss for generator.
         #G_loss = gen_loss + dis_loss + con_loss
         #G_loss = gen_loss + dis_loss + con_loss + align_loss
@@ -396,8 +396,8 @@ for epoch in range(params['num_epochs']):
         G_loss = gen_loss
         G_loss = G_loss*alpha_g
         Q_loss = dis_loss + con_loss
-        #GQ_loss = G_loss + Q_loss
-        GQ_loss = Q_loss
+        GQ_loss = G_loss + Q_loss
+        #GQ_loss = Q_loss
         # Calculate gradients.
         #G_loss.backward()
         GQ_loss.backward()
