@@ -193,7 +193,8 @@ start_time = time.time()
 iters = 0
 
 #Realness vs. Classification Hyperparams
-alpha = 1
+alpha_d = .5
+alpha_g = 1
 beta = .5
 clip_value_1 = 1
 clip_value_2 = 1
@@ -236,7 +237,7 @@ for epoch in range(params['num_epochs']):
             print ('NAN VALUE in Discriminator Real Loss')
 
         loss_real = criterionD(probs_real, label)
-        loss_real = loss_real*alpha
+        loss_real = loss_real*alpha_d
         # Calculate gradients.
         loss_real.backward()
 
@@ -289,7 +290,7 @@ for epoch in range(params['num_epochs']):
             print ('NAN VALUE in Discriminator Fake Loss')
 
         loss_fake = criterionD(probs_fake, label)
-        loss_fake = loss_fake*alpha
+        loss_fake = loss_fake*alpha_d
         # Calculate gradients.
         loss_fake.backward()
 
@@ -393,7 +394,7 @@ for epoch in range(params['num_epochs']):
         #G_loss = gen_loss + dis_loss + con_loss + align_loss
         #G_loss = dis_loss + con_loss
         G_loss = gen_loss
-        G_loss = G_loss*alpha
+        G_loss = G_loss*alpha_g
         Q_loss = dis_loss + con_loss
         GQ_loss = G_loss + Q_loss
         # Calculate gradients.
