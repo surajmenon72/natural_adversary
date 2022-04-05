@@ -34,7 +34,7 @@ print(netG)
 netG.eval()
 
 start = 0
-stop = 1
+stop = 3
 #c = np.linspace(-2, 2, 10).reshape(1, -1)
 c = np.linspace(start, stop, 10).reshape(1, -1)
 c = np.repeat(c, 10, 0).reshape(-1, 1)
@@ -57,7 +57,7 @@ reduction_factor = 1
 #c2 = torch.zeros((10, 100, 1, 1), device=device)
 c2 = torch.zeros((1, 100, 1, 1), device=device)
 #primary
-#c2[c_index] = c[:, :, 0]*reduction_factor
+c2[c_index] = c[:, :, 0]*reduction_factor
 #secondary
 #c2[c_index2] = (c[:, :, 0])/reduction_factor
 c2 = c2.permute(1, 0, 2, 3)
