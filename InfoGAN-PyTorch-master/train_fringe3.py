@@ -312,6 +312,8 @@ for epoch in range(params['num_epochs']):
 
         #Split loss 
         split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
+        print (torch.sum(split_labels, dim=1))
+        exit()
         fake_data = netG(noise)
         output_s = classifier(fake_data)
 
