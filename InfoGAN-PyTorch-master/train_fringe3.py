@@ -396,7 +396,8 @@ for epoch in range(params['num_epochs']):
         G_loss = gen_loss
         G_loss = G_loss*alpha_g
         Q_loss = dis_loss + con_loss
-        GQ_loss = G_loss + Q_loss
+        #GQ_loss = G_loss + Q_loss
+        GQ_loss = Q_loss
         # Calculate gradients.
         #G_loss.backward()
         GQ_loss.backward()
