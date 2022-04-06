@@ -247,7 +247,7 @@ for epoch in range(params['num_epochs']):
         probs_c = torch.squeeze(probs_c)
         probs_c = F.log_softmax(probs_c, dim=1)
 
-        if we want to sample the knn embeddings
+        #if we want to sample the knn embeddings
         knn_batches = 1
         knn_e = torch.zeros((params['knn_batch_size']*knn_batches, output_s.shape[1])).to(device)
         knn_t = torch.zeros(params['knn_batch_size']*knn_batches).to(device)
