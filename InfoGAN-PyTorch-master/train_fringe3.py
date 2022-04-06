@@ -249,7 +249,7 @@ for epoch in range(params['num_epochs']):
 
         #if we want to sample the knn embeddings
         knn_batches = 1
-        knn_e = torch.zeros((params['knn_batch_size']*knn_batches, output_s.shape[1])).to(device)
+        knn_e = torch.zeros((params['knn_batch_size']*knn_batches, output_c.shape[1])).to(device)
         knn_t = torch.zeros(params['knn_batch_size']*knn_batches).to(device)
         for j, (data_knn, labels_knn) in enumerate(dataloader_knn, 0):
             output = classifier(data_knn.to(device))
