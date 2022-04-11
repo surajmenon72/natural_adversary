@@ -18,7 +18,7 @@ args = parser.parse_args()
 from models.mnist_model_smooth import Encoder, CHead
 
 
-seed = 1123
+seed = 1125
 random.seed(seed)
 torch.manual_seed(seed)
 print("Random Seed: ", seed)

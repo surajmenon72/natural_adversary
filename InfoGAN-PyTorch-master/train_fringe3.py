@@ -34,7 +34,9 @@ device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
 load_model = False
-load_classifier = True
+load_classifier = False
+train_classifier_head = False
+
 state_dict = {}
 if (load_model):
     load_path = './checkpoint/model_load'
@@ -227,6 +229,7 @@ for epoch in range(params['num_epochs']):
         # Real data
         label = torch.full((b_size, ), real_label, device=device)
         output1 = discriminator(real_data)
+
         probs_real = netD(output1).view(-1)
         label = label.to(torch.float32)
 
@@ -248,35 +251,37 @@ for epoch in range(params['num_epochs']):
         probs_c = F.log_softmax(probs_c, dim=1)
 
         #if we want to sample the knn embeddings
-        knn_batches = 1
-        knn_e = torch.zeros((params['knn_batch_size']*knn_batches, output_c.shape[1])).to(device)
-        knn_t = torch.zeros(params['knn_batch_size']*knn_batches).to(device)
-        for j, (data_knn, labels_knn) in enumerate(dataloader_knn, 0):
-            output = classifier(data_knn.to(device))
-            labels_knn = labels_knn.to(device)
+        if (train_classifier_head):
+            knn_batches = 1
+            knn_e = torch.zeros((params['knn_batch_size']*knn_batches, output_c.shape[1])).to(device)
+            knn_t = torch.zeros(params['knn_batch_size']*knn_batches).to(device)
+            for j, (data_knn, labels_knn) in enumerate(dataloader_knn, 0):
+                output = classifier(data_knn.to(device))
+                labels_knn = labels_knn.to(device)
 
-            start_index = j*params['knn_batch_size']
-            end_index = (j+1)*params['knn_batch_size']
+                start_index = j*params['knn_batch_size']
+                end_index = (j+1)*params['knn_batch_size']
 
-            knn_e[start_index:end_index, :] = output[:, :]
-            knn_t[start_index:end_index] = labels_knn[:]
+                knn_e[start_index:end_index, :] = output[:, :]
+                knn_t[start_index:end_index] = labels_knn[:]
 
-            if (j == (knn_batches-1)):
-                break
+                if (j == (knn_batches-1)):
+                    break
 
-        soft_probs_c = calculate_fuzzy_knn(output_c, knn_e, knn_t, device, k=50, num_classes=10)
+            soft_probs_c = calculate_fuzzy_knn(output_c, knn_e, knn_t, device, k=50, num_classes=10)
 
-        # check for NaN
-        isnan1 = torch.sum(torch.isnan(probs_c))
-        isnan2 = torch.sum(torch.isnan(soft_probs_c))
-        if ((isnan1 > 0) or (isnan2 > 0)):
-            print ('NAN VALUE in Classifier Loss')
+            # check for NaN
+            isnan1 = torch.sum(torch.isnan(probs_c))
+            isnan2 = torch.sum(torch.isnan(soft_probs_c))
+            if ((isnan1 > 0) or (isnan2 > 0)):
+                print ('NAN VALUE in Classifier Loss')
 
-        loss_c = criterionC(probs_c, soft_probs_c)
-        loss_c = loss_c*beta
-        # Calculate gradients
-        loss_c.backward()
-        # loss_c = torch.zeros(1)
+            loss_c = criterionC(probs_c, soft_probs_c)
+            loss_c = loss_c*beta
+            # Calculate gradients
+            loss_c.backward()
+        else:
+            loss_c = torch.zeros(1)
 
         # Fake data
         label.fill_(fake_label)
