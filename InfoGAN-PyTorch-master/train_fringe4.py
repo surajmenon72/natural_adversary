@@ -34,7 +34,7 @@ device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
 load_model = False
-load_classifier = False
+load_classifier = True
 train_classifier_head = False
 
 state_dict = {}
@@ -234,41 +234,65 @@ for epoch in range(params['num_epochs']):
 
         if (epoch % d_train_cadence == 0):
             # Real data
-            label = torch.full((b_size, ), real_label, device=device)
-            output1 = discriminator(real_data)
+            # label = torch.full((b_size, ), real_label, device=device)
+            # output1 = discriminator(real_data)
 
-            probs_real = netD(output1).view(-1)
-            label = label.to(torch.float32)
+            # probs_real = netD(output1).view(-1)
+            # label = label.to(torch.float32)
 
-            #check for NaN
-            isnan1 = torch.sum(torch.isnan(probs_real))
-            isnan2 = torch.sum(torch.isnan(label))
-            if ((isnan1 > 0) or (isnan2 > 0)):
-                print ('NAN VALUE in Discriminator Real Loss')
+            # #check for NaN
+            # isnan1 = torch.sum(torch.isnan(probs_real))
+            # isnan2 = torch.sum(torch.isnan(label))
+            # if ((isnan1 > 0) or (isnan2 > 0)):
+            #     print ('NAN VALUE in Discriminator Real Loss')
 
-            loss_real = criterionD(probs_real, label)
-            loss_real = loss_real*alpha_d
-            # Calculate gradients.
-            loss_real.backward()
+            # loss_real = criterionD(probs_real, label)
+            # loss_real = loss_real*alpha_d
+            # # Calculate gradients.
+            # loss_real.backward()
 
-            # Fake data
-            label.fill_(fake_label)
-            fake_data = netG(noise)
-            output2 = discriminator(fake_data.detach())
-            probs_fake = netD(output2).view(-1)
+            # # Fake data
+            # label.fill_(fake_label)
+            # fake_data = netG(noise)
+            # output2 = discriminator(fake_data.detach())
+            # probs_fake = netD(output2).view(-1)
 
-            isnan1 = torch.sum(torch.isnan(probs_fake))
-            isnan2 = torch.sum(torch.isnan(label))
-            if ((isnan1 > 0) or (isnan2 > 0)):
-                print ('NAN VALUE in Discriminator Fake Loss')
+            # isnan1 = torch.sum(torch.isnan(probs_fake))
+            # isnan2 = torch.sum(torch.isnan(label))
+            # if ((isnan1 > 0) or (isnan2 > 0)):
+            #     print ('NAN VALUE in Discriminator Fake Loss')
 
-            loss_fake = criterionD(probs_fake, label)
-            loss_fake = loss_fake*alpha_d
-            # Calculate gradients.
-            loss_fake.backward()
+            # loss_fake = criterionD(probs_fake, label)
+            # loss_fake = loss_fake*alpha_d
+            # # Calculate gradients.
+            # loss_fake.backward()
 
             # Net Loss for the discriminator and classifier
-            D_loss = loss_real + loss_fake
+            # D_loss = loss_real + loss_fake
+
+            real_output = discriminator(real_data)
+            real_output = netD(real_output)
+            errD_real = torch.mean(real_output)
+            D_x = real_output.mean().item()
+
+            # Generate fake image batch with G
+            fake_data = netG(noise)
+
+            # Train with fake
+            fake_output = discriminator(fake_data.detach())
+            fake_output = netD(fake_output)
+            errD_fake = torch.mean(fake_output)
+            D_G_z1 = fake_output.mean().item()
+
+            # Calculate W-div gradient penalty
+            # gradient_penalty = calculate_gradient_penalty(discriminator, netD,
+            #                                               real_data.data, fake_data.data,
+            #                                               device)
+            gradient_penalty = 0
+
+            # Add the gradients from the all-real and all-fake batches
+            D_loss = -errD_real + errD_fake + gradient_penalty * 10
+            D_loss.backward()
         else:
             D_loss = torch.zeros(1)
 
@@ -370,17 +394,23 @@ for epoch in range(params['num_epochs']):
 
         # Fake data treated as real.
         if (epoch % g_train_cadence == 0):
+            # fake_data = netG(noise)
+            # output = discriminator(fake_data)
+            # label.fill_(real_label)
+            # probs_fake = netD(output).view(-1)
+
+            # isnan1 = torch.sum(torch.isnan(probs_fake))
+            # isnan2 = torch.sum(torch.isnan(label))
+            # if ((isnan1 > 0) or (isnan2 > 0)):
+            #     print ('NAN VALUE in Generator Real Loss')
+
+            # gen_loss = criterionD(probs_fake, label)
+
+             # Generate fake image batch with G
             fake_data = netG(noise)
-            output = discriminator(fake_data)
-            label.fill_(real_label)
-            probs_fake = netD(output).view(-1)
-
-            isnan1 = torch.sum(torch.isnan(probs_fake))
-            isnan2 = torch.sum(torch.isnan(label))
-            if ((isnan1 > 0) or (isnan2 > 0)):
-                print ('NAN VALUE in Generator Real Loss')
-
-            gen_loss = criterionD(probs_fake, label)
+            output = discriminator(fake_images)
+            fake_output = netD(output)
+            gen_loss = -torch.mean(fake_output)
 
             q_logits, q_mu, q_var = netQ(output)
             target = torch.LongTensor(idx).to(device)
@@ -420,7 +450,7 @@ for epoch in range(params['num_epochs']):
         else:
             G_loss = torch.zeros(1)
             Q_loss = torch.zeros(1)
-            
+
         # Update parameters.
         nn.utils.clip_grad_value_(netG.parameters(), clip_value_2)
         nn.utils.clip_grad_value_(netQ.parameters(), clip_value_2)

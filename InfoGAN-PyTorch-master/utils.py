@@ -110,6 +110,10 @@ def noise_sample_target(n_dis_c, dis_c_dim, n_con_c, n_z, batch_size, device, ta
             con_c[i, t, :, :] = num
             c_nums.append(num)
 
+            #test for hierarchy
+            num = torch.rand(1, 1, 1, 1)
+            con_c[i, 1, :, :] = num
+
 
     noise = z
     if(n_dis_c != 0):
@@ -222,7 +226,7 @@ def calculate_fuzzy_knn(model_output, knn_e, knn_t, device, k=10, num_classes=10
 
     return sm_knn
 
-def calculate_gradient_penalty(model, real_images, fake_images, device):
+def calculate_gradient_penalty(model, model_H, real_images, fake_images, device):
     """Calculates the gradient penalty loss for WGAN GP"""
     # Random weight term for interpolation between real and fake data
     alpha = torch.randn((real_images.size(0), 1, 1, 1), device=device)
@@ -230,6 +234,7 @@ def calculate_gradient_penalty(model, real_images, fake_images, device):
     interpolates = (alpha * real_images + ((1 - alpha) * fake_images)).requires_grad_(True)
 
     model_interpolates = model(interpolates)
+    model_interpolates = model_H(model_interpolates)
     grad_outputs = torch.ones(model_interpolates.size(), device=device, requires_grad=False)
 
     # Get gradient w.r.t. interpolates
