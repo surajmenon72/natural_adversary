@@ -446,8 +446,8 @@ for epoch in range(params['num_epochs']):
             Q_loss = dis_loss + con_loss
             GQ_loss = G_loss + Q_loss
             # Calculate gradients.
-            #GQ_loss.backward()
-            G_loss.backward()
+            GQ_loss.backward()
+            #G_loss.backward()
         else:
             G_loss = torch.zeros(1)
             Q_loss = torch.zeros(1)
