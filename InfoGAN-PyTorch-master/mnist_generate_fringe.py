@@ -10,7 +10,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-load_path', required=True, help='Checkpoint to load path from')
 args = parser.parse_args()
 
-from models.mnist_model_smooth import Generator
+from models.mnist_model_wsmooth import Generator
 
 seed = 1125
 random.seed(seed)
@@ -49,13 +49,13 @@ zeros = torch.zeros(100, 1, 1, 1, device=device)
 # c2 = torch.cat((c2, ), dim=1)
 
 # for i in range(3, 10):
-# 	c2 = torch.cat((c2, zeros), dim=1)
+# c2 = torch.cat((c2, zeros), dim=1)
 
 c_index = 0
 #c_index2 = 6
 reduction_factor = 1
 #c2 = torch.zeros((10, 100, 1, 1), device=device)
-c2 = torch.zeros((1, 100, 1, 1), device=device)
+c2 = torch.zeros((2, 100, 1, 1), device=device)
 #primary
 c2[c_index] = c[:, :, 0]*reduction_factor
 #secondary

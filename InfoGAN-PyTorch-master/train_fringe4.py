@@ -202,7 +202,7 @@ clip_value_1 = 1
 clip_value_2 = 1
 
 d_train_cadence = 1
-g_train_cadence = 1
+g_train_cadence = 2
 c_train_cadence = 1
 s_train_cadence = 1
 
@@ -443,7 +443,8 @@ for epoch in range(params['num_epochs']):
             # Net loss for generator.
             G_loss = gen_loss
             G_loss = G_loss*alpha_g
-            Q_loss = dis_loss + con_loss
+            #Q_loss = dis_loss + con_loss
+            Q_loss = torch.zeros(1)
             GQ_loss = G_loss + Q_loss
             # Calculate gradients.
             GQ_loss.backward()
