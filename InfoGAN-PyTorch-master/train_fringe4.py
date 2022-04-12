@@ -408,7 +408,7 @@ for epoch in range(params['num_epochs']):
 
              # Generate fake image batch with G
             fake_data = netG(noise)
-            output = discriminator(fake_images)
+            output = discriminator(fake_data)
             fake_output = netD(output)
             gen_loss = -torch.mean(fake_output)
 
