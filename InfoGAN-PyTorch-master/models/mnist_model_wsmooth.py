@@ -32,7 +32,7 @@ class Generator(nn.Module):
             nn.BatchNorm2d(64),
             nn.ReLU(True),
 
-            nn.ConvTranspose2d(64, 3, 4, 2, 1),
+            nn.ConvTranspose2d(64, 1, 4, 2, 1),
             nn.Tanh()
         )
 
@@ -56,7 +56,7 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         self.main = nn.Sequential(
-            nn.Conv2d(3, 64, 4, 2, 1, bias=False),
+            nn.Conv2d(1, 64, 4, 2, 1, bias=False),
             nn.LeakyReLU(0.2, True),
 
             nn.Conv2d(64, 128, 4, 2, 1, bias=False),
