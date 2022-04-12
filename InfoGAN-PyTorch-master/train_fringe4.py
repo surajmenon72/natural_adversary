@@ -371,7 +371,7 @@ for epoch in range(params['num_epochs']):
             loss_split = criterionS(probs_split, split_labels)
             loss_split = loss_split*beta
             #Calculate Gradients
-            loss_split.backward()
+            # loss_split.backward()
             # loss_split = torch.zeros(1)
 
             # fake_data = netG(noise)
