@@ -202,7 +202,7 @@ clip_value_1 = 1
 clip_value_2 = 1
 
 d_train_cadence = 1
-g_train_cadence = 2
+g_train_cadence = 1
 c_train_cadence = 1
 s_train_cadence = 1
 
