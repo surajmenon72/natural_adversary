@@ -9,13 +9,13 @@ import matplotlib.animation as animation
 import time
 import random
 
-from models.mnist_model_exp import Generator, Discriminator, DHead, Classifier, CHead, SHead, QHead
+#from models.mnist_model_exp import Generator, Discriminator, DHead, Classifier, CHead, SHead, QHead
 from dataloader import get_data
 from utils import *
 from config import params
 
 if(params['dataset'] == 'MNIST'):
-    from models.mnist_model_smooth import Generator, Discriminator, DHead, Encoder, CHead, QHead
+    from models.mnist_model_wsmooth import Generator, Discriminator, DHead, Encoder, CHead, QHead
 elif(params['dataset'] == 'SVHN'):
     from models.svhn_model import Generator, Discriminator, DHead, QHead
 elif(params['dataset'] == 'CelebA'):
@@ -59,7 +59,7 @@ if(params['dataset'] == 'MNIST'):
     params['num_dis_c'] = 1
     params['dis_c_dim'] = 10
     #params['num_con_c'] = 10 #continuous variable allocated for each class
-    params['num_con_c'] = 1
+    params['num_con_c'] = 2
 elif(params['dataset'] == 'SVHN'):
     params['num_z'] = 124
     params['num_dis_c'] = 4
@@ -201,6 +201,11 @@ beta = 1
 clip_value_1 = 1
 clip_value_2 = 1
 
+d_train_cadence = 1
+g_train_cadence = 1
+c_train_cadence = 1
+s_train_cadence = 1
+
 for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
 
@@ -226,81 +231,89 @@ for epoch in range(params['num_epochs']):
         #classifier.train()
         netC.train()
         optimD.zero_grad()
-        # Real data
-        label = torch.full((b_size, ), real_label, device=device)
-        output1 = discriminator(real_data)
 
-        probs_real = netD(output1).view(-1)
-        label = label.to(torch.float32)
+        if (epoch % d_train_cadence == 0):
+            # Real data
+            label = torch.full((b_size, ), real_label, device=device)
+            output1 = discriminator(real_data)
 
-        #check for NaN
-        isnan1 = torch.sum(torch.isnan(probs_real))
-        isnan2 = torch.sum(torch.isnan(label))
-        if ((isnan1 > 0) or (isnan2 > 0)):
-            print ('NAN VALUE in Discriminator Real Loss')
+            probs_real = netD(output1).view(-1)
+            label = label.to(torch.float32)
 
-        loss_real = criterionD(probs_real, label)
-        loss_real = loss_real*alpha_d
-        # Calculate gradients.
-        loss_real.backward()
+            #check for NaN
+            isnan1 = torch.sum(torch.isnan(probs_real))
+            isnan2 = torch.sum(torch.isnan(label))
+            if ((isnan1 > 0) or (isnan2 > 0)):
+                print ('NAN VALUE in Discriminator Real Loss')
+
+            loss_real = criterionD(probs_real, label)
+            loss_real = loss_real*alpha_d
+            # Calculate gradients.
+            loss_real.backward()
+
+            # Fake data
+            label.fill_(fake_label)
+            fake_data = netG(noise)
+            output2 = discriminator(fake_data.detach())
+            probs_fake = netD(output2).view(-1)
+
+            isnan1 = torch.sum(torch.isnan(probs_fake))
+            isnan2 = torch.sum(torch.isnan(label))
+            if ((isnan1 > 0) or (isnan2 > 0)):
+                print ('NAN VALUE in Discriminator Fake Loss')
+
+            loss_fake = criterionD(probs_fake, label)
+            loss_fake = loss_fake*alpha_d
+            # Calculate gradients.
+            loss_fake.backward()
+
+            # Net Loss for the discriminator and classifier
+            D_loss = loss_real + loss_fake
+        else:
+            D_loss = torch.zeros(1)
 
         #Train classifier
-        output_c = classifier(real_data)
-        probs_c = netC(output_c)
-        probs_c = torch.squeeze(probs_c)
-        probs_c = F.log_softmax(probs_c, dim=1)
-
         #if we want to sample the knn embeddings
         if (train_classifier_head):
-            knn_batches = 1
-            knn_e = torch.zeros((params['knn_batch_size']*knn_batches, output_c.shape[1])).to(device)
-            knn_t = torch.zeros(params['knn_batch_size']*knn_batches).to(device)
-            for j, (data_knn, labels_knn) in enumerate(dataloader_knn, 0):
-                output = classifier(data_knn.to(device))
-                labels_knn = labels_knn.to(device)
+            if (epoch % c_train_cadence == 0):
+                output_c = classifier(real_data)
+                probs_c = netC(output_c)
+                probs_c = torch.squeeze(probs_c)
+                probs_c = F.log_softmax(probs_c, dim=1)
 
-                start_index = j*params['knn_batch_size']
-                end_index = (j+1)*params['knn_batch_size']
+                knn_batches = 1
+                knn_e = torch.zeros((params['knn_batch_size']*knn_batches, output_c.shape[1])).to(device)
+                knn_t = torch.zeros(params['knn_batch_size']*knn_batches).to(device)
+                for j, (data_knn, labels_knn) in enumerate(dataloader_knn, 0):
+                    output = classifier(data_knn.to(device))
+                    labels_knn = labels_knn.to(device)
 
-                knn_e[start_index:end_index, :] = output[:, :]
-                knn_t[start_index:end_index] = labels_knn[:]
+                    start_index = j*params['knn_batch_size']
+                    end_index = (j+1)*params['knn_batch_size']
 
-                if (j == (knn_batches-1)):
-                    break
+                    knn_e[start_index:end_index, :] = output[:, :]
+                    knn_t[start_index:end_index] = labels_knn[:]
 
-            soft_probs_c = calculate_fuzzy_knn(output_c, knn_e, knn_t, device, k=50, num_classes=10)
+                    if (j == (knn_batches-1)):
+                        break
 
-            # check for NaN
-            isnan1 = torch.sum(torch.isnan(probs_c))
-            isnan2 = torch.sum(torch.isnan(soft_probs_c))
-            if ((isnan1 > 0) or (isnan2 > 0)):
-                print ('NAN VALUE in Classifier Loss')
+                soft_probs_c = calculate_fuzzy_knn(output_c, knn_e, knn_t, device, k=50, num_classes=10)
 
-            loss_c = criterionC(probs_c, soft_probs_c)
-            loss_c = loss_c*beta
-            # Calculate gradients
-            loss_c.backward()
+                # check for NaN
+                isnan1 = torch.sum(torch.isnan(probs_c))
+                isnan2 = torch.sum(torch.isnan(soft_probs_c))
+                if ((isnan1 > 0) or (isnan2 > 0)):
+                    print ('NAN VALUE in Classifier Loss')
+
+                loss_c = criterionC(probs_c, soft_probs_c)
+                loss_c = loss_c*beta
+                # Calculate gradients
+                loss_c.backward()
         else:
             loss_c = torch.zeros(1)
 
-        # Fake data
-        label.fill_(fake_label)
-        fake_data = netG(noise)
-        output2 = discriminator(fake_data.detach())
-        probs_fake = netD(output2).view(-1)
-
-        isnan1 = torch.sum(torch.isnan(probs_fake))
-        isnan2 = torch.sum(torch.isnan(label))
-        if ((isnan1 > 0) or (isnan2 > 0)):
-            print ('NAN VALUE in Discriminator Fake Loss')
-
-        loss_fake = criterionD(probs_fake, label)
-        loss_fake = loss_fake*alpha_d
-        # Calculate gradients.
-        loss_fake.backward()
-
-        # Net Loss for the discriminator and classifier
-        D_loss = loss_real + loss_fake
+        #Net loss for classifier
+        C_loss = loss_c
 
         # Update parameters
         nn.utils.clip_grad_value_(discriminator.parameters(), clip_value_1)
@@ -316,96 +329,98 @@ for epoch in range(params['num_epochs']):
         optimD.zero_grad() 
 
         #Split loss 
-        split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
-        fake_data = netG(noise)
-        output_s = classifier(fake_data)
+        if (epoch % s_train_cadence == 0):
+            split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
+            fake_data = netG(noise)
+            output_s = classifier(fake_data)
 
-        #KLDiv expects log space, already in softmax
-        probs_split = netC(output_s)
-        probs_split = F.log_softmax(probs_split, dim=1)
+            #KLDiv expects log space, already in softmax
+            probs_split = netC(output_s)
+            probs_split = F.log_softmax(probs_split, dim=1)
 
-        #check for NaN
-        isnan1 = torch.sum(torch.isnan(probs_split))
-        isnan2 = torch.sum(torch.isnan(split_labels))
-        if ((isnan1 > 0) or (isnan2 > 0)):
-            print ('NAN VALUE in Split Loss')
+            #check for NaN
+            isnan1 = torch.sum(torch.isnan(probs_split))
+            isnan2 = torch.sum(torch.isnan(split_labels))
+            if ((isnan1 > 0) or (isnan2 > 0)):
+                print ('NAN VALUE in Split Loss')
 
-        loss_split = criterionS(probs_split, split_labels)
-        loss_split = loss_split*beta
-        #Calculate Gradients
-        loss_split.backward()
-        # loss_split = torch.zeros(1)
+            loss_split = criterionS(probs_split, split_labels)
+            loss_split = loss_split*beta
+            #Calculate Gradients
+            loss_split.backward()
+            # loss_split = torch.zeros(1)
 
-        # fake_data = netG(noise)
-        # output_e = classifier(fake_data)
-        # probs_e = netC(output_e)
-        # probs_e = F.softmax(probs_e, dim=1)
+            # fake_data = netG(noise)
+            # output_e = classifier(fake_data)
+            # probs_e = netC(output_e)
+            # probs_e = F.softmax(probs_e, dim=1)
 
-        # entropies = calc_targeted_entropy(probs_e, true_label_g, targets, params['dis_c_dim'], device)
-        # loss_e = -torch.sum(entropies) #trying to maximize entropies
-        # loss_e = loss_e*beta
-        # #Calculate Gradients
-        # loss_e.backward()
+            # entropies = calc_targeted_entropy(probs_e, true_label_g, targets, params['dis_c_dim'], device)
+            # loss_e = -torch.sum(entropies) #trying to maximize entropies
+            # loss_e = loss_e*beta
+            # #Calculate Gradients
+            # loss_e.backward()
+
+            #Loss for Split
+            S_loss = loss_split
+            #S_loss = loss_e
+        else:
+            S_loss = torch.zeros(1)
 
 
         # Fake data treated as real.
-        fake_data = netG(noise)
-        output = discriminator(fake_data)
-        label.fill_(real_label)
-        probs_fake = netD(output).view(-1)
+        if (epoch % g_train_cadence == 0):
+            fake_data = netG(noise)
+            output = discriminator(fake_data)
+            label.fill_(real_label)
+            probs_fake = netD(output).view(-1)
 
-        isnan1 = torch.sum(torch.isnan(probs_fake))
-        isnan2 = torch.sum(torch.isnan(label))
-        if ((isnan1 > 0) or (isnan2 > 0)):
-            print ('NAN VALUE in Generator Real Loss')
+            isnan1 = torch.sum(torch.isnan(probs_fake))
+            isnan2 = torch.sum(torch.isnan(label))
+            if ((isnan1 > 0) or (isnan2 > 0)):
+                print ('NAN VALUE in Generator Real Loss')
 
-        gen_loss = criterionD(probs_fake, label)
+            gen_loss = criterionD(probs_fake, label)
 
-        q_logits, q_mu, q_var = netQ(output)
-        target = torch.LongTensor(idx).to(device)
-        # Calculating loss for discrete latent code.
-        dis_loss = 0
+            q_logits, q_mu, q_var = netQ(output)
+            target = torch.LongTensor(idx).to(device)
+            # Calculating loss for discrete latent code.
+            dis_loss = 0
 
-        isnan1 = torch.sum(torch.isnan(q_logits))
-        isnan2 = torch.sum(torch.isnan(target))
-        if ((isnan1 > 0) or (isnan2 > 0)):
-            print ('NAN VALUE in Q Discrete Loss')
+            isnan1 = torch.sum(torch.isnan(q_logits))
+            isnan2 = torch.sum(torch.isnan(target))
+            if ((isnan1 > 0) or (isnan2 > 0)):
+                print ('NAN VALUE in Q Discrete Loss')
 
-        # for MNIST, this is always 1
-        for j in range(params['num_dis_c']):
-            dis_loss += criterionQ_dis(q_logits[:, j*10 : j*10 + 10], target[j])
+            # for MNIST, this is always 1
+            for j in range(params['num_dis_c']):
+                dis_loss += criterionQ_dis(q_logits[:, j*10 : j*10 + 10], target[j])
 
-        # align_loss = criterionQ_dis(q_logits, true_label_g)
-        # align_loss = 0
+            # align_loss = criterionQ_dis(q_logits, true_label_g)
+            # align_loss = 0
 
-        isnan1 = torch.sum(torch.isnan(noise))
-        isnan2 = torch.sum(torch.isnan(q_mu))
-        isnan3 = torch.sum(torch.isnan(q_var))
-        if ((isnan1 > 0) or (isnan2 > 0) or (isnan3 > 0)):
-            print ('NAN VALUE in Q Continuous Loss')
+            isnan1 = torch.sum(torch.isnan(noise))
+            isnan2 = torch.sum(torch.isnan(q_mu))
+            isnan3 = torch.sum(torch.isnan(q_var))
+            if ((isnan1 > 0) or (isnan2 > 0) or (isnan3 > 0)):
+                print ('NAN VALUE in Q Continuous Loss')
 
-        # Calculating loss for continuous latent code.
-        con_loss = 0
-        if (params['num_con_c'] != 0):
-            con_loss = criterionQ_con(noise[:, params['num_z']+ params['num_dis_c']*params['dis_c_dim'] : ].view(-1, params['num_con_c']), q_mu, q_var)*0.1
+            # Calculating loss for continuous latent code.
+            con_loss = 0
+            if (params['num_con_c'] != 0):
+                con_loss = criterionQ_con(noise[:, params['num_z']+ params['num_dis_c']*params['dis_c_dim'] : ].view(-1, params['num_con_c']), q_mu, q_var)*0.1
 
-        #Net loss for classifier
-        C_loss = loss_c
-        #Loss for Split
-        S_loss = loss_split
-        #S_loss = loss_e
-        # Net loss for generator.
-        #G_loss = gen_loss + dis_loss + con_loss
-        #G_loss = gen_loss + dis_loss + con_loss + align_loss
-        #G_loss = dis_loss + con_loss
-        G_loss = gen_loss
-        G_loss = G_loss*alpha_g
-        Q_loss = dis_loss + con_loss
-        GQ_loss = G_loss + Q_loss
-        #GQ_loss = Q_loss
-        # Calculate gradients.
-        #G_loss.backward()
-        GQ_loss.backward()
+            # Net loss for generator.
+            G_loss = gen_loss
+            G_loss = G_loss*alpha_g
+            Q_loss = dis_loss + con_loss
+            GQ_loss = G_loss + Q_loss
+            # Calculate gradients.
+            GQ_loss.backward()
+        else:
+            G_loss = torch.zeros(1)
+            Q_loss = torch.zeros(1)
+            
         # Update parameters.
         nn.utils.clip_grad_value_(netG.parameters(), clip_value_2)
         nn.utils.clip_grad_value_(netQ.parameters(), clip_value_2)

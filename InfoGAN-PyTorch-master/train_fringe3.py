@@ -9,7 +9,7 @@ import matplotlib.animation as animation
 import time
 import random
 
-from models.mnist_model_exp import Generator, Discriminator, DHead, Classifier, CHead, SHead, QHead
+#from models.mnist_model_exp import Generator, Discriminator, DHead, Classifier, CHead, SHead, QHead
 from dataloader import get_data
 from utils import *
 from config import params

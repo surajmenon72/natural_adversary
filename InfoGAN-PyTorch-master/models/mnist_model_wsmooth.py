@@ -7,59 +7,95 @@ Architecture based on InfoGAN paper, +FringeGAN experiments.
 """
 
 class Generator(nn.Module):
+    r""" An Generator model.
+    `Generative Adversarial Networks model architecture from the One weird trick...
+    <https://arxiv.org/abs/1704.00028v3>`_ paper.
+    """
+
     def __init__(self):
-        super().__init__()
+        super(Generator, self).__init__()
 
-        #self.tconv1 = nn.ConvTranspose2d(82, 1024, 1, 1, bias=False)
-        self.tconv1 = nn.ConvTranspose2d(73, 1024, 1, 1, bias=False)
-        self.bn1 = nn.BatchNorm2d(1024)
+        self.main = nn.Sequential(
+            nn.ConvTranspose2d(73, 512, 4, 1, 0, bias=False),
+            nn.BatchNorm2d(512),
+            nn.ReLU(True),
 
-        self.tconv2 = nn.ConvTranspose2d(1024, 128, 7, 1, bias=False)
-        self.bn2 = nn.BatchNorm2d(128)
+            nn.ConvTranspose2d(512, 256, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(256),
+            nn.ReLU(True),
 
-        self.tconv3 = nn.ConvTranspose2d(128, 64, 4, 2, padding=1, bias=False)
-        self.bn3 = nn.BatchNorm2d(64)
+            nn.ConvTranspose2d(256, 128, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(128),
+            nn.ReLU(True),
 
-        self.tconv4 = nn.ConvTranspose2d(64, 1, 4, 2, padding=1, bias=False)
+            nn.ConvTranspose2d(128, 64, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(64),
+            nn.ReLU(True),
 
-    def forward(self, x):
-        x = F.relu(self.bn1(self.tconv1(x)))
-        x = F.relu(self.bn2(self.tconv2(x)))
-        x = F.relu(self.bn3(self.tconv3(x)))
+            nn.ConvTranspose2d(64, 3, 4, 2, 1),
+            nn.Tanh()
+        )
 
-        img = torch.sigmoid(self.tconv4(x))
-
-        return img
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
+        r"""Defines the computation performed at every call.
+        Args:
+            input (tensor): input tensor into the calculation.
+        Returns:
+            A four-dimensional vector (NCHW).
+        """
+        out = self.main(input)
+        return out
 
 class Discriminator(nn.Module):
+    """ An Discriminator model.
+    `Generative Adversarial Networks model architecture from the One weird trick...
+    <https://arxiv.org/abs/1704.00028v3>`_ paper.
+    """
+
     def __init__(self):
-        super().__init__()
+        super(Discriminator, self).__init__()
 
-        self.conv1 = nn.Conv2d(1, 64, 4, 2, 1)
+        self.main = nn.Sequential(
+            nn.Conv2d(3, 64, 4, 2, 1, bias=False),
+            nn.LeakyReLU(0.2, True),
 
-        self.conv2 = nn.Conv2d(64, 128, 4, 2, 1, bias=False)
-        self.bn2 = nn.BatchNorm2d(128)
+            nn.Conv2d(64, 128, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(128),
+            nn.LeakyReLU(0.2, True),
 
-        self.conv3 = nn.Conv2d(128, 1024, 7, bias=False)
-        self.bn3 = nn.BatchNorm2d(1024)
+            nn.Conv2d(128, 256, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(256),
+            nn.LeakyReLU(0.2, True),
 
-    def forward(self, x):
-        x = F.leaky_relu(self.conv1(x), 0.1, inplace=True)
-        x = F.leaky_relu(self.bn2(self.conv2(x)), 0.1, inplace=True)
-        x = F.leaky_relu(self.bn3(self.conv3(x)), 0.1, inplace=True)
+            nn.Conv2d(256, 512, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(512),
+            nn.LeakyReLU(0.2, True),
 
-        return x
+            #nn.Conv2d(512, 1, 4, 1, 0),
+        )
+
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
+        """ Defines the computation performed at every call.
+        Args:
+            input (tensor): input tensor into the calculation.
+        Returns:
+            A four-dimensional vector (NCHW).
+        """
+        out = self.main(input)
+        #out = torch.flatten(out)
+        return out
 
 class DHead(nn.Module):
     def __init__(self):
         super().__init__()
 
-        self.conv = nn.Conv2d(1024, 1, 1)
+        self.conv = nn.Conv2d(512, 1, 4, 1, 0)
 
     def forward(self, x):
-        output = torch.sigmoid(self.conv(x))
+        out = self.conv(x)
+        out = torch.flatten(out)
 
-        return output
+        return out
 
 class Encoder(nn.Module):
     def __init__(self):
@@ -99,7 +135,7 @@ class QHead(nn.Module):
     def __init__(self):
         super().__init__()
 
-        self.conv1 = nn.Conv2d(1024, 128, 1, bias=False)
+        self.conv1 = nn.Conv2d(512, 128, 1, bias=False)
         self.bn1 = nn.BatchNorm2d(128)
 
         self.conv_disc = nn.Conv2d(128, 10, 1)
