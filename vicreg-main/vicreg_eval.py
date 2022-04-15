@@ -303,7 +303,7 @@ def main_worker(args):
     print (k_means.shape)
 
     #Set knn,works only if targets are about evenly distributed in training set
-    batches_for_knn = 400
+    batches_for_knn = 100
     knn_e = torch.zeros((batches_for_knn*batch_size, embedding_size))
     knn_t = torch.zeros(batches_for_knn*batch_size)
 
@@ -380,7 +380,7 @@ def main_worker(args):
     # print ('Validation Accuracy w/ K-Means')
     # print (accuracy)
 
-    def calculate_fuzzy_knn(model_output, knn_e, knn_t, k=10, num_classes=10):
+    def calculate_fuzzy_knn(model_output, knn_e, knn_t, k=100, num_classes=10):
         b_size = model_output.shape[0]
         e_size = model_output.shape[1]
         knn_size = knn_e.shape[0]
