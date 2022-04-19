@@ -162,7 +162,6 @@ def get_split_labels(true_label, targets, c_nums, num_classes, device):
         if (tl != t):
             labels[i, :] = remainder_fill
             labels[i, tl] = 1-c_num
-            #labels[i, t] = c_num
             labels[i, t] = c_num_r
             # labels[i, tl] = 0.5
             # labels[i, t] = 0.5
