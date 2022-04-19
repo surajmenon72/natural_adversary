@@ -416,7 +416,7 @@ def main_worker(args):
     img_tensor = image.float()
 
     #Now lets validate w/ KNN
-    batches_to_test = 10
+    batches_to_test = 50
     total_correct = 0
     total_samples = 0
     print ('Validating w/ KNN')

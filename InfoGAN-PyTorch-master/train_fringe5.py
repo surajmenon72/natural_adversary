@@ -15,7 +15,7 @@ from utils import *
 from config import params
 
 if(params['dataset'] == 'MNIST'):
-    from models.mnist_model_wsmooth import Generator, Discriminator, DHead, Encoder, CHead, QHead
+    from models.mnist_model_wsmooth import Generator, Encoder, DHead, CHead, QHead, Stretcher, HHead
 elif(params['dataset'] == 'SVHN'):
     from models.svhn_model import Generator, Discriminator, DHead, QHead
 elif(params['dataset'] == 'CelebA'):
@@ -90,21 +90,29 @@ netG = Generator().to(device)
 netG.apply(weights_init)
 print(netG)
 
-discriminator = Discriminator().to(device)
-discriminator.apply(weights_init)
-print(discriminator)
+netGPlus = Generator().to(device)
+netG.apply(weights_init)
+print (netGPlus)
+
+encoder = Encoder().to(device)
+encoder.apply(weights_init)
+print (encoder)
 
 netD = DHead().to(device)
 netD.apply(weights_init)
 print(netD)
 
-classifier = Encoder().to(device)
-classifier.apply(weights_init)
-print(classifier)
-
 netC = CHead().to(device)
 netC.apply(weights_init)
 print (netC)
+
+stretcher = Encoder().to(device)
+stretcher.apply(weights_init)
+print (stretcher)
+
+netH = DHead().to(device)
+netH.apply(weights_init)
+print (netH)
 
 netQ = QHead().to(device)
 netQ.apply(weights_init)
@@ -113,21 +121,23 @@ print(netQ)
 
 if (load_model):
     netG.load_state_dict(state_dict['netG'])
-    discriminator.load_state_dict(state_dict['discriminator'])
+    netGPlus.load_state_dict(state_dict['netGPlus'])
+    encoder.load_state_dict(state_dict['encoder'])
     netD.load_state_dict(state_dict['netD'])
-    classifier.load_state_dict(state_dict['classifier'])
     netC.load_state_dict(state_dict['netC'])
+    stretcher.load_state_dict(state_dict['stretcher'])
+    netH.load_state_dict(state_dict['netH'])
     netQ.load_state_dict(state_dict['netQ'])
     print ('Model successfully loaded')
 elif (load_classifier):
-    classifier.load_state_dict(state_dict['classifier'])
+    encoder.load_state_dict(state_dict['classifier'])
     netC.load_state_dict(state_dict['netC'])
     print ('Loaded Classifer and CHead')
 else:
     #need to load classifier regardless
     path = './checkpoints/mnist_encoder-256.pth'
     state_dict = torch.load(path, map_location=device)
-    missing_keys, unexpected_keys = classifier.load_state_dict(state_dict, strict=False)
+    missing_keys, unexpected_keys = encoder.load_state_dict(state_dict, strict=False)
     print ('Loaded classifier')
 
 
@@ -139,24 +149,28 @@ knn_t = knn_dict["knn_t"].to(device)
 print ('Loaded KNN')
 
 # Loss for discrimination between real and fake images.
-criterionD = nn.BCELoss()
+criterionH = nn.BCELoss()
 # Loss for classifier
 # criterionC = nn.CrossEntropyLoss()
 criterionC = nn.KLDivLoss()
 # Loss for split between identity and controversy, just use CrossEntropy
-criterionS = nn.KLDivLoss()
+criterionGP = nn.KLDivLoss()
 # Loss for discrete latent code.
 criterionQ_dis = nn.CrossEntropyLoss()
 # Loss for continuous latent code.
 criterionQ_con = NormalNLLLoss()
 
 #which networks don't require grad
-classifier.requires_grad_(False)
-classifier.eval()
+encoder.requires_grad_(False)
+encoder.eval()
 
 # Adam optimiser is used.
-optimD = optim.Adam([{'params': discriminator.parameters()}, {'params': netD.parameters()}, {'params': classifier.parameters()}, {'params': netC.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimE = optim.Adam([{'params': encoder.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimD = optim.Adam([{'params': netD.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimC = optim.Adam([{'params': netC.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 optimG = optim.Adam([{'params': netG.parameters()}, {'params': netQ.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimGPlus = optim.Adam([{'params': netGPlus.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimS = optim.Adam([{'params': stretcher.parameters()}, {'params': netH.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 
 # Fixed Noise
 z = torch.randn(100, params['num_z'], 1, 1, device=device)
@@ -175,12 +189,14 @@ if(params['num_con_c'] != 0):
     con_c = torch.rand(100, params['num_con_c'], 1, 1, device=device) * 2 - 1
     fixed_noise = torch.cat((fixed_noise, con_c), dim=1)
 
+#only if using a binary loss for fake/real
 real_label = 1
 fake_label = 0
 
 # List variables to store results pf training.
 img_list = []
 G_losses = []
+GP_losses = []
 Q_losses = []
 D_losses = []
 C_losses = []
@@ -195,16 +211,18 @@ start_time = time.time()
 iters = 0
 
 #Realness vs. Classification Hyperparams
-alpha_d = 1 
-alpha_g = 1
+alpha = 1
 beta = 1
+lamb = 1
 clip_value_1 = 1
 clip_value_2 = 1
 
-d_train_cadence = 1
-g_train_cadence = 1
 c_train_cadence = 1
+d_train_cadence = 1
+gp_train_cadence = 1
+gp_iters = 1
 s_train_cadence = 1
+g_train_cadence = 1
 
 for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
@@ -226,75 +244,8 @@ for epoch in range(params['num_epochs']):
         noise, idx, c_nums = noise_sample_target(params['num_dis_c'], params['dis_c_dim'], params['num_con_c'], params['num_z'], b_size, device, targets)
 
         # Updating discriminator and DHead
-        discriminator.train()
-        netD.train()
-        #classifier.train()
         netC.train()
-        optimD.zero_grad()
-
-        if (epoch % d_train_cadence == 0):
-            # Real data
-            # label = torch.full((b_size, ), real_label, device=device)
-            # output1 = discriminator(real_data)
-
-            # probs_real = netD(output1).view(-1)
-            # label = label.to(torch.float32)
-
-            # #check for NaN
-            # isnan1 = torch.sum(torch.isnan(probs_real))
-            # isnan2 = torch.sum(torch.isnan(label))
-            # if ((isnan1 > 0) or (isnan2 > 0)):
-            #     print ('NAN VALUE in Discriminator Real Loss')
-
-            # loss_real = criterionD(probs_real, label)
-            # loss_real = loss_real*alpha_d
-            # # Calculate gradients.
-            # loss_real.backward()
-
-            # # Fake data
-            # label.fill_(fake_label)
-            # fake_data = netG(noise)
-            # output2 = discriminator(fake_data.detach())
-            # probs_fake = netD(output2).view(-1)
-
-            # isnan1 = torch.sum(torch.isnan(probs_fake))
-            # isnan2 = torch.sum(torch.isnan(label))
-            # if ((isnan1 > 0) or (isnan2 > 0)):
-            #     print ('NAN VALUE in Discriminator Fake Loss')
-
-            # loss_fake = criterionD(probs_fake, label)
-            # loss_fake = loss_fake*alpha_d
-            # # Calculate gradients.
-            # loss_fake.backward()
-
-            # Net Loss for the discriminator and classifier
-            # D_loss = loss_real + loss_fake
-
-            real_output = discriminator(real_data)
-            real_output = netD(real_output)
-            errD_real = torch.mean(real_output)
-            D_x = real_output.mean().item()
-
-            # Generate fake image batch with G
-            fake_data = netG(noise)
-
-            # Train with fake
-            fake_output = discriminator(fake_data.detach())
-            fake_output = netD(fake_output)
-            errD_fake = torch.mean(fake_output)
-            D_G_z1 = fake_output.mean().item()
-
-            # Calculate W-div gradient penalty
-            gradient_penalty = calculate_gradient_penalty(discriminator, netD,
-                                                          real_data.data, fake_data.data,
-                                                          device)
-            # gradient_penalty = 0
-
-            # Add the gradients from the all-real and all-fake batches
-            D_loss = -errD_real + errD_fake + gradient_penalty * 10
-            D_loss.backward()
-        else:
-            D_loss = torch.zeros(1)
+        optimC.zero_grad()
 
         #Train classifier
         #if we want to sample the knn embeddings
@@ -338,79 +289,141 @@ for epoch in range(params['num_epochs']):
 
         #Net loss for classifier
         C_loss = loss_c
+        optimC.step()
 
-        # Update parameters, add clipping if having exploding grads
-        # nn.utils.clip_grad_value_(discriminator.parameters(), clip_value_1)
-        # nn.utils.clip_grad_value_(netD.parameters(), clip_value_1)
-        # nn.utils.clip_grad_value_(classifier.parameters(), clip_value_1)
-        # nn.utils.clip_grad_value_(netC.parameters(), clip_value_1)
+        netD.train()
+        optimD.zero_grad()
+
+        if (epoch % d_train_cadence == 0):
+            # Real data
+            real_output = encoder(real_data)
+            real_output = netD(real_output)
+            errD_real = torch.mean(real_output)
+            D_x = real_output.mean().item()
+
+            # Generate fake image batch with G
+            fake_data = netG(noise)
+
+            # Train with fake
+            fake_output = encoder(fake_data.detach())
+            fake_output = netD(fake_output)
+            errD_fake = torch.mean(fake_output)
+            D_G_z1 = fake_output.mean().item()
+
+            # Calculate W-div gradient penalty
+            gradient_penalty = calculate_gradient_penalty(encoder, netD,
+                                                          real_data.data, fake_data.data,
+                                                          device)
+            # gradient_penalty = 0
+
+            # Add the gradients from the all-real and all-fake batches
+            D_loss = -errD_real + errD_fake + gradient_penalty * 10
+            D_loss.backward()
+        else:
+            D_loss = torch.zeros(1)
+
         optimD.step()
+
+        netGPlus.train()
+        optimGPlus.zero_grad()
+
+        #Split loss 
+        if (epoch % gp_train_cadence == 0):
+            totalGP_loss = 0
+            for gp_iter in range(gp_iters):
+                split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
+                fake_data = netGPlus(noise)
+                output_s = classifier(fake_data)
+
+                #KLDiv expects log space, already in softmax
+                probs_split = netC(output_s)
+                probs_split = F.log_softmax(probs_split, dim=1)
+
+                #check for NaN
+                isnan1 = torch.sum(torch.isnan(probs_split))
+                isnan2 = torch.sum(torch.isnan(split_labels))
+                if ((isnan1 > 0) or (isnan2 > 0)):
+                    print ('NAN VALUE in Split Loss')
+
+                loss_split = criterionGP(probs_split, split_labels)
+                loss_split = loss_split*beta
+
+                output_d = encoder(fake_data)
+                fake_output = netD(output_d)
+                gen_loss = -torch.mean(fake_output)
+
+                #Loss for Split
+                GP_loss = alpha*loss_split + beta*loss_split
+                totalGP_loss += GP_loss
+
+            totalGP_loss /= gp_iters
+            totalGP_loss.backward()
+        else:
+            totalGP_loss = torch.zeros(1)
+
+        optimGPlus.step()
+
+        stretcher.train()
+        netH.train()
+        optimS.zero_grad()
+
+        #Train the stretcher
+        if (epoch % s_train_cadence == 0):
+            fake_data_1 = netG(noise)
+            fm = encoder.get_feature_maps(fake_data_1)
+            output_1 = stretcher(fake_data_0, fm)
+            probs_1 = netH(output_0).view(-1)
+
+            fake_data_0 = netGPlus(noise)
+            fm = encoder.get_feature_maps(fake_data_0)
+            output_0 = stretcher(fake_data_1, fm)
+            probs_0 = netH(output_1).view(-1)
+
+            label_1 = torch.full((b_size, ), real_label, device=device)
+            label_0 = torch.full((b_size, ), fake_label, device=device)
+
+            label_1 = label_1.to(torch.float32)
+            label_0 = label_0.to(torch.float32)
+
+            #check for NaN
+            isnan1 = torch.sum(torch.isnan(probs_1))
+            isnan2 = torch.sum(torch.isnan(label_1))
+            if ((isnan1 > 0) or (isnan2 > 0)):
+                print ('NAN VALUE in Discriminator Real Loss')
+
+            loss_1 = criterionH(probs_1, label_1)
+
+            #check for NaN
+            isnan1 = torch.sum(torch.isnan(probs_0))
+            isnan2 = torch.sum(torch.isnan(label_0))
+            if ((isnan1 > 0) or (isnan2 > 0)):
+                print ('NAN VALUE in Discriminator Real Loss')
+
+            loss_0 = criterionH(probs_0, label_0)
+
+            S_loss = loss_1 + loss_0
+            # Calculate gradients.
+            S_loss.backward()
+        else:
+            S_loss = torch.zeros(1)
 
         # Updating Generator and QHead
         netG.train()
         netQ.train()
         optimG.zero_grad()
-        optimD.zero_grad() 
-
-        #Split loss 
-        if (epoch % s_train_cadence == 0):
-            split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
-            fake_data = netG(noise)
-            output_s = classifier(fake_data)
-
-            #KLDiv expects log space, already in softmax
-            probs_split = netC(output_s)
-            probs_split = F.log_softmax(probs_split, dim=1)
-
-            #check for NaN
-            isnan1 = torch.sum(torch.isnan(probs_split))
-            isnan2 = torch.sum(torch.isnan(split_labels))
-            if ((isnan1 > 0) or (isnan2 > 0)):
-                print ('NAN VALUE in Split Loss')
-
-            loss_split = criterionS(probs_split, split_labels)
-            loss_split = loss_split*beta
-            #Calculate Gradients
-            loss_split.backward()
-            # loss_split = torch.zeros(1)
-
-            # fake_data = netG(noise)
-            # output_e = classifier(fake_data)
-            # probs_e = netC(output_e)
-            # probs_e = F.softmax(probs_e, dim=1)
-
-            # entropies = calc_targeted_entropy(probs_e, true_label_g, targets, params['dis_c_dim'], device)
-            # loss_e = -torch.sum(entropies) #trying to maximize entropies
-            # loss_e = loss_e*beta
-            # #Calculate Gradients
-            # loss_e.backward()
-
-            #Loss for Split
-            S_loss = loss_split
-            #S_loss = loss_e
-        else:
-            S_loss = torch.zeros(1)
-
 
         # Fake data treated as real.
         if (epoch % g_train_cadence == 0):
-            # fake_data = netG(noise)
-            # output = discriminator(fake_data)
-            # label.fill_(real_label)
-            # probs_fake = netD(output).view(-1)
-
-            # isnan1 = torch.sum(torch.isnan(probs_fake))
-            # isnan2 = torch.sum(torch.isnan(label))
-            # if ((isnan1 > 0) or (isnan2 > 0)):
-            #     print ('NAN VALUE in Generator Real Loss')
-
-            # gen_loss = criterionD(probs_fake, label)
-
              # Generate fake image batch with G
             fake_data = netG(noise)
-            output = discriminator(fake_data)
+            output = encoder(fake_data)
             fake_output = netD(output)
             gen_loss = -torch.mean(fake_output)
+
+            fm = encoder.get_feature_maps(fake_data)
+            s_output = stretcher(fake_data, fm)
+            fake_output_s = netD(s_output)
+            gen_loss_s = -torch.mean(fake_output_s)
 
             q_logits, q_mu, q_var = netQ(output)
             target = torch.LongTensor(idx).to(device)
@@ -441,8 +454,8 @@ for epoch in range(params['num_epochs']):
                 con_loss = criterionQ_con(noise[:, params['num_z']+ params['num_dis_c']*params['dis_c_dim'] : ].view(-1, params['num_con_c']), q_mu, q_var)*0.1
 
             # Net loss for generator.
-            G_loss = gen_loss
-            G_loss = G_loss*alpha_g
+            G_loss = gen_loss + lamb*gen_loss_s
+            G_loss = G_loss
             Q_loss = dis_loss + con_loss
             GQ_loss = G_loss + Q_loss
             # Calculate gradients.
@@ -452,9 +465,6 @@ for epoch in range(params['num_epochs']):
             G_loss = torch.zeros(1)
             Q_loss = torch.zeros(1)
 
-        # Update parameters, add clipping if having exploding grads
-        # nn.utils.clip_grad_value_(netG.parameters(), clip_value_2)
-        # nn.utils.clip_grad_value_(netQ.parameters(), clip_value_2)
         optimG.step()
 
         # Check progress of training.
@@ -468,6 +478,7 @@ for epoch in range(params['num_epochs']):
         Q_losses.append(Q_loss.item())
         D_losses.append(D_loss.item())
         C_losses.append(C_loss.item())
+        GP_losses.append(totalGP_loss.item())
         S_losses.append(S_loss.item())
 
         iters += 1
@@ -493,13 +504,19 @@ for epoch in range(params['num_epochs']):
     if (epoch+1) % params['save_epoch'] == 0:
         torch.save({
             'netG' : netG.state_dict(),
-            'discriminator' : discriminator.state_dict(),
-            'classifier' : classifier.state_dict(),
+            'netGPlus' : netGPlus.state_dict(),
+            'encoder' : encoder.state_dict(),
+            'stretcher' : stretcher.state_dict(),
             'netC' : netC.state_dict(),
             'netD' : netD.state_dict(),
             'netQ' : netQ.state_dict(),
+            'netH' : netH.state_dict(),
             'optimD' : optimD.state_dict(),
             'optimG' : optimG.state_dict(),
+            'optimS' : optimS.state_dict(),
+            'optimGPlus' : optimGPlus.state_dict(),
+            'optimC' : optimC.state_dict(),
+            'optimE' : optimE.state_dict(),
             'params' : params
             }, 'checkpoint/model_fringe_epoch_%d_{}'.format(params['dataset']) %(epoch+1))
 
@@ -519,15 +536,21 @@ plt.savefig("Epoch_%d_{}".format(params['dataset']) %(params['num_epochs']))
 # Save network weights.
 torch.save({
     'netG' : netG.state_dict(),
-    'discriminator' : discriminator.state_dict(),
-    'classifier' : classifier.state_dict(),
+    'netGPlus' : netGPlus.state_dict(),
+    'encoder' : encoder.state_dict(),
+    'stretcher' : stretcher.state_dict(),
     'netC' : netC.state_dict(),
     'netD' : netD.state_dict(),
     'netQ' : netQ.state_dict(),
+    'netH' : netH.state_dict(),
     'optimD' : optimD.state_dict(),
     'optimG' : optimG.state_dict(),
+    'optimS' : optimS.state_dict(),
+    'optimGPlus' : optimGPlus.state_dict(),
+    'optimC' : optimC.state_dict(),
+    'optimE' : optimE.state_dict(),
     'params' : params
-    }, 'checkpoint/model_final_fringe_{}'.format(params['dataset']))
+    }, 'checkpoint/model_fringe_epoch_%d_{}'.format(params['dataset']) %(epoch+1))
 
 
 # Plot the training losses.
