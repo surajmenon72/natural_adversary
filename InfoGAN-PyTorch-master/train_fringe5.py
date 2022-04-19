@@ -15,7 +15,7 @@ from utils import *
 from config import params
 
 if(params['dataset'] == 'MNIST'):
-    from models.mnist_model_wsmooth import Generator, Encoder, DHead, CHead, QHead, Stretcher, HHead
+    from models.mnist_model_wtsmooth import Generator, Encoder, DHead, CHead, QHead, Stretcher, HHead
 elif(params['dataset'] == 'SVHN'):
     from models.svhn_model import Generator, Discriminator, DHead, QHead
 elif(params['dataset'] == 'CelebA'):
@@ -106,11 +106,11 @@ netC = CHead().to(device)
 netC.apply(weights_init)
 print (netC)
 
-stretcher = Encoder().to(device)
+stretcher = Stretcher().to(device)
 stretcher.apply(weights_init)
 print (stretcher)
 
-netH = DHead().to(device)
+netH = HHead().to(device)
 netH.apply(weights_init)
 print (netH)
 
@@ -228,8 +228,8 @@ for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
 
     for i, (data, true_label) in enumerate(dataloader, 0):
-        # print ('Batch')
-        # print (i)
+        print ('Batch')
+        print (i)
         # Get batch size
         b_size = data.size(0)
         # Transfer data tensor to GPU/CPU (device)
@@ -333,7 +333,7 @@ for epoch in range(params['num_epochs']):
             for gp_iter in range(gp_iters):
                 split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
                 fake_data = netGPlus(noise)
-                output_s = classifier(fake_data)
+                output_s = encoder(fake_data)
 
                 #KLDiv expects log space, already in softmax
                 probs_split = netC(output_s)
@@ -371,13 +371,13 @@ for epoch in range(params['num_epochs']):
         if (epoch % s_train_cadence == 0):
             fake_data_1 = netG(noise)
             fm = encoder.get_feature_maps(fake_data_1)
-            output_1 = stretcher(fake_data_0, fm)
-            probs_1 = netH(output_0).view(-1)
+            output_1 = stretcher(fake_data_1, fm)
+            probs_1 = netH(output_1).view(-1)
 
             fake_data_0 = netGPlus(noise)
             fm = encoder.get_feature_maps(fake_data_0)
-            output_0 = stretcher(fake_data_1, fm)
-            probs_0 = netH(output_1).view(-1)
+            output_0 = stretcher(fake_data_0, fm)
+            probs_0 = netH(output_0).view(-1)
 
             label_1 = torch.full((b_size, ), real_label, device=device)
             label_0 = torch.full((b_size, ), fake_label, device=device)
@@ -416,7 +416,7 @@ for epoch in range(params['num_epochs']):
         if (epoch % g_train_cadence == 0):
              # Generate fake image batch with G
             fake_data = netG(noise)
-            output = encoder(fake_data)
+            output_h, output = encoder.half_forward(fake_data)
             fake_output = netD(output)
             gen_loss = -torch.mean(fake_output)
 
@@ -425,7 +425,7 @@ for epoch in range(params['num_epochs']):
             fake_output_s = netD(s_output)
             gen_loss_s = -torch.mean(fake_output_s)
 
-            q_logits, q_mu, q_var = netQ(output)
+            q_logits, q_mu, q_var = netQ(output_h)
             target = torch.LongTensor(idx).to(device)
             # Calculating loss for discrete latent code.
             dis_loss = 0
@@ -455,7 +455,6 @@ for epoch in range(params['num_epochs']):
 
             # Net loss for generator.
             G_loss = gen_loss + lamb*gen_loss_s
-            G_loss = G_loss
             Q_loss = dis_loss + con_loss
             GQ_loss = G_loss + Q_loss
             # Calculate gradients.
