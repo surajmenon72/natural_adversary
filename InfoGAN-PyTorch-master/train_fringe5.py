@@ -224,6 +224,11 @@ gp_iters = 1
 s_train_cadence = 1
 g_train_cadence = 1
 
+#save blank for first epoch
+torch.save({
+    'netG' : netG.state_dict()
+    }, 'checkpoint/gen_save')
+
 for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
 
@@ -330,6 +335,10 @@ for epoch in range(params['num_epochs']):
         #Split loss 
         if (epoch % gp_train_cadence == 0):
             totalGP_loss = 0
+            path = './checkpoint/gen_save'
+            state_dict = torch.load(path, map_location=device)
+            netGPlus.load_state_dict(state_dict['netG'])
+
             for gp_iter in range(gp_iters):
                 split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
                 fake_data = netGPlus(noise)
@@ -407,6 +416,8 @@ for epoch in range(params['num_epochs']):
         else:
             S_loss = torch.zeros(1)
 
+        optimS.step()
+
         # Updating Generator and QHead
         netG.train()
         netQ.train()
@@ -465,6 +476,11 @@ for epoch in range(params['num_epochs']):
             Q_loss = torch.zeros(1)
 
         optimG.step()
+
+        #save generator to load next batch
+        torch.save({
+            'netG' : netG.state_dict()
+            }, 'checkpoint/gen_save')
 
         # Check progress of training.
         if i != 0 and i%100 == 0:
