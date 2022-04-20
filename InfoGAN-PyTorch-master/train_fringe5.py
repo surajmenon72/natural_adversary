@@ -471,7 +471,7 @@ for epoch in range(params['num_epochs']):
         if i != 0 and i%100 == 0:
             print('[%d/%d][%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f\tLoss_C: %.4f\tLoss_S: %.4f\tLoss_Q: %.4f'
                   % (epoch+1, params['num_epochs'], i, len(dataloader), 
-                    D_loss.item(), G_loss.item(), C_loss.item(), S_loss.item(), Q_loss.item()))
+                    D_loss.item(), totalGP_loss.item(), C_loss.item(), S_loss.item(), Q_loss.item()))
 
         # Save the losses for plotting.
         G_losses.append(G_loss.item())
@@ -505,7 +505,7 @@ for epoch in range(params['num_epochs']):
         torch.save({
             'netG' : netG.state_dict(),
             'netGPlus' : netGPlus.state_dict(),
-            'classifier' : encoder.state_dict(),
+            'classifier' : classifier.state_dict(),
             'discriminator': discriminator.state_dict(),
             'stretcher' : stretcher.state_dict(),
             'netC' : netC.state_dict(),
@@ -538,7 +538,7 @@ plt.savefig("Epoch_%d_{}".format(params['dataset']) %(params['num_epochs']))
 torch.save({
     'netG' : netG.state_dict(),
     'netGPlus' : netGPlus.state_dict(),
-    'classifier' : encoder.state_dict(),
+    'classifier' : classifier.state_dict(),
     'discriminator': discriminator.state_dict(),
     'stretcher' : stretcher.state_dict(),
     'netC' : netC.state_dict(),
