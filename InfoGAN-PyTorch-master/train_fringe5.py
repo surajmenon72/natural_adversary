@@ -15,7 +15,7 @@ from utils import *
 from config import params
 
 if(params['dataset'] == 'MNIST'):
-    from models.mnist_model_wtsmooth import Generator, Encoder, DHead, CHead, QHead, Stretcher, HHead
+    from models.mnist_model_wtsmooth import Generator, Discriminator, DHead, QHead, Encoder, CHead, Stretcher, HHead
 elif(params['dataset'] == 'SVHN'):
     from models.svhn_model import Generator, Discriminator, DHead, QHead
 elif(params['dataset'] == 'CelebA'):
@@ -94,13 +94,21 @@ netGPlus = Generator().to(device)
 netG.apply(weights_init)
 print (netGPlus)
 
-encoder = Encoder().to(device)
-encoder.apply(weights_init)
-print (encoder)
+discriminator = Discriminator().to(device)
+discriminator.apply(weights_init)
+print (discriminator)
 
 netD = DHead().to(device)
 netD.apply(weights_init)
 print(netD)
+
+netQ = QHead().to(device)
+netQ.apply(weights_init)
+print(netQ)
+
+classifier = Encoder().to(device)
+classifier.apply(weights_init)
+print (classifier)
 
 netC = CHead().to(device)
 netC.apply(weights_init)
@@ -114,15 +122,12 @@ netH = HHead().to(device)
 netH.apply(weights_init)
 print (netH)
 
-netQ = QHead().to(device)
-netQ.apply(weights_init)
-print(netQ)
-
 
 if (load_model):
     netG.load_state_dict(state_dict['netG'])
     netGPlus.load_state_dict(state_dict['netGPlus'])
-    encoder.load_state_dict(state_dict['encoder'])
+    classifier.load_state_dict(state_dict['classifier'])
+    discriminator.load_state_dict(state_dict['discriminator'])
     netD.load_state_dict(state_dict['netD'])
     netC.load_state_dict(state_dict['netC'])
     stretcher.load_state_dict(state_dict['stretcher'])
@@ -130,7 +135,7 @@ if (load_model):
     netQ.load_state_dict(state_dict['netQ'])
     print ('Model successfully loaded')
 elif (load_classifier):
-    encoder.load_state_dict(state_dict['classifier'])
+    classifier.load_state_dict(state_dict['classifier'])
     netC.load_state_dict(state_dict['netC'])
     print ('Loaded Classifer and CHead')
 else:
@@ -161,15 +166,15 @@ criterionQ_dis = nn.CrossEntropyLoss()
 criterionQ_con = NormalNLLLoss()
 
 #which networks don't require grad
-encoder.requires_grad_(False)
-encoder.eval()
+classifier.requires_grad_(False)
+classifier.eval()
 
 # Adam optimiser is used.
-optimE = optim.Adam([{'params': encoder.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
-optimD = optim.Adam([{'params': netD.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimE = optim.Adam([{'params': classifier.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimD = optim.Adam([{'params': discriminator.parameters()}, {'params': netD.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 optimC = optim.Adam([{'params': netC.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
-optimG = optim.Adam([{'params': netG.parameters()}, {'params': netQ.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
-optimGPlus = optim.Adam([{'params': netGPlus.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimG = optim.Adam([{'params': netG.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimGPlus = optim.Adam([{'params': netGPlus.parameters()}, {'params': netQ.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 optimS = optim.Adam([{'params': stretcher.parameters()}, {'params': netH.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 
 # Fixed Noise
@@ -301,7 +306,7 @@ for epoch in range(params['num_epochs']):
 
         if (epoch % d_train_cadence == 0):
             # Real data
-            real_output = encoder(real_data)
+            real_output = discriminator(real_data)
             real_output = netD(real_output)
             errD_real = torch.mean(real_output)
             D_x = real_output.mean().item()
@@ -310,13 +315,13 @@ for epoch in range(params['num_epochs']):
             fake_data = netG(noise)
 
             # Train with fake
-            fake_output = encoder(fake_data.detach())
+            fake_output = discriminator(fake_data.detach())
             fake_output = netD(fake_output)
             errD_fake = torch.mean(fake_output)
             D_G_z1 = fake_output.mean().item()
 
             # Calculate W-div gradient penalty
-            gradient_penalty = calculate_gradient_penalty(encoder, netD,
+            gradient_penalty = calculate_gradient_penalty(discriminator, netD,
                                                           real_data.data, fake_data.data,
                                                           device)
             # gradient_penalty = 0
@@ -329,20 +334,58 @@ for epoch in range(params['num_epochs']):
 
         optimD.step()
 
+        stretcher.train()
+        netH.train()
+        optimS.zero_grad()
+
+        #Train the stretcher
+        if (epoch % s_train_cadence == 0):
+            fm = discriminator.get_feature_maps(real_data)
+            real_output = stretcher(real_data, fm)
+            real_output = netD(real_output)
+            err_real = torch.mean(real_output) 
+
+            fake_data_1 = netG(noise)
+            fm = discriminator.get_feature_maps(fake_data_1)
+            output_1 = stretcher(fake_data_1, fm)
+            output_1 = netH(output_1)
+            err_g = torch.mean(output_1)
+
+            fake_data_0 = netGPlus(noise)
+            fm = discriminator.get_feature_maps(fake_data_0)
+            output_0 = stretcher(fake_data_0, fm)
+            output_0 = netH(output_0)
+            err_gplus = torch.mean(output_0)
+
+            #no gradient penalty here for now
+            S_loss = -err_real + -err_g + err_gplus
+            # Calculate gradients.
+            S_loss.backward()
+        else:
+            S_loss = torch.zeros(1)
+
+        optimS.step()
+
+        #save generator to load next batch.. transfer netGPlus to netG
+        torch.save({
+            'netGPlus' : netG.state_dict()
+            }, 'checkpoint/gen_save')
+
+        path = './checkpoint/gen_save'
+        state_dict = torch.load(path, map_location=device)
+        netG.load_state_dict(state_dict['netGPlus'])
+
         netGPlus.train()
         optimGPlus.zero_grad()
 
         #Split loss 
         if (epoch % gp_train_cadence == 0):
             totalGP_loss = 0
-            path = './checkpoint/gen_save'
-            state_dict = torch.load(path, map_location=device)
-            netGPlus.load_state_dict(state_dict['netG'])
 
             for gp_iter in range(gp_iters):
                 split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
                 fake_data = netGPlus(noise)
-                output_s = encoder(fake_data)
+                output_s = classifier(fake_data)
 
                 #KLDiv expects log space, already in softmax
                 probs_split = netC(output_s)
@@ -355,14 +398,14 @@ for epoch in range(params['num_epochs']):
                     print ('NAN VALUE in Split Loss')
 
                 loss_split = criterionGP(probs_split, split_labels)
-                loss_split = loss_split*beta
 
-                output_d = encoder(fake_data)
-                fake_output = netD(output_d)
-                gen_loss = -torch.mean(fake_output)
+                fm = discriminator.get_feature_maps(fake_data)
+                output_h = stretcher(fake_data, fm)
+                output_h = netH(output_h)
+                gen_loss = torch.mean(output_h)
 
-                #Loss for Split
-                GP_loss = alpha*loss_split + beta*loss_split
+                #Loss for Split, needs to be tuned
+                GP_loss = alpha*loss_split + beta*-gen_loss
                 totalGP_loss += GP_loss
 
             totalGP_loss /= gp_iters
@@ -372,71 +415,18 @@ for epoch in range(params['num_epochs']):
 
         optimGPlus.step()
 
-        stretcher.train()
-        netH.train()
-        optimS.zero_grad()
-
-        #Train the stretcher
-        if (epoch % s_train_cadence == 0):
-            fake_data_1 = netG(noise)
-            fm = encoder.get_feature_maps(fake_data_1)
-            output_1 = stretcher(fake_data_1, fm)
-            probs_1 = netH(output_1).view(-1)
-
-            fake_data_0 = netGPlus(noise)
-            fm = encoder.get_feature_maps(fake_data_0)
-            output_0 = stretcher(fake_data_0, fm)
-            probs_0 = netH(output_0).view(-1)
-
-            label_1 = torch.full((b_size, ), real_label, device=device)
-            label_0 = torch.full((b_size, ), fake_label, device=device)
-
-            label_1 = label_1.to(torch.float32)
-            label_0 = label_0.to(torch.float32)
-
-            #check for NaN
-            isnan1 = torch.sum(torch.isnan(probs_1))
-            isnan2 = torch.sum(torch.isnan(label_1))
-            if ((isnan1 > 0) or (isnan2 > 0)):
-                print ('NAN VALUE in Discriminator Real Loss')
-
-            loss_1 = criterionH(probs_1, label_1)
-
-            #check for NaN
-            isnan1 = torch.sum(torch.isnan(probs_0))
-            isnan2 = torch.sum(torch.isnan(label_0))
-            if ((isnan1 > 0) or (isnan2 > 0)):
-                print ('NAN VALUE in Discriminator Real Loss')
-
-            loss_0 = criterionH(probs_0, label_0)
-
-            S_loss = loss_1 + loss_0
-            # Calculate gradients.
-            S_loss.backward()
-        else:
-            S_loss = torch.zeros(1)
-
-        optimS.step()
-
         # Updating Generator and QHead
-        netG.train()
+        netGPlus.train()
         netQ.train()
-        optimG.zero_grad()
+        optimGPlus.zero_grad()
 
         # Fake data treated as real.
         if (epoch % g_train_cadence == 0):
-             # Generate fake image batch with G
-            fake_data = netG(noise)
-            output_h, output = encoder.half_forward(fake_data)
-            fake_output = netD(output)
-            gen_loss = -torch.mean(fake_output)
+             # Now set the latent var
+            fake_data = netGPlus(noise)
+            output_q = discriminator(fake_data)
 
-            fm = encoder.get_feature_maps(fake_data)
-            s_output = stretcher(fake_data, fm)
-            fake_output_s = netD(s_output)
-            gen_loss_s = -torch.mean(fake_output_s)
-
-            q_logits, q_mu, q_var = netQ(output_h)
+            q_logits, q_mu, q_var = netQ(output_q)
             target = torch.LongTensor(idx).to(device)
             # Calculating loss for discrete latent code.
             dis_loss = 0
@@ -465,22 +455,17 @@ for epoch in range(params['num_epochs']):
                 con_loss = criterionQ_con(noise[:, params['num_z']+ params['num_dis_c']*params['dis_c_dim'] : ].view(-1, params['num_con_c']), q_mu, q_var)*0.1
 
             # Net loss for generator.
-            G_loss = gen_loss + lamb*gen_loss_s
+            G_loss = torch.zeros(1)
             Q_loss = dis_loss + con_loss
-            GQ_loss = G_loss + Q_loss
+            #GQ_loss = G_loss + Q_loss
+            GQ_loss = Q_loss
             # Calculate gradients.
             GQ_loss.backward()
-            #G_loss.backward()
         else:
             G_loss = torch.zeros(1)
             Q_loss = torch.zeros(1)
 
-        optimG.step()
-
-        #save generator to load next batch
-        torch.save({
-            'netG' : netG.state_dict()
-            }, 'checkpoint/gen_save')
+        optimGPlus.step()
 
         # Check progress of training.
         if i != 0 and i%100 == 0:
@@ -520,7 +505,8 @@ for epoch in range(params['num_epochs']):
         torch.save({
             'netG' : netG.state_dict(),
             'netGPlus' : netGPlus.state_dict(),
-            'encoder' : encoder.state_dict(),
+            'classifier' : encoder.state_dict(),
+            'discriminator': discriminator.state_dict(),
             'stretcher' : stretcher.state_dict(),
             'netC' : netC.state_dict(),
             'netD' : netD.state_dict(),
@@ -552,7 +538,8 @@ plt.savefig("Epoch_%d_{}".format(params['dataset']) %(params['num_epochs']))
 torch.save({
     'netG' : netG.state_dict(),
     'netGPlus' : netGPlus.state_dict(),
-    'encoder' : encoder.state_dict(),
+    'classifier' : encoder.state_dict(),
+    'discriminator': discriminator.state_dict(),
     'stretcher' : stretcher.state_dict(),
     'netC' : netC.state_dict(),
     'netD' : netD.state_dict(),

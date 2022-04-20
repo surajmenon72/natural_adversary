@@ -32,6 +32,70 @@ class Generator(nn.Module):
 
         return img
 
+class Discriminator(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        self.conv1 = nn.Conv2d(1, 64, 4, 2, 1)
+
+        self.conv2 = nn.Conv2d(64, 128, 4, 2, 1, bias=False)
+        self.bn2 = nn.BatchNorm2d(128)
+
+        self.conv3 = nn.Conv2d(128, 1024, 7, bias=False)
+        self.bn3 = nn.BatchNorm2d(1024)
+
+    def forward(self, x):
+        x = F.leaky_relu(self.conv1(x), 0.1, inplace=True)
+        x = F.leaky_relu(self.bn2(self.conv2(x)), 0.1, inplace=True)
+        x = F.leaky_relu(self.bn3(self.conv3(x)), 0.1, inplace=True)
+
+        return x
+
+    def get_feature_maps(self, x):
+        fm = []
+        x = F.leaky_relu(self.conv1(x), 0.1, inplace=True)
+        fm.append(x)
+        x = F.leaky_relu(self.bn2(self.conv2(x)), 0.1, inplace=True)
+        fm.append(x)
+        x = F.leaky_relu(self.bn3(self.conv3(x)), 0.1, inplace=True)
+        fm.append(x)
+
+        return fm
+
+class DHead(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        self.conv = nn.Conv2d(1024, 1, 1)
+
+    def forward(self, x):
+        #output = torch.sigmoid(self.conv(x))
+        output = self.conv(x)
+        output = torch.flatten(output)
+
+        return output
+
+class QHead(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        self.conv1 = nn.Conv2d(1024, 128, 1, bias=False)
+        self.bn1 = nn.BatchNorm2d(128)
+
+        self.conv_disc = nn.Conv2d(128, 10, 1)
+        self.conv_mu = nn.Conv2d(128, 2, 1)
+        self.conv_var = nn.Conv2d(128, 2, 1)
+
+    def forward(self, x):
+        x = F.leaky_relu(self.bn1(self.conv1(x)), 0.1, inplace=True)
+
+        disc_logits = self.conv_disc(x).squeeze()
+
+        mu = self.conv_mu(x).squeeze()
+        var = torch.exp(self.conv_var(x).squeeze())
+
+        return disc_logits, mu, var
+
 class Encoder(nn.Module):
     def __init__(self):
         super().__init__()
@@ -55,45 +119,6 @@ class Encoder(nn.Module):
 
         return x
 
-    def half_forward(self, x):
-        x = F.leaky_relu(self.conv1(x), 0.1, inplace=True)
-        x = F.leaky_relu(self.bn2(self.conv2(x)), 0.1, inplace=True)
-        x_half = F.leaky_relu(self.bn3(self.conv3(x)), 0.1, inplace=True)
-
-        x = x_half.view(-1, 1024)
-        x = F.relu(self.fc1(x))
-
-        return x_half, x
-
-    def get_feature_maps(self, x):
-        fm = []
-        x = F.leaky_relu(self.conv1(x), 0.1, inplace=True)
-        fm.append(x)
-        x = F.leaky_relu(self.bn2(self.conv2(x)), 0.1, inplace=True)
-        fm.append(x)
-        x = F.leaky_relu(self.bn3(self.conv3(x)), 0.1, inplace=True)
-        fm.append(x)
-        x = x.view(-1, 1024)
-        x = F.relu(self.fc1(x))
-        fm.append(x)
-
-        return fm
-
-
-class DHead(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-        #self.conv = nn.Conv2d(256, 1, 1)
-        self.fc1 = nn.Linear(256, 1)
-
-    def forward(self, x):
-        #output = torch.sigmoid(self.conv(x))
-        output = self.fc1(x)
-        output = torch.flatten(output)
-
-        return output
-
 class CHead(nn.Module):
     def __init__(self):
         super().__init__()
@@ -104,27 +129,6 @@ class CHead(nn.Module):
         x = self.fc1(x)
 
         return x
-
-class QHead(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-        self.conv1 = nn.Conv2d(1024, 128, 1, bias=False)
-        self.bn1 = nn.BatchNorm2d(128)
-
-        self.conv_disc = nn.Conv2d(128, 10, 1)
-        self.conv_mu = nn.Conv2d(128, 2, 1)
-        self.conv_var = nn.Conv2d(128, 2, 1)
-
-    def forward(self, x):
-        x = F.leaky_relu(self.bn1(self.conv1(x)), 0.1, inplace=True)
-
-        disc_logits = self.conv_disc(x).squeeze()
-
-        mu = self.conv_mu(x).squeeze()
-        var = torch.exp(self.conv_var(x).squeeze())
-
-        return disc_logits, mu, var
 
 class Stretcher(nn.Module):
     def __init__(self):
@@ -138,36 +142,21 @@ class Stretcher(nn.Module):
         self.conv3 = nn.Conv2d(128, 1024, 7, bias=False)
         self.bn3 = nn.BatchNorm2d(1024)
 
-        self.fc1 = nn.Linear(1024, 256)
-
-    # def forward(self, x):
-    #     x = F.leaky_relu(self.conv1(x), 0.1, inplace=True) 
-    #     x = F.leaky_relu(self.bn2(self.conv2(x)), 0.1, inplace=True)
-    #     x = F.leaky_relu(self.bn3(self.conv3(x)), 0.1, inplace=True)
-    #     x = x_pre.view(-1, 1024)
-    #     x = F.relu(self.fc1(x))
-
-    #     return x
-
     def forward(self, x, fm):
         x = F.leaky_relu(self.conv1(x), 0.1, inplace=True)  + fm[0]
         x = F.leaky_relu(self.bn2(self.conv2(x)), 0.1, inplace=True) + fm[1]
         x = F.leaky_relu(self.bn3(self.conv3(x)), 0.1, inplace=True) + fm[2]
-        x = x.view(-1, 1024)
-        x = F.relu(self.fc1(x)) + fm[3]
 
         return x
 
 class HHead(nn.Module):
     def __init__(self):
         super().__init__()
-
-        #self.conv = nn.Conv2d(256, 1, 1)
-        self.fc1 = nn.Linear(256, 1)
+        
+        self.conv = nn.Conv2d(1024, 1, 1)
 
     def forward(self, x):
-        output = torch.sigmoid(self.fc1(x))
-        # output = self.conv(x)
-        # output = torch.flatten(output)
+        output = self.conv(x)
+        output = torch.flatten(output)
 
         return output
