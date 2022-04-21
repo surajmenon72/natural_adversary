@@ -45,9 +45,14 @@ class Discriminator(nn.Module):
         self.bn3 = nn.BatchNorm2d(1024)
 
     def forward(self, x):
+        # x = F.leaky_relu(self.conv1(x), 0.1, inplace=True)
+        # x = F.leaky_relu(self.bn2(self.conv2(x)), 0.1, inplace=True)
+        # x = F.leaky_relu(self.bn3(self.conv3(x)), 0.1, inplace=True)
+
+        #Remove batch norm
         x = F.leaky_relu(self.conv1(x), 0.1, inplace=True)
-        x = F.leaky_relu(self.bn2(self.conv2(x)), 0.1, inplace=True)
-        x = F.leaky_relu(self.bn3(self.conv3(x)), 0.1, inplace=True)
+        x = F.leaky_relu(self.conv2(x), 0.1, inplace=True)
+        x = F.leaky_relu(self.conv3(x), 0.1, inplace=True)
 
         return x
 
@@ -143,16 +148,21 @@ class Stretcher(nn.Module):
         self.bn3 = nn.BatchNorm2d(1024)
 
     def forward(self, x, fm):
-        x = F.leaky_relu(self.conv1(x), 0.1, inplace=True)  + fm[0]
-        x = F.leaky_relu(self.bn2(self.conv2(x)), 0.1, inplace=True) + fm[1]
-        x = F.leaky_relu(self.bn3(self.conv3(x)), 0.1, inplace=True) + fm[2]
+        # x = F.leaky_relu(self.conv1(x), 0.1, inplace=True)  + fm[0]
+        # x = F.leaky_relu(self.bn2(self.conv2(x)), 0.1, inplace=True) + fm[1]
+        # x = F.leaky_relu(self.bn3(self.conv3(x)), 0.1, inplace=True) + fm[2]
+
+        #Remove batch norm
+        x = F.leaky_relu(self.conv1(x), 0.1, inplace=True) + fm[0]
+        x = F.leaky_relu(self.conv2(x), 0.1, inplace=True) + fm[1]
+        x = F.leaky_relu(self.conv3(x), 0.1, inplace=True) + fm[2]
 
         return x
 
 class HHead(nn.Module):
     def __init__(self):
         super().__init__()
-        
+
         self.conv = nn.Conv2d(1024, 1, 1)
 
     def forward(self, x):
