@@ -431,7 +431,7 @@ for epoch in range(params['num_epochs']):
         # netGPlus.train()
         # netQ.train()
         # optimGPlus.zero_grad()
-        totalGP_loss = 0
+        totalGP_loss = torch.zeros(1)
 
         # Fake data treated as real.
         if (epoch % g_train_cadence == 0):
