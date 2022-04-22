@@ -219,7 +219,7 @@ iters = 0
 #Realness vs. Classification Hyperparams
 alpha = 1
 beta = 1
-lamb = 1
+gamma = 1
 clip_value_1 = 1
 clip_value_2 = 1
 
@@ -481,7 +481,7 @@ for epoch in range(params['num_epochs']):
 
             # Net loss for generator.
             #G_loss = torch.zeros(1)
-            G_loss = -err_d + -err_s
+            G_loss = -err_d + -err_s*gamma
             Q_loss = dis_loss + con_loss
             #GQ_loss = G_loss + Q_loss
             GQ_loss = G_loss + Q_loss
