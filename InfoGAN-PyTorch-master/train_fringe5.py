@@ -154,7 +154,8 @@ knn_t = knn_dict["knn_t"].to(device)
 print ('Loaded KNN')
 
 # Loss for discrimination between real and fake images.
-criterionH = nn.BCELoss()
+# criterionD = nn.BCELoss()
+# criterionH = nn.BCELoss()
 # Loss for classifier
 # criterionC = nn.CrossEntropyLoss()
 criterionC = nn.KLDivLoss()
@@ -173,7 +174,7 @@ classifier.eval()
 optimE = optim.Adam([{'params': classifier.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 optimD = optim.Adam([{'params': discriminator.parameters()}, {'params': netD.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 optimC = optim.Adam([{'params': netC.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
-optimG = optim.Adam([{'params': netG.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimG = optim.Adam([{'params': netG.parameters()}, {'params': netQ.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 optimGPlus = optim.Adam([{'params': netGPlus.parameters()}, {'params': netQ.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 optimS = optim.Adam([{'params': stretcher.parameters()}, {'params': netH.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 
@@ -230,9 +231,9 @@ s_train_cadence = 1
 g_train_cadence = 1
 
 #save blank for first epoch
-torch.save({
-    'netG' : netG.state_dict()
-    }, 'checkpoint/gen_save')
+# torch.save({
+#     'netG' : netG.state_dict()
+#     }, 'checkpoint/gen_save')
 
 for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
@@ -245,6 +246,15 @@ for epoch in range(params['num_epochs']):
         # Transfer data tensor to GPU/CPU (device)
         real_data = data.to(device)
         true_label_g = true_label.to(device)
+
+        #For now set G+ to G
+        torch.save({
+            'netG' : netG.state_dict()
+            }, 'checkpoint/gen_save')
+
+        path = './checkpoint/gen_save'
+        state_dict = torch.load(path, map_location=device)
+        netGPlus.load_state_dict(state_dict['netG'])
 
 
         #get labels, targets
@@ -348,13 +358,15 @@ for epoch in range(params['num_epochs']):
             fake_data_1 = netG(noise)
             fm = discriminator.get_feature_maps(fake_data_1)
             output_1 = stretcher(fake_data_1, fm)
-            output_1 = netH(output_1)
+            #output_1 = netH(output_1)
+            output_1 = netD(output_1)
             err_g = torch.mean(output_1)
 
             fake_data_0 = netGPlus(noise)
             fm = discriminator.get_feature_maps(fake_data_0)
             output_0 = stretcher(fake_data_0, fm)
-            output_0 = netH(output_0)
+            #output_0 = netH(output_0)
+            output_0 = netD(output_0)
             err_gplus = torch.mean(output_0)
 
             #no gradient penalty here for now
@@ -367,66 +379,77 @@ for epoch in range(params['num_epochs']):
         optimS.step()
 
         #save generator to load next batch.. transfer netGPlus to netG
-        torch.save({
-            'netGPlus' : netG.state_dict()
-            }, 'checkpoint/gen_save')
+        # torch.save({
+        #     'netGPlus' : netG.state_dict()
+        #     }, 'checkpoint/gen_save')
 
-        path = './checkpoint/gen_save'
-        state_dict = torch.load(path, map_location=device)
-        netG.load_state_dict(state_dict['netGPlus'])
+        # path = './checkpoint/gen_save'
+        # state_dict = torch.load(path, map_location=device)
+        # netG.load_state_dict(state_dict['netGPlus'])
 
-        netGPlus.train()
-        optimGPlus.zero_grad()
+        # netGPlus.train()
+        # optimGPlus.zero_grad()
 
-        #Split loss 
-        if (epoch % gp_train_cadence == 0):
-            totalGP_loss = 0
+        # #Split loss 
+        # if (epoch % gp_train_cadence == 0):
+        #     totalGP_loss = 0
 
-            for gp_iter in range(gp_iters):
-                split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
-                fake_data = netGPlus(noise)
-                output_s = classifier(fake_data)
+        #     for gp_iter in range(gp_iters):
+        #         split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
+        #         fake_data = netGPlus(noise)
+        #         output_s = classifier(fake_data)
 
-                #KLDiv expects log space, already in softmax
-                probs_split = netC(output_s)
-                probs_split = F.log_softmax(probs_split, dim=1)
+        #         #KLDiv expects log space, already in softmax
+        #         probs_split = netC(output_s)
+        #         probs_split = F.log_softmax(probs_split, dim=1)
 
-                #check for NaN
-                isnan1 = torch.sum(torch.isnan(probs_split))
-                isnan2 = torch.sum(torch.isnan(split_labels))
-                if ((isnan1 > 0) or (isnan2 > 0)):
-                    print ('NAN VALUE in Split Loss')
+        #         #check for NaN
+        #         isnan1 = torch.sum(torch.isnan(probs_split))
+        #         isnan2 = torch.sum(torch.isnan(split_labels))
+        #         if ((isnan1 > 0) or (isnan2 > 0)):
+        #             print ('NAN VALUE in Split Loss')
 
-                loss_split = criterionGP(probs_split, split_labels)
+        #         loss_split = criterionGP(probs_split, split_labels)
 
-                fm = discriminator.get_feature_maps(fake_data)
-                output_h = stretcher(fake_data, fm)
-                output_h = netH(output_h)
-                gen_loss = torch.mean(output_h)
+        #         fm = discriminator.get_feature_maps(fake_data)
+        #         output_h = stretcher(fake_data, fm)
+        #         output_h = netH(output_h)
+        #         gen_loss = torch.mean(output_h)
 
-                #Loss for Split, needs to be tuned
-                GP_loss = alpha*loss_split + beta*-gen_loss
-                totalGP_loss += GP_loss
+        #         #Loss for Split, needs to be tuned
+        #         GP_loss = alpha*loss_split + beta*-gen_loss
+        #         totalGP_loss += GP_loss
 
-            totalGP_loss /= gp_iters
-            totalGP_loss.backward()
-        else:
-            totalGP_loss = torch.zeros(1)
+        #     totalGP_loss /= gp_iters
+        #     totalGP_loss.backward()
+        # else:
+        #     totalGP_loss = torch.zeros(1)
 
-        optimGPlus.step()
+        # optimGPlus.step()
 
-        # Updating Generator and QHead
-        netGPlus.train()
-        netQ.train()
-        optimGPlus.zero_grad()
+        # # Updating Generator and QHead
+        # netGPlus.train()
+        # netQ.train()
+        # optimGPlus.zero_grad()
 
         # Fake data treated as real.
         if (epoch % g_train_cadence == 0):
              # Now set the latent var
-            fake_data = netGPlus(noise)
-            output_q = discriminator(fake_data)
+            # fake_data = netGPlus(noise)
+            # output_q = discriminator(fake_data)
 
-            q_logits, q_mu, q_var = netQ(output_q)
+            fake_data = netG(noise)
+            output_d = discriminator(fake_data)
+            output_d = netD(output_d)
+            err_d = torch.mean(output_d) 
+
+            fm = discriminator.get_feature_maps(fake_data)
+            output_s = stretcher(fake_data, fm)
+            #output_s = netH(output_s)
+            output_s = netD(output_s)
+            err_s = torch.mean(output_s)
+
+            q_logits, q_mu, q_var = netQ(output_d)
             target = torch.LongTensor(idx).to(device)
             # Calculating loss for discrete latent code.
             dis_loss = 0
@@ -455,17 +478,19 @@ for epoch in range(params['num_epochs']):
                 con_loss = criterionQ_con(noise[:, params['num_z']+ params['num_dis_c']*params['dis_c_dim'] : ].view(-1, params['num_con_c']), q_mu, q_var)*0.1
 
             # Net loss for generator.
-            G_loss = torch.zeros(1)
+            #G_loss = torch.zeros(1)
+            G_loss = -err_d + -err_s
             Q_loss = dis_loss + con_loss
             #GQ_loss = G_loss + Q_loss
-            GQ_loss = Q_loss
+            GQ_loss = G_loss + Q_loss
             # Calculate gradients.
             GQ_loss.backward()
         else:
             G_loss = torch.zeros(1)
             Q_loss = torch.zeros(1)
 
-        optimGPlus.step()
+        #optimGPlus.step()
+        optimG.step()
 
         # Check progress of training.
         if i != 0 and i%100 == 0:
