@@ -449,7 +449,8 @@ for epoch in range(params['num_epochs']):
             output_s = netD(output_s)
             err_s = torch.mean(output_s)
 
-            q_logits, q_mu, q_var = netQ(output_d)
+            output_q = discriminator(fake_data)
+            q_logits, q_mu, q_var = netQ(output_q)
             target = torch.LongTensor(idx).to(device)
             # Calculating loss for discrete latent code.
             dis_loss = 0
