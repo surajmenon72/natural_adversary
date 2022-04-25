@@ -344,9 +344,8 @@ for epoch in range(params['num_epochs']):
 
         optimD.step()
         #need to clip WGAN for Lipshitz
-        nn.utils.clip_grad_value_(netD.parameters(), clip_value_1)
-        torch.clamp(discriminator.parameters(), min=-.01, max=.01)
-        torch.clamp(netD.parameters(), min=-.01, max=.01)
+        clip_module_weights(discriminator, min=-.01, max=.01)
+        clip_module_weights(netD, min=-.01, max=.01)
 
         # stretcher.train()
         # netH.train()
