@@ -344,8 +344,8 @@ for epoch in range(params['num_epochs']):
 
         optimD.step()
         #need to clip WGAN for Lipshitz
-        clip_module_weights(discriminator, min=-.01, max=.01)
-        clip_module_weights(netD, min=-.01, max=.01)
+        clip_module_weights(discriminator, min_v=-.01, max_v=.01)
+        clip_module_weights(netD, min_v=-.01, max_v=.01)
 
         # stretcher.train()
         # netH.train()

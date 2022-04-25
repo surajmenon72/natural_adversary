@@ -250,8 +250,6 @@ def calculate_gradient_penalty(model, model_H, real_images, fake_images, device)
     return gradient_penalty
 
 def clip_module_weights(module, min_v=-.01, max_v=.01):
-    if hasattr(module, 'weight'):
-        w = module.weight.data
-        w = w.clamp(min_v, max_v)
-        module.weight.data = w
+    for p in module.parameters():
+        p.data.clamp_(min_v, max_v)
 
