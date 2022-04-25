@@ -285,10 +285,10 @@ for epoch in range(params['num_epochs']):
             D_G_z1 = fake_output.mean().item()
 
             # Calculate W-div gradient penalty
-            gradient_penalty = calculate_gradient_penalty(discriminator, netD,
-                                                          real_data.data, fake_data.data,
-                                                          device)
-            # gradient_penalty = 0
+            # gradient_penalty = calculate_gradient_penalty(discriminator, netD,
+            #                                               real_data.data, fake_data.data,
+            #                                               device)
+            gradient_penalty = 0
 
             # Add the gradients from the all-real and all-fake batches
             D_loss = -errD_real + errD_fake + gradient_penalty * 10
@@ -340,10 +340,10 @@ for epoch in range(params['num_epochs']):
         C_loss = loss_c
 
         # Update parameters, add clipping if having exploding grads
-        # nn.utils.clip_grad_value_(discriminator.parameters(), clip_value_1)
-        # nn.utils.clip_grad_value_(netD.parameters(), clip_value_1)
-        # nn.utils.clip_grad_value_(classifier.parameters(), clip_value_1)
-        # nn.utils.clip_grad_value_(netC.parameters(), clip_value_1)
+        nn.utils.clip_grad_value_(discriminator.parameters(), clip_value_1)
+        nn.utils.clip_grad_value_(netD.parameters(), clip_value_1)
+        nn.utils.clip_grad_value_(classifier.parameters(), clip_value_1)
+        nn.utils.clip_grad_value_(netC.parameters(), clip_value_1)
         optimD.step()
 
         # Updating Generator and QHead
@@ -453,8 +453,8 @@ for epoch in range(params['num_epochs']):
             Q_loss = torch.zeros(1)
 
         # Update parameters, add clipping if having exploding grads
-        # nn.utils.clip_grad_value_(netG.parameters(), clip_value_2)
-        # nn.utils.clip_grad_value_(netQ.parameters(), clip_value_2)
+        nn.utils.clip_grad_value_(netG.parameters(), clip_value_2)
+        nn.utils.clip_grad_value_(netQ.parameters(), clip_value_2)
         optimG.step()
 
         # Check progress of training.
