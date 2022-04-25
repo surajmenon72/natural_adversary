@@ -249,9 +249,9 @@ def calculate_gradient_penalty(model, model_H, real_images, fake_images, device)
     gradient_penalty = torch.mean((gradients.norm(2, dim=1) - 1) ** 2)
     return gradient_penalty
 
-def clip_module_weights(module, min=-.01, max=.01):
+def clip_module_weights(module, min_v=-.01, max_v=.01):
     if hasattr(module, 'weight'):
         w = module.weight.data
-        w = w.clamp(-1,1)
+        w = w.clamp(min_v, max_v)
         module.weight.data = w
 
