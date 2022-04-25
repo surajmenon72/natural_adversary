@@ -370,8 +370,6 @@ for epoch in range(params['num_epochs']):
             err_gplus = torch.mean(output_0)
 
             #no gradient penalty here for now
-            g_net = -err_g + err_gplus
-            print (g_net)
             S_loss = -err_real + -err_g + err_gplus
             # Calculate gradients.
             S_loss.backward()
@@ -483,7 +481,8 @@ for epoch in range(params['num_epochs']):
 
             # Net loss for generator.
             #G_loss = torch.zeros(1)
-            G_loss = -err_d + -err_s*gamma
+            #G_loss = -err_d + -err_s*gamma
+            G_loss = -err_d
             Q_loss = dis_loss + con_loss
             #GQ_loss = G_loss + Q_loss
             GQ_loss = G_loss + Q_loss
