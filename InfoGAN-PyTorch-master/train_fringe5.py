@@ -228,7 +228,7 @@ d_train_cadence = 1
 gp_train_cadence = 1
 gp_iters = 1
 s_train_cadence = 1
-g_train_cadence = 2
+g_train_cadence = 1
 
 #save blank for first epoch
 # torch.save({
@@ -344,8 +344,8 @@ for epoch in range(params['num_epochs']):
 
         optimD.step()
         #need to clip WGAN for Lipshitz
-        clip_module_weights(discriminator, min_v=-.01, max_v=.01)
-        clip_module_weights(netD, min_v=-.01, max_v=.01)
+        # clip_module_weights(discriminator, min_v=-.01, max_v=.01)
+        # clip_module_weights(netD, min_v=-.01, max_v=.01)
 
         # stretcher.train()
         # netH.train()
