@@ -228,7 +228,7 @@ d_train_cadence = 1
 gp_train_cadence = 1
 gp_iters = 1
 s_train_cadence = 1
-g_train_cadence = 1
+g_train_cadence = 2
 
 #save blank for first epoch
 # torch.save({
@@ -331,10 +331,10 @@ for epoch in range(params['num_epochs']):
             D_G_z1 = fake_output.mean().item()
 
             # Calculate W-div gradient penalty
-            gradient_penalty = calculate_gradient_penalty(discriminator, netD,
-                                                          real_data.data, fake_data.data,
-                                                          device)
-            # gradient_penalty = 0
+            # gradient_penalty = calculate_gradient_penalty(discriminator, netD,
+            #                                               real_data.data, fake_data.data,
+            #                                               device)
+            gradient_penalty = 0
 
             # Add the gradients from the all-real and all-fake batches
             D_loss = -errD_real + errD_fake + gradient_penalty * 10
@@ -343,6 +343,10 @@ for epoch in range(params['num_epochs']):
             D_loss = torch.zeros(1)
 
         optimD.step()
+        #need to clip WGAN for Lipshitz
+        nn.utils.clip_grad_value_(netD.parameters(), clip_value_1)
+        torch.clamp(discriminator.parameters(), min=-.01, max=.01)
+        torch.clamp(netD.parameters(), min=-.01, max=.01)
 
         # stretcher.train()
         # netH.train()
