@@ -344,39 +344,39 @@ for epoch in range(params['num_epochs']):
 
         optimD.step()
 
-        stretcher.train()
-        netH.train()
-        optimS.zero_grad()
+        # stretcher.train()
+        # netH.train()
+        # optimS.zero_grad()
 
-        #Train the stretcher
-        if (epoch % s_train_cadence == 0):
-            fm = discriminator.get_feature_maps(real_data)
-            real_output = stretcher(real_data, fm)
-            real_output = netD(real_output)
-            err_real = torch.mean(real_output) 
+        # #Train the stretcher
+        # if (epoch % s_train_cadence == 0):
+        #     fm = discriminator.get_feature_maps(real_data)
+        #     real_output = stretcher(real_data, fm)
+        #     real_output = netD(real_output)
+        #     err_real = torch.mean(real_output) 
 
-            fake_data_1 = netG(noise)
-            fm = discriminator.get_feature_maps(fake_data_1)
-            output_1 = stretcher(fake_data_1, fm)
-            #output_1 = netH(output_1)
-            output_1 = netD(output_1)
-            err_g = torch.mean(output_1)
+        #     fake_data_1 = netG(noise)
+        #     fm = discriminator.get_feature_maps(fake_data_1)
+        #     output_1 = stretcher(fake_data_1, fm)
+        #     #output_1 = netH(output_1)
+        #     output_1 = netD(output_1)
+        #     err_g = torch.mean(output_1)
 
-            fake_data_0 = netGPlus(noise)
-            fm = discriminator.get_feature_maps(fake_data_0)
-            output_0 = stretcher(fake_data_0, fm)
-            #output_0 = netH(output_0)
-            output_0 = netD(output_0)
-            err_gplus = torch.mean(output_0)
+        #     fake_data_0 = netGPlus(noise)
+        #     fm = discriminator.get_feature_maps(fake_data_0)
+        #     output_0 = stretcher(fake_data_0, fm)
+        #     #output_0 = netH(output_0)
+        #     output_0 = netD(output_0)
+        #     err_gplus = torch.mean(output_0)
 
-            #no gradient penalty here for now
-            S_loss = -err_real + -err_g + err_gplus
-            # Calculate gradients.
-            S_loss.backward()
-        else:
-            S_loss = torch.zeros(1)
+        #     #no gradient penalty here for now
+        #     S_loss = -err_real + -err_g + err_gplus
+        #     # Calculate gradients.
+        #     S_loss.backward()
+        # else:
+        #     S_loss = torch.zeros(1)
 
-        optimS.step()
+        # optimS.step()
 
         #save generator to load next batch.. transfer netGPlus to netG
         # torch.save({
@@ -496,8 +496,8 @@ for epoch in range(params['num_epochs']):
         optimG.step()
 
         # Check progress of training.
-        #if i != 0 and i%100 == 0:
-        if i != 0 and i%10 == 0:
+        if i != 0 and i%100 == 0:
+        #if i != 0 and i%10 == 0:
             print('[%d/%d][%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f\tLoss_C: %.4f\tLoss_S: %.4f\tLoss_Q: %.4f'
                   % (epoch+1, params['num_epochs'], i, len(dataloader), 
                     D_loss.item(), G_loss.item(), C_loss.item(), S_loss.item(), Q_loss.item()))
