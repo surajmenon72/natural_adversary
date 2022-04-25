@@ -375,6 +375,7 @@ for epoch in range(params['num_epochs']):
         #     S_loss.backward()
         # else:
         #     S_loss = torch.zeros(1)
+        S_loss = torch.zeros(1)
 
         # optimS.step()
 
