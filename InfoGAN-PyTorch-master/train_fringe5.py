@@ -33,7 +33,7 @@ print("Random Seed: ", seed)
 device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
-load_model = True
+load_model = False
 load_classifier = True
 train_classifier_head = False
 
@@ -342,12 +342,12 @@ for epoch in range(params['num_epochs']):
         else:
             D_loss = torch.zeros(1)
 
-        nn.utils.clip_grad_value_(discriminator.parameters(), clip_value_1)
-        nn.utils.clip_grad_value_(netD.parameters(), clip_value_1)
+        # nn.utils.clip_grad_value_(discriminator.parameters(), clip_value_1)
+        # nn.utils.clip_grad_value_(netD.parameters(), clip_value_1)
         optimD.step()
         #need to clip WGAN for Lipshitz
-        # clip_module_weights(discriminator, min_v=-.01, max_v=.01)
-        # clip_module_weights(netD, min_v=-.01, max_v=.01)
+        clip_module_weights(discriminator, min_v=-.01, max_v=.01)
+        clip_module_weights(netD, min_v=-.01, max_v=.01)
 
         # stretcher.train()
         # netH.train()
