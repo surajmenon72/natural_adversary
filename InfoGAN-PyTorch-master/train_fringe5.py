@@ -511,8 +511,8 @@ for epoch in range(params['num_epochs']):
         optimG.step()
 
         # Check progress of training.
-        #if i != 0 and i%100 == 0:
-        if i != 0 and i%10 == 0:
+        if i != 0 and i%100 == 0:
+        #if i != 0 and i%10 == 0:
             print('[%d/%d][%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f\tLoss_C: %.4f\tLoss_S: %.4f\tLoss_Q: %.4f'
                   % (epoch+1, params['num_epochs'], i, len(dataloader), 
                     D_loss.item(), G_loss.item(), C_loss.item(), S_loss.item(), Q_loss.item()))
