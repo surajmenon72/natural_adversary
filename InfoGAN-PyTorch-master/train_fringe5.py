@@ -342,47 +342,50 @@ for epoch in range(params['num_epochs']):
         else:
             D_loss = torch.zeros(1)
 
-        nn.utils.clip_grad_value_(discriminator.parameters(), clip_value_1)
-        nn.utils.clip_grad_value_(netD.parameters(), clip_value_1)
+        # nn.utils.clip_grad_value_(discriminator.parameters(), clip_value_1)
+        # nn.utils.clip_grad_value_(netD.parameters(), clip_value_1)
         optimD.step()
         #need to clip WGAN for Lipshitz
-        # clip_module_weights(discriminator, min_v=-.01, max_v=.01)
-        # clip_module_weights(netD, min_v=-.01, max_v=.01)
+        clip_module_weights(discriminator, min_v=-.01, max_v=.01)
+        clip_module_weights(netD, min_v=-.01, max_v=.01)
 
-        # stretcher.train()
-        # netH.train()
-        # optimS.zero_grad()
+        stretcher.train()
+        netH.train()
+        optimS.zero_grad()
 
-        # #Train the stretcher
-        # if (epoch % s_train_cadence == 0):
-        #     fm = discriminator.get_feature_maps(real_data)
-        #     real_output = stretcher(real_data, fm)
-        #     real_output = netD(real_output)
-        #     err_real = torch.mean(real_output) 
+        #Train the stretcher
+        if (epoch % s_train_cadence == 0):
+            fm = discriminator.get_feature_maps(real_data)
+            real_output = stretcher(real_data, fm)
+            real_output = netD(real_output)
+            err_real = torch.mean(real_output) 
 
-        #     fake_data_1 = netG(noise)
-        #     fm = discriminator.get_feature_maps(fake_data_1)
-        #     output_1 = stretcher(fake_data_1, fm)
-        #     #output_1 = netH(output_1)
-        #     output_1 = netD(output_1)
-        #     err_g = torch.mean(output_1)
+            fake_data_1 = netG(noise)
+            fm = discriminator.get_feature_maps(fake_data_1)
+            output_1 = stretcher(fake_data_1, fm)
+            #output_1 = netH(output_1)
+            output_1 = netD(output_1)
+            err_g = torch.mean(output_1)
 
-        #     fake_data_0 = netGPlus(noise)
-        #     fm = discriminator.get_feature_maps(fake_data_0)
-        #     output_0 = stretcher(fake_data_0, fm)
-        #     #output_0 = netH(output_0)
-        #     output_0 = netD(output_0)
-        #     err_gplus = torch.mean(output_0)
+            fake_data_0 = netGPlus(noise)
+            fm = discriminator.get_feature_maps(fake_data_0)
+            output_0 = stretcher(fake_data_0, fm)
+            #output_0 = netH(output_0)
+            output_0 = netD(output_0)
+            err_gplus = torch.mean(output_0)
 
-        #     #no gradient penalty here for now
-        #     S_loss = -err_real + -err_g + err_gplus
-        #     # Calculate gradients.
-        #     S_loss.backward()
-        # else:
-        #     S_loss = torch.zeros(1)
-        S_loss = torch.zeros(1)
+            #no gradient penalty here for now
+            S_loss = -err_real + -err_g + err_gplus
+            # Calculate gradients.
+            S_loss.backward()
+        else:
+            S_loss = torch.zeros(1)
+        # S_loss = torch.zeros(1)
 
-        # optimS.step()
+        optimS.step()
+        #need to clip WGAN for Lipshitz
+        clip_module_weights(stretcher, min_v=-.01, max_v=.01)
+        clip_module_weights(netH, min_v=-.01, max_v=.01)
 
         #save generator to load next batch.. transfer netGPlus to netG
         # torch.save({
@@ -491,8 +494,8 @@ for epoch in range(params['num_epochs']):
 
             # Net loss for generator.
             #G_loss = torch.zeros(1)
-            #G_loss = -err_d + -err_s*gamma
-            G_loss = -err_d
+            G_loss = -err_d + -err_s*gamma
+            #G_loss = -err_d
             Q_loss = dis_loss + con_loss
             #GQ_loss = G_loss + Q_loss
             GQ_loss = G_loss + Q_loss
