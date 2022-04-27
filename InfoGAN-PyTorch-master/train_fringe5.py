@@ -217,7 +217,7 @@ start_time = time.time()
 iters = 0
 
 #Realness vs. Classification Hyperparams
-alpha = 1
+alpha = .01
 beta = 1
 gamma = 1
 clip_value_1 = 1
@@ -248,13 +248,13 @@ for epoch in range(params['num_epochs']):
         true_label_g = true_label.to(device)
 
         #For now set G+ to G
-        torch.save({
-            'netG' : netG.state_dict()
-            }, 'checkpoint/gen_save')
+        # torch.save({
+        #     'netG' : netG.state_dict()
+        #     }, 'checkpoint/gen_save')
 
-        path = './checkpoint/gen_save'
-        state_dict = torch.load(path, map_location=device)
-        netGPlus.load_state_dict(state_dict['netG'])
+        # path = './checkpoint/gen_save'
+        # state_dict = torch.load(path, map_location=device)
+        # netGPlus.load_state_dict(state_dict['netG'])
 
 
         #get labels, targets
@@ -384,87 +384,58 @@ for epoch in range(params['num_epochs']):
 
         nn.utils.clip_grad_value_(stretcher.parameters(), clip_value_1)
         nn.utils.clip_grad_value_(netH.parameters(), clip_value_1)
-        # optimS.step()
+        optimS.step()
         # #need to clip WGAN for Lipshitz
         # clip_module_weights(stretcher, min_v=-.01, max_v=.01)
         # clip_module_weights(netH, min_v=-.01, max_v=.01)
 
         #save generator to load next batch.. transfer netGPlus to netG
-        # torch.save({
-        #     'netGPlus' : netG.state_dict()
-        #     }, 'checkpoint/gen_save')
+        torch.save({
+            'netGPlus' : netGPlus.state_dict()
+            }, 'checkpoint/gen_save')
 
-        # path = './checkpoint/gen_save'
-        # state_dict = torch.load(path, map_location=device)
-        # netG.load_state_dict(state_dict['netGPlus'])
+        path = './checkpoint/gen_save'
+        state_dict = torch.load(path, map_location=device)
+        netG.load_state_dict(state_dict['netGPlus'])
 
-        # netGPlus.train()
-        # optimGPlus.zero_grad()
-
-        # #Split loss 
-        # if (epoch % gp_train_cadence == 0):
-        #     totalGP_loss = 0
-
-        #     for gp_iter in range(gp_iters):
-        #         split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
-        #         fake_data = netGPlus(noise)
-        #         output_s = classifier(fake_data)
-
-        #         #KLDiv expects log space, already in softmax
-        #         probs_split = netC(output_s)
-        #         probs_split = F.log_softmax(probs_split, dim=1)
-
-        #         #check for NaN
-        #         isnan1 = torch.sum(torch.isnan(probs_split))
-        #         isnan2 = torch.sum(torch.isnan(split_labels))
-        #         if ((isnan1 > 0) or (isnan2 > 0)):
-        #             print ('NAN VALUE in Split Loss')
-
-        #         loss_split = criterionGP(probs_split, split_labels)
-
-        #         fm = discriminator.get_feature_maps(fake_data)
-        #         output_h = stretcher(fake_data, fm)
-        #         output_h = netH(output_h)
-        #         gen_loss = torch.mean(output_h)
-
-        #         #Loss for Split, needs to be tuned
-        #         GP_loss = alpha*loss_split + beta*-gen_loss
-        #         totalGP_loss += GP_loss
-
-        #     totalGP_loss /= gp_iters
-        #     totalGP_loss.backward()
-        # else:
-        #     totalGP_loss = torch.zeros(1)
-
-        # optimGPlus.step()
-
-        # # Updating Generator and QHead
-        # netGPlus.train()
-        # netQ.train()
-        # optimGPlus.zero_grad()
-
-        netG.train()
+        netGPlus.train()
         netQ.train()
-        optimG.zero_grad()
-        totalGP_loss = torch.zeros(1)
+        optimGPlus.zero_grad()
 
-        # Fake data treated as real.
-        if (epoch % g_train_cadence == 0):
-             # Now set the latent var
-            # fake_data = netGPlus(noise)
-            # output_q = discriminator(fake_data)
+        #Split loss 
+        if (epoch % gp_train_cadence == 0):
+            totalGP_loss = 0
 
-            fake_data = netG(noise)
-            output_d = discriminator(fake_data)
-            output_d = netD(output_d)
-            err_d = torch.mean(output_d) 
+            for gp_iter in range(gp_iters):
+                split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
+                fake_data = netGPlus(noise)
+                output_s = classifier(fake_data)
 
-            fm = discriminator.get_feature_maps(fake_data)
-            output_s = stretcher(fake_data, fm)
-            #output_s = netH(output_s)
-            output_s = netD(output_s)
-            err_s = torch.mean(output_s)
+                #KLDiv expects log space, already in softmax
+                probs_split = netC(output_s)
+                probs_split = F.log_softmax(probs_split, dim=1)
 
+                #check for NaN
+                isnan1 = torch.sum(torch.isnan(probs_split))
+                isnan2 = torch.sum(torch.isnan(split_labels))
+                if ((isnan1 > 0) or (isnan2 > 0)):
+                    print ('NAN VALUE in Split Loss')
+
+                loss_split = criterionGP(probs_split, split_labels)
+
+                fm = discriminator.get_feature_maps(fake_data)
+                output_h = stretcher(fake_data, fm)
+                output_h = netH(output_h)
+                gen_loss = torch.mean(output_h)
+
+                #Loss for Split, needs to be tuned
+                GP_loss = alpha*loss_split + beta*-gen_loss
+                totalGP_loss += GP_loss
+
+            totalGP_loss /= gp_iters
+            totalGP_loss.backward()
+
+            fake_data = netGPlus(noise)
             output_q = discriminator(fake_data)
             q_logits, q_mu, q_var = netQ(output_q)
             target = torch.LongTensor(idx).to(device)
@@ -494,21 +465,80 @@ for epoch in range(params['num_epochs']):
             if (params['num_con_c'] != 0):
                 con_loss = criterionQ_con(noise[:, params['num_z']+ params['num_dis_c']*params['dis_c_dim'] : ].view(-1, params['num_con_c']), q_mu, q_var)*0.1
 
-            # Net loss for generator.
-            #G_loss = torch.zeros(1)
-            G_loss = -err_d + -err_s*gamma
-            #G_loss = -err_d
             Q_loss = dis_loss + con_loss
-            #GQ_loss = G_loss + Q_loss
-            GQ_loss = G_loss + Q_loss
-            # Calculate gradients.
-            GQ_loss.backward()
-        else:
-            G_loss = torch.zeros(1)
-            Q_loss = torch.zeros(1)
+            Q_loss.backward()
 
-        #optimGPlus.step()
-        optimG.step()
+        else:
+            totalGP_loss = torch.zeros(1)
+
+        optimGPlus.step()
+
+        # netG.train()
+        # netQ.train()
+        # optimG.zero_grad()
+        # totalGP_loss = torch.zeros(1)
+
+        # # Fake data treated as real.
+        # if (epoch % g_train_cadence == 0):
+        #      # Now set the latent var
+        #     # fake_data = netGPlus(noise)
+        #     # output_q = discriminator(fake_data)
+
+        #     fake_data = netG(noise)
+        #     output_d = discriminator(fake_data)
+        #     output_d = netD(output_d)
+        #     err_d = torch.mean(output_d) 
+
+        #     fm = discriminator.get_feature_maps(fake_data)
+        #     output_s = stretcher(fake_data, fm)
+        #     #output_s = netH(output_s)
+        #     output_s = netD(output_s)
+        #     err_s = torch.mean(output_s)
+
+        #     output_q = discriminator(fake_data)
+        #     q_logits, q_mu, q_var = netQ(output_q)
+        #     target = torch.LongTensor(idx).to(device)
+        #     # Calculating loss for discrete latent code.
+        #     dis_loss = 0
+
+        #     isnan1 = torch.sum(torch.isnan(q_logits))
+        #     isnan2 = torch.sum(torch.isnan(target))
+        #     if ((isnan1 > 0) or (isnan2 > 0)):
+        #         print ('NAN VALUE in Q Discrete Loss')
+
+        #     # for MNIST, this is always 1
+        #     for j in range(params['num_dis_c']):
+        #         dis_loss += criterionQ_dis(q_logits[:, j*10 : j*10 + 10], target[j])
+
+        #     # align_loss = criterionQ_dis(q_logits, true_label_g)
+        #     # align_loss = 0
+
+        #     isnan1 = torch.sum(torch.isnan(noise))
+        #     isnan2 = torch.sum(torch.isnan(q_mu))
+        #     isnan3 = torch.sum(torch.isnan(q_var))
+        #     if ((isnan1 > 0) or (isnan2 > 0) or (isnan3 > 0)):
+        #         print ('NAN VALUE in Q Continuous Loss')
+
+        #     # Calculating loss for continuous latent code.
+        #     con_loss = 0
+        #     if (params['num_con_c'] != 0):
+        #         con_loss = criterionQ_con(noise[:, params['num_z']+ params['num_dis_c']*params['dis_c_dim'] : ].view(-1, params['num_con_c']), q_mu, q_var)*0.1
+
+        #     # Net loss for generator.
+        #     #G_loss = torch.zeros(1)
+        #     G_loss = -err_d + -err_s*gamma
+        #     #G_loss = -err_d
+        #     Q_loss = dis_loss + con_loss
+        #     #GQ_loss = G_loss + Q_loss
+        #     GQ_loss = G_loss + Q_loss
+        #     # Calculate gradients.
+        #     GQ_loss.backward()
+        # else:
+        #     G_loss = torch.zeros(1)
+        #     Q_loss = torch.zeros(1)
+        G_loss = torch.zeros(1)
+
+        # optimG.step()
 
         # Check progress of training.
         if i != 0 and i%100 == 0:
