@@ -357,6 +357,7 @@ for epoch in range(params['num_epochs']):
         if (epoch % s_train_cadence == 0):
             fm = discriminator.get_feature_maps(real_data)
             real_output = stretcher(real_data, fm)
+            #real_output = netH(real_output)
             real_output = netD(real_output)
             err_real = torch.mean(real_output) 
 
