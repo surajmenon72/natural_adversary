@@ -107,6 +107,7 @@ def noise_sample_target(n_dis_c, dis_c_dim, n_con_c, n_z, batch_size, device, ta
             # con_c[i, :, :, :] = full_num
 
             num = torch.rand(1, 1, 1, 1)
+            num = 0.5 #hack for testing
             con_c[i, t, :, :] = num
             c_nums.append(num)
 
