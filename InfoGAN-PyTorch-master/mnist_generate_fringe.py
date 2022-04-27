@@ -33,8 +33,8 @@ print(netG)
 
 netG.eval()
 
-start = .4
-stop = .6
+start = -1
+stop = 1
 #c = np.linspace(-2, 2, 10).reshape(1, -1)
 c = np.linspace(start, stop, 10).reshape(1, -1)
 c = np.repeat(c, 10, 0).reshape(-1, 1)
