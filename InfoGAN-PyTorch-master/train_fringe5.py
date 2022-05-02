@@ -408,6 +408,7 @@ for epoch in range(params['num_epochs']):
             totalGP_loss = 0
             total_split_loss = 0
             total_gen_loss = 0
+            total_gen_d_loss = 0
 
             for gp_iter in range(gp_iters):
                 split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
@@ -432,11 +433,16 @@ for epoch in range(params['num_epochs']):
                 output_h = netD(output_h)
                 gen_loss = torch.mean(output_h)
 
+                output_d = discriminator(fake_data)
+                output_d = netD(output_d)
+                gen_d_loss = torhc.mean(output_d)
+
                 #Loss for Split, needs to be tuned
-                GP_loss = alpha*loss_split + beta*-gen_loss
+                GP_loss = alpha*loss_split + beta*-gen_loss + gamma*-gen_d_loss
                 totalGP_loss += GP_loss
                 total_split_loss += loss_split
                 total_gen_loss += -gen_loss
+                total_gen_d_loss += -gen_d_loss
 
             totalGP_loss /= gp_iters
             totalGP_loss.backward()
@@ -552,9 +558,9 @@ for epoch in range(params['num_epochs']):
             print('[%d/%d][%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f\tLoss_C: %.4f\tLoss_S: %.4f\tLoss_Q: %.4f'
                   % (epoch+1, params['num_epochs'], i, len(dataloader), 
                     D_loss.item(), G_loss.item(), C_loss.item(), S_loss.item(), Q_loss.item()))
-            print('[%d/%d][%d/%d]\tLoss_G+: %.4f\tLoss_Split: %.4f\tLoss_Gen: %.4f'
+            print('[%d/%d][%d/%d]\tLoss_G+: %.4f\tLoss_Split: %.4f\tLoss_Gen: %.4f\tLoss_Gen_D: %.4f'
                   % (epoch+1, params['num_epochs'], i, len(dataloader), 
-                    totalGP_loss.item(), total_split_loss.item(), total_gen_loss.item()))
+                    totalGP_loss.item(), total_split_loss.item(), total_gen_loss.item(), total_gen_d_loss.item()))
 
         # Save the losses for plotting.
         G_losses.append(G_loss.item())
