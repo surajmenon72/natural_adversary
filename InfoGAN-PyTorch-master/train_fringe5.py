@@ -435,7 +435,7 @@ for epoch in range(params['num_epochs']):
 
                 output_d = discriminator(fake_data)
                 output_d = netD(output_d)
-                gen_d_loss = torhc.mean(output_d)
+                gen_d_loss = torch.mean(output_d)
 
                 #Loss for Split, needs to be tuned
                 GP_loss = alpha*loss_split + beta*-gen_loss + gamma*-gen_d_loss
