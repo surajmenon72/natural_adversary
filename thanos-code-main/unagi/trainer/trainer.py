@@ -222,9 +222,9 @@ class UnagiModule(pl.LightningModule):
             Y_dict,
         ) = batch
 
-        print (X_dict['inputs']['image'].shape)
-        print (Y_dict)
-        exit()
+        # print (X_dict['inputs']['image'].shape)
+        # print (Y_dict)
+        # exit()
 
         # Forward pass through the model(s)
         output_dict = self.forward(X_dict)
