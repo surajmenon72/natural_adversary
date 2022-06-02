@@ -145,7 +145,6 @@ class UnagiModule(pl.LightningModule):
 
         for batch in dl:
             X_dict, _ = batch
-            print (X_dict['inputs']['image'].shape)
             # shape is (B, V, ...) -- discard (B, V)
             X_shapes = {
                 k: tuple(v.shape[2:])
@@ -222,9 +221,6 @@ class UnagiModule(pl.LightningModule):
             X_dict,
             Y_dict,
         ) = batch
-
-        print (X_dict['inputs']['image'].shape)
-        print (Y_dict)
 
         # Forward pass through the model(s)
         output_dict = self.forward(X_dict)

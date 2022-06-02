@@ -31,8 +31,6 @@ class ResnetEncoder(nn.Module):
         self.d_model = encoder.fc.in_features
 
     def forward(self, x):
-        print (x.shape)
-        exit()
         x = self.f(x)
         x = torch.flatten(x, start_dim=1)
         return x

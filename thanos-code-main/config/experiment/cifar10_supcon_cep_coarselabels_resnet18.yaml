@@ -6,7 +6,8 @@ defaults:
   - override /pipeline@tasks: cep_image_supcon
   - override /embedding@model.embeddings.ImagePreEncoder: identity
   - override /encoder@model.encoders.ImageEncoder: resnet
-  - override /dataflow/transforms@dataflow.transforms: cifar10_resnet
+  #- override /dataflow/transforms@dataflow.transforms: cifar10_resnet
+  - override /dataflow/transforms@dataflow.transforms: mnist
 
 
 model:
