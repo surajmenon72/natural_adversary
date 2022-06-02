@@ -146,7 +146,6 @@ class UnagiModule(pl.LightningModule):
         for batch in dl:
             X_dict, _ = batch
             print (X_dict['inputs']['image'].shape)
-            exit()
             # shape is (B, V, ...) -- discard (B, V)
             X_shapes = {
                 k: tuple(v.shape[2:])
