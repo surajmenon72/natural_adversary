@@ -222,7 +222,7 @@ class UnagiModule(pl.LightningModule):
             Y_dict,
         ) = batch
 
-        print (X_dict['inputs'])
+        print (X_dict['inputs']['image'].shape)
         print (Y_dict)
         exit()
 
