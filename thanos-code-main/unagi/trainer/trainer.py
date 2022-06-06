@@ -208,6 +208,7 @@ class UnagiModule(pl.LightningModule):
 
     def forward(self, x_dict):
         print (x_dict)
+        exit()
         return self.model(x_dict)
 
     def configure_callbacks(self):
