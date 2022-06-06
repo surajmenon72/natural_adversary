@@ -1,7 +1,8 @@
 # @package _global_
 defaults:
   - _self_
-  - override /dataflow: cifar10_coarse
+  #- override /dataflow: cifar10_coarse
+  - override /dataflow: mnist
   - override /modules@model: cep_image_supcon
   - override /pipeline@tasks: cep_image_supcon
   - override /embedding@model.embeddings.ImagePreEncoder: identity
