@@ -145,9 +145,6 @@ class UnagiModule(pl.LightningModule):
 
         for batch in dl:
             X_dict, _ = batch
-            print ('Set D Input')
-            print (X_dict)
-            exit()
             # shape is (B, V, ...) -- discard (B, V)
             X_shapes = {
                 k: tuple(v.shape[2:])
@@ -210,9 +207,6 @@ class UnagiModule(pl.LightningModule):
         pass
 
     def forward(self, x_dict):
-        print ('Forward Pass')
-        print (x_dict)
-        exit()
         return self.model(x_dict)
 
     def configure_callbacks(self):

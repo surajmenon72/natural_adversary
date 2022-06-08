@@ -1,8 +1,7 @@
 defaults:
   - /preprocessor@preprocessors.SupervisedTaskPreprocessing: supervised_task_preprocessing
   - /embedding@embeddings.ImagePreEncoder: square_patch
-  #- /encoder@encoders.ImageEncoder: transformer
-  - /encoder@encoders.ImageEncoder: resnet
+  - /encoder@encoders.ImageEncoder: transformer
   - /decoder@decoders.Classifier: classifier
   - /decoder@decoders.ViewSelect0: view_select
   - /decoder@decoders.ViewSelect1: view_select
