@@ -1,7 +1,7 @@
 # @package _global_
 defaults:
   - _self_
-  - override /dataflow: cifar10_coarse
+  - override /dataflow: cifar10
   - override /modules@model: cep_image_supcon
   - override /pipeline@tasks: cep_image_supcon
   - override /embedding@model.embeddings.ImagePreEncoder: identity
@@ -21,7 +21,7 @@ model:
   decoders:
     Classifier:
       d_input: 512
-      d_output: 2
+      d_output: 10
   losses:
     ContrastiveLoss:
       module: l_spread
