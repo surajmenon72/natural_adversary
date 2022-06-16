@@ -6,4 +6,4 @@ ckpt = './models/adv_pths_best-resnet18.ckpt'
 
 loaded = torch.load(ckpt, map_location=torch.device('cpu'))
 
-print (loaded.keys())
+print (loaded['state_dict'].keys())
