@@ -12,8 +12,8 @@ from torch import nn, optim
 from torchvision import datasets, transforms
 import torch
 
-import resnet
-import main_vicreg_mnist 
+# import resnet
+# import main_vicreg_mnist 
 
 def get_arguments():
     parser = argparse.ArgumentParser(
@@ -112,10 +112,42 @@ def get_arguments():
 
     return parser
 
+class ResnetEncoder(nn.Module):
+    def __init__(
+        self,
+        model="resnet18",
+        use_pretrained=False,
+        **kwargs,
+    ):
+        super().__init__()
+
+        encoder = eval(model)(pretrained=use_pretrained)
+        self.f = []
+        """for name, module in encoder.named_children():
+            if name == "conv1":
+                module = nn.Conv2d(
+                    3, 64, kernel_size=3, stride=1, padding=1, bias=False
+                )
+            if not isinstance(module, nn.Linear) and not isinstance(
+                module, nn.MaxPool2d
+            ):
+                self.f.append(module)"""
+        for name, module in encoder.named_children():
+            if not isinstance(module, nn.Linear):
+                self.f.append(module)
+        self.f = nn.Sequential(*self.f)
+        self.feature_size = encoder.fc.in_features
+        self.d_model = encoder.fc.in_features
+
+    def forward(self, x):
+        x = self.f(x)
+        x = torch.flatten(x, start_dim=1)
+        return x
+
 
 def main():
-    parser = get_arguments()
-    args = parser.parse_args()
+    # parser = get_arguments()
+    # args = parser.parse_args()
     # if args.train_percent in {1, 10}:
     #     args.train_files = urllib.request.urlopen(
     #         f"https://raw.githubusercontent.com/google-research/simclr/master/imagenet_subsets/{args.train_percent}percent.txt"
@@ -156,15 +188,35 @@ def main_worker(args):
     device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 
     # backbone, embedding = resnet.__dict__[args.arch](zero_init_residual=True)
-    backbone = main_vicreg_mnist.Encoder()
-    embedding = 256 
-    state_dict = torch.load(args.pretrained, map_location="cpu")
-    missing_keys, unexpected_keys = backbone.load_state_dict(state_dict, strict=False)
-    assert missing_keys == [] and unexpected_keys == []
+    # backbone = ResnetEncoder()
+    # embedding = 256 
+    # state_dict = torch.load(args.pretrained, map_location="cpu")
+    # missing_keys, unexpected_keys = backbone.load_state_dict(state_dict, strict=False)
+    # assert missing_keys == [] and unexpected_keys == []
 
-    batch_size = args.batch_size
-    embedding_size = 1000
-    head = nn.Linear(embedding, embedding_size)
+    ckpt = './models/adv_pths_best-resnet18.ckpt'
+    loaded = torch.load(ckpt, map_location=torch.device('cpu'))
+
+    backbone = ResnetEncoder()
+    backbone.load_state_dict(
+    {
+        ".".join(k.split(".")[3:]): v
+        for k, v in loaded["state_dict"].items()
+        if (
+            # source_module in k
+            # and "model" in k
+            # and k.split(".")[2] == source_module
+            "model" in k
+            and "ImageEncoder" in k
+        )
+    },
+    strict=True,
+)
+
+    batch_size = 16
+    embedding_size = 512
+    output_size = 10
+    head = nn.Linear(embedding_size, output_size)
     head.weight.data.normal_(mean=0.0, std=0.01)
     head.bias.data.zero_()
     #model = nn.Sequential(backbone, head)
@@ -253,10 +305,14 @@ def main_worker(args):
 
     #Load MNIST
     transform = transforms.Compose([
-        transforms.Resize(28),
-        transforms.CenterCrop(28),
-        #transforms.Grayscale(3), #hack to fit resnet to mnist
-        transforms.ToTensor()])
+            transforms.Grayscale(num_output_channels=3),
+            transforms.Resize(28),
+            transforms.CenterCrop(28),
+            transforms.ToTensor(),
+            transforms.Normalize(
+                mean=[0.1307, 0.1307, 0.1307], std=[0.3081, 0.3081, 0.3081]
+            ),]
+    )
 
     root = 'data/'
     train_dataset = datasets.MNIST(root+'mnist/', train='train', 
@@ -272,42 +328,44 @@ def main_worker(args):
                                             shuffle=True)
 
     #Set the k-means
-    model.eval()
-    num_classes = 10
-    batches_to_avg = 100
-    k_means = torch.zeros((num_classes, embedding_size))
-    if (args.train_k_means == "True"):
-        print ('Training K-Means')
-        totals = torch.zeros((num_classes, 1))
-        for i, (images, target) in enumerate(train_loader):
-            print ('Batch')
-            print (i)
-            output = model(images.to(device))
-            for j in range(batch_size):
-                k_means[target[j], :] += output[j, :]
-                totals[target[j], :] += 1
+    # num_classes = 10
+    # batches_to_avg = 100
+    # k_means = torch.zeros((num_classes, embedding_size))
+    # if (args.train_k_means == "True"):
+    #     print ('Training K-Means')
+    #     totals = torch.zeros((num_classes, 1))
+    #     for i, (images, target) in enumerate(train_loader):
+    #         print ('Batch')
+    #         print (i)
+    #         output = model(images.to(device))
+    #         for j in range(batch_size):
+    #             k_means[target[j], :] += output[j, :]
+    #             totals[target[j], :] += 1
 
-            if (i == (batches_to_avg-1)):
-                break
+    #         if (i == (batches_to_avg-1)):
+    #             break
 
-        k_means = k_means/totals
-        state = dict(
-            k_means=k_means,
-        )
-        torch.save(state, args.exp_dir / "k_means.pth")
-    else:
-        k_dict = torch.load(args.exp_dir / "k_means.pth")
-        k_means = k_dict["k_means"]
-        print ('K_means loaded')
+    #     k_means = k_means/totals
+    #     state = dict(
+    #         k_means=k_means,
+    #     )
+    #     torch.save(state, args.exp_dir / "k_means.pth")
+    # else:
+    #     k_dict = torch.load(args.exp_dir / "k_means.pth")
+    #     k_means = k_dict["k_means"]
+    #     print ('K_means loaded')
 
-    print (k_means.shape)
+    # print (k_means.shape)
 
     #Set knn,works only if targets are about evenly distributed in training set
+    model.eval()
     batches_for_knn = 100
+    exp_dir = './models'
+    train_knn = True
     knn_e = torch.zeros((batches_for_knn*batch_size, embedding_size))
     knn_t = torch.zeros(batches_for_knn*batch_size)
 
-    if (args.train_knn == "True"):
+    if (train_knn == "True"):
         print ('Training KNN')
         for i, (images, target) in enumerate(train_loader):
             print ('Batch')
@@ -327,28 +385,28 @@ def main_worker(args):
             knn_e = knn_e,
             knn_t = knn_t,
         )
-        torch.save(state, args.exp_dir / "knn.pth")
+        torch.save(state, exp_dir / "knn.pth")
     else:
-        knn_dict = torch.load(args.exp_dir / "knn.pth")
+        knn_dict = torch.load(exp_dir / "knn.pth")
         knn_e = knn_dict["knn_e"]
         knn_t = knn_dict["knn_t"]
         print ('KNN loaded')
 
-    def calculate_fuzzy_k_means(model_output, k_means):
-        b_size = model_output.shape[0]
-        e_size = model_output.shape[1]
-        k_size = k_means.shape[0]
+    # def calculate_fuzzy_k_means(model_output, k_means):
+    #     b_size = model_output.shape[0]
+    #     e_size = model_output.shape[1]
+    #     k_size = k_means.shape[0]
 
-        model_output_r = model_output.view((b_size, 1, e_size))
-        k_means_r = k_means.view((1, k_size, e_size))
-        k_means_r = k_means_r.repeat(b_size, 1, 1)
+    #     model_output_r = model_output.view((b_size, 1, e_size))
+    #     k_means_r = k_means.view((1, k_size, e_size))
+    #     k_means_r = k_means_r.repeat(b_size, 1, 1)
 
-        distances = torch.cdist(model_output_r, k_means_r, p=2) #verified this works
-        distances = distances.view((b_size, k_size))
+    #     distances = torch.cdist(model_output_r, k_means_r, p=2) #verified this works
+    #     distances = distances.view((b_size, k_size))
 
-        sm_probs = torch.nn.functional.softmax(distances, dim=1)
+    #     sm_probs = torch.nn.functional.softmax(distances, dim=1)
 
-        return sm_probs
+    #     return sm_probs
 
     #Validation tasks
 
