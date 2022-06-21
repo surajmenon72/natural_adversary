@@ -15,7 +15,7 @@ from utils import *
 from config import params
 
 if(params['dataset'] == 'MNIST'):
-    from models.mnist_model_wtsmooth import Generator, Discriminator, DHead, QHead, Encoder, CHead, Stretcher, HHead
+    from models.mnist_model_wtsmooth2 import Generator, Discriminator, DHead, QHead, Encoder, CHead, Stretcher, HHead
 elif(params['dataset'] == 'SVHN'):
     from models.svhn_model import Generator, Discriminator, DHead, QHead
 elif(params['dataset'] == 'CelebA'):
@@ -106,7 +106,7 @@ netQ = QHead().to(device)
 netQ.apply(weights_init)
 print(netQ)
 
-classifier = Encoder().to(device)
+classifier = ResnetEncoder().to(device)
 classifier.apply(weights_init)
 print (classifier)
 
@@ -140,9 +140,23 @@ elif (load_classifier):
     print ('Loaded Classifer and CHead')
 else:
     #need to load classifier regardless
-    path = './checkpoints/mnist_encoder-256.pth'
+    path = './checkpoints/adv_pths_best-resnet18.ckpt'
     state_dict = torch.load(path, map_location=device)
-    missing_keys, unexpected_keys = encoder.load_state_dict(state_dict, strict=False)
+    #missing_keys, unexpected_keys = classifier.load_state_dict(state_dict['state_dict', strict=False)
+    classifier.load_state_dict(
+        {
+            ".".join(k.split(".")[3:]): v
+            for k, v in loaded["state_dict"].items()
+            if (
+                # source_module in k
+                # and "model" in k
+                # and k.split(".")[2] == source_module
+                "model" in k
+                and "ImageEncoder" in k
+            )
+        },
+        strict=True,
+    )
     print ('Loaded classifier')
 
 
@@ -217,7 +231,7 @@ start_time = time.time()
 iters = 0
 
 #Realness vs. Classification Hyperparams
-alpha = 1e3
+alpha = 1
 beta = 1
 gamma = 1
 clip_value_1 = 1
