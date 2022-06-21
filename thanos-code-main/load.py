@@ -57,7 +57,21 @@ loaded = torch.load(ckpt, map_location=torch.device('cpu'))
 # print (loaded['state_dict'].keys())
 
 e = VisionEncoder()
-e.load_state_dict(loaded['state_dict'])
+#e.load_state_dict(loaded['state_dict'])
+e.load_state_dict(
+    {
+        ".".join(k.split(".")[3:]): v
+        for k, v in ckpt["state_dict"].items()
+        if (
+            # source_module in k
+            # and "model" in k
+            # and k.split(".")[2] == source_module
+            "model" in k
+            and "ImageEncoder" in k
+        )
+    },
+    strict=True,
+)
 
 print ('Loaded State Dict')
 exit()
