@@ -98,10 +98,11 @@ loader = torch.utils.data.DataLoader(
 )
 
 for step, x in enumerate(loader):
-	print ('Input Shape')
-	print (x.shape)
-
 	x = x.to(device)
+
+	print ('Input Shape')
+	print (x)
+	print (x.shape)
 
 	y = e(x)
 
