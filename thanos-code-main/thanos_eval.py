@@ -10,6 +10,7 @@ import urllib
 
 from torch import nn, optim
 from torchvision import datasets, transforms
+from torchvision.models import resnet18, resnet34, resnet50
 import torch
 
 # import resnet
