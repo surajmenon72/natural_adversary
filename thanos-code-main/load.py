@@ -68,7 +68,7 @@ e.load_state_dict(
             # and "model" in k
             # and k.split(".")[2] == source_module
             "model" in k
-            #and "ImageEncoder" in k
+            and "ImageEncoder" in k
         )
     },
     strict=True,
