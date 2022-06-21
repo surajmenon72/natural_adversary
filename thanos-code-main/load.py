@@ -61,7 +61,7 @@ e = VisionEncoder()
 e.load_state_dict(
     {
         ".".join(k.split(".")[3:]): v
-        for k, v in ckpt["state_dict"].items()
+        for k, v in loaded["state_dict"].items()
         if (
             # source_module in k
             # and "model" in k
