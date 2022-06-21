@@ -440,7 +440,7 @@ def main_worker(args):
     # print ('Validation Accuracy w/ K-Means')
     # print (accuracy)
 
-    def calculate_fuzzy_knn(model_output, knn_e, knn_t, k=500, num_classes=10):
+    def calculate_fuzzy_knn(model_output, knn_e, knn_t, k=100, num_classes=10):
         b_size = model_output.shape[0]
         e_size = model_output.shape[1]
         knn_size = knn_e.shape[0]
@@ -477,7 +477,7 @@ def main_worker(args):
     # img_tensor = image.float()
 
     #Now lets validate w/ KNN
-    batches_to_test = 50
+    batches_to_test = 100
     total_correct = 0
     total_samples = 0
     print ('Validating w/ KNN')
