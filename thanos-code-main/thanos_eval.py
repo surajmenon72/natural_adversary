@@ -474,8 +474,7 @@ def main_worker(args):
     # image = torch.load('3-9.pt')
     # image = torch.cat([image, image, image], dim=0) 
     # image.resize_(1, 3, 28, 28)
-
-    img_tensor = image.float()
+    # img_tensor = image.float()
 
     #Now lets validate w/ KNN
     batches_to_test = 50
