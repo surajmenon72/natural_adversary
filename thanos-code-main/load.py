@@ -81,12 +81,12 @@ print ('Loaded State Dict')
 root = 'data/'
 transform = transforms.Compose([
 			transforms.Grayscale(num_output_channels=3),
+			transforms.Resize(28),
+            transforms.CenterCrop(28),
+            transforms.ToTensor(),
 			transforms.Normalize(
                 mean=[0.1307, 0.1307, 0.1307], std=[0.3081, 0.3081, 0.3081]
-    		),
-        	transforms.Resize(28),
-            transforms.CenterCrop(28),
-            transforms.ToTensor()]
+    		),]
 )
 dataset = dsets.MNIST(root+'mnist/', train='train', 
                     download=True, transform=transform)
