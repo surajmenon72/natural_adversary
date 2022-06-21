@@ -363,7 +363,7 @@ def main_worker(args):
     model.eval()
     batches_for_knn = 400
     exp_dir = './models/knn.pth'
-    train_knn = 'False'
+    train_knn = 'True'
     knn_e = torch.zeros((batches_for_knn*batch_size, embedding_size))
     knn_t = torch.zeros(batches_for_knn*batch_size)
 
@@ -440,7 +440,7 @@ def main_worker(args):
     # print ('Validation Accuracy w/ K-Means')
     # print (accuracy)
 
-    def calculate_fuzzy_knn(model_output, knn_e, knn_t, k=200, num_classes=10):
+    def calculate_fuzzy_knn(model_output, knn_e, knn_t, k=500, num_classes=10):
         b_size = model_output.shape[0]
         e_size = model_output.shape[1]
         knn_size = knn_e.shape[0]
