@@ -186,7 +186,8 @@ def main_worker(args):
     # torch.cuda.set_device(gpu)
     # torch.backends.cudnn.benchmark = True
 
-    device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
+    #device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
+    device = torch.device('cpu')
 
     # backbone, embedding = resnet.__dict__[args.arch](zero_init_residual=True)
     # backbone = ResnetEncoder()
