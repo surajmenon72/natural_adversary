@@ -471,9 +471,9 @@ def main_worker(args):
 
         return sm_knn
 
-    # image = torch.load('7-8.pt')
-    # image.resize_(1, 1, 28, 28)
-    # img_tensor = image.float()
+    image = torch.load('7-8.pt')
+    image.resize_(1, 1, 28, 28)
+    img_tensor = image.float()
 
     #Now lets validate w/ KNN
     batches_to_test = 50
@@ -486,13 +486,13 @@ def main_worker(args):
 
         output = model(images.to(device))
 
-        # img_test = img_tensor
-        # output = model(img_test.to(device))
+        img_test = img_tensor
+        output = model(img_test.to(device))
         fuzzy_guesses = calculate_fuzzy_knn(output, knn_e, knn_t)
 
-        # print (fuzzy_guesses.shape)
-        # print (fuzzy_guesses[0])
-        # exit()
+        print (fuzzy_guesses.shape)
+        print (fuzzy_guesses[0])
+        exit()
 
         guesses = torch.argmax(fuzzy_guesses, dim=1)
         
