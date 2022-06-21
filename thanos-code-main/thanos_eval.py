@@ -223,7 +223,7 @@ def main_worker(args):
     #model = nn.Sequential(backbone, head)
     #model.cuda(gpu)
     model = backbone
-    embedding_size = embedding
+    #embedding_size = embedding
     model.to(device)
 
     if args.weights == "freeze":
