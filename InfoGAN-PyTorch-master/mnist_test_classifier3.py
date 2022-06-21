@@ -15,7 +15,7 @@ parser.add_argument('-load_path', required=True, help='Checkpoint to load path f
 args = parser.parse_args()
 
 #from models.mnist_model_exp import Classifier, CHead
-from models.mnist_model_smooth import Encoder, CHead
+from models.mnist_model_wtsmooth2 import ResNetEncoder, CHead
 
 
 seed = 1125
