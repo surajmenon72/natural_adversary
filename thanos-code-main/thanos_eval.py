@@ -363,7 +363,7 @@ def main_worker(args):
     model.eval()
     batches_for_knn = 100
     exp_dir = './models/knn.pth'
-    train_knn = 'True'
+    train_knn = 'False'
     knn_e = torch.zeros((batches_for_knn*batch_size, embedding_size))
     knn_t = torch.zeros(batches_for_knn*batch_size)
 
