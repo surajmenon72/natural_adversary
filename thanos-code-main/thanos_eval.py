@@ -471,7 +471,7 @@ def main_worker(args):
 
         return sm_knn
 
-    image = torch.load('7-8.pt')
+    image = torch.load('8-8.pt')
     image = torch.cat([image, image, image], dim=0) 
     image.resize_(1, 3, 28, 28)
 
