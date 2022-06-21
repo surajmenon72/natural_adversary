@@ -93,7 +93,7 @@ dataset = dsets.MNIST(root+'mnist/', train='train',
 
 loader = torch.utils.data.DataLoader(
     dataset,
-    batch_size=args.batch_size,
+    batch_size=16,
     shuffle=True
 )
 
