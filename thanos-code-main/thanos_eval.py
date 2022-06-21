@@ -361,8 +361,8 @@ def main_worker(args):
     #Set knn,works only if targets are about evenly distributed in training set
     model.eval()
     batches_for_knn = 100
-    exp_dir = './models'
-    train_knn = True
+    exp_dir = './models/knn.pth'
+    train_knn = 'True'
     knn_e = torch.zeros((batches_for_knn*batch_size, embedding_size))
     knn_t = torch.zeros(batches_for_knn*batch_size)
 
@@ -386,9 +386,9 @@ def main_worker(args):
             knn_e = knn_e,
             knn_t = knn_t,
         )
-        torch.save(state, exp_dir / "knn.pth")
+        torch.save(state, exp_dir)
     else:
-        knn_dict = torch.load(exp_dir / "knn.pth")
+        knn_dict = torch.load(exp_dir)
         knn_e = knn_dict["knn_e"]
         knn_t = knn_dict["knn_t"]
         print ('KNN loaded')
