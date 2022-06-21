@@ -56,7 +56,8 @@ loaded = torch.load(ckpt, map_location=torch.device('cpu'))
 # print (loaded.keys())
 # print (loaded['state_dict'].keys())
 
-e = VisionEncoder()
+#e = VisionEncoder()
+e = ResnetEncoder()
 #e.load_state_dict(loaded['state_dict'])
 e.load_state_dict(
     {
