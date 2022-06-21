@@ -146,8 +146,8 @@ class ResnetEncoder(nn.Module):
 
 
 def main():
-    # parser = get_arguments()
-    # args = parser.parse_args()
+    parser = get_arguments()
+    args = parser.parse_args()
     # if args.train_percent in {1, 10}:
     #     args.train_files = urllib.request.urlopen(
     #         f"https://raw.githubusercontent.com/google-research/simclr/master/imagenet_subsets/{args.train_percent}percent.txt"
