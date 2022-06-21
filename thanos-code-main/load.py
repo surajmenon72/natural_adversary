@@ -75,17 +75,40 @@ e.load_state_dict(
 )
 
 print ('Loaded State Dict')
-exit()
 
 #Now test running an image through
 
 root = 'data/'
 transform = transforms.Compose([
+			transforms.Grayscale(num_output_channels=3)
         	transforms.Resize(28),
             transforms.CenterCrop(28),
-            transforms.ToTensor()])
+            transforms.ToTensor()]
+            transforms.Normalize(
+                mean=[0.1307, 0.1307, 0.1307], std=[0.3081, 0.3081, 0.3081]
+    ),
+)
 dataset = dsets.MNIST(root+'mnist/', train='train', 
                     download=True, transform=transform)
+
+loader = torch.utils.data.DataLoader(
+    dataset,
+    batch_size=args.batch_size,
+    shuffle=True
+)
+
+for step, x in enumerate(loader):
+	print ('Input Shape')
+	print (x.shape)
+
+	x = x.to(device)
+
+	y = e(x)
+
+	print ('Output Shape')
+	print (y.shape)
+	exit()
+
 
 
 
