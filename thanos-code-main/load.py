@@ -75,6 +75,7 @@ e.load_state_dict(
 )
 
 print ('Loaded State Dict')
+device = torch.device('cpu')
 
 #Now test running an image through
 
