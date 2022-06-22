@@ -145,6 +145,28 @@ class ResnetEncoder(nn.Module):
         x = torch.flatten(x, start_dim=1)
         return x
 
+class Encoder(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        self.conv1 = nn.Conv2d(1, 64, 4, 2, 1)
+
+        self.conv2 = nn.Conv2d(64, 128, 4, 2, 1, bias=False)
+        self.bn2 = nn.BatchNorm2d(128)
+
+        self.conv3 = nn.Conv2d(128, 1024, 7, bias=False)
+        self.bn3 = nn.BatchNorm2d(1024)
+
+        self.fc1 = nn.Linear(1024, 512)
+
+    def forward(self, x):
+        x = F.leaky_relu(self.conv1(x), 0.1, inplace=True)
+        x = F.leaky_relu(self.bn2(self.conv2(x)), 0.1, inplace=True)
+        x = F.leaky_relu(self.bn3(self.conv3(x)), 0.1, inplace=True)
+        x = x.view(-1, 1024)
+        x = F.relu(self.fc1(x))
+
+        return x
 
 def main():
     parser = get_arguments()
@@ -199,21 +221,22 @@ def main_worker(args):
     ckpt = './models/adv_pths_best-resnet18.ckpt'
     loaded = torch.load(ckpt, map_location=torch.device('cpu'))
 
-    backbone = ResnetEncoder()
-    backbone.load_state_dict(
-        {
-            ".".join(k.split(".")[3:]): v
-            for k, v in loaded["state_dict"].items()
-            if (
-                # source_module in k
-                # and "model" in k
-                # and k.split(".")[2] == source_module
-                "model" in k
-                and "ImageEncoder" in k
-            )
-        },
-        strict=True,
-    )
+    #backbone = ResnetEncoder()
+    backbone = Encoder()
+    # backbone.load_state_dict(
+    #     {
+    #         ".".join(k.split(".")[3:]): v
+    #         for k, v in loaded["state_dict"].items()
+    #         if (
+    #             # source_module in k
+    #             # and "model" in k
+    #             # and k.split(".")[2] == source_module
+    #             "model" in k
+    #             and "ImageEncoder" in k
+    #         )
+    #     },
+    #     strict=True,
+    # )
 
     batch_size = 16
     embedding_size = 512
