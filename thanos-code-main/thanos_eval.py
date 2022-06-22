@@ -150,7 +150,7 @@ class Encoder(nn.Module):
     def __init__(self):
         super().__init__()
 
-        self.conv1 = nn.Conv2d(1, 64, 4, 2, 1)
+        self.conv1 = nn.Conv2d(3, 64, 4, 2, 1)
 
         self.conv2 = nn.Conv2d(64, 128, 4, 2, 1, bias=False)
         self.bn2 = nn.BatchNorm2d(128)
