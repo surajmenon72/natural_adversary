@@ -33,9 +33,9 @@ print("Random Seed: ", seed)
 device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
-load_model = True
-load_classifier = True
-train_classifier_head = False
+load_model = False
+load_classifier = False
+train_classifier_head = True
 
 state_dict = {}
 if (load_model):
@@ -324,6 +324,9 @@ for epoch in range(params['num_epochs']):
         #Net loss for classifier
         C_loss = loss_c
         optimC.step()
+
+        if (train_classifier_head):
+            continue
 
         netD.train()
         optimD.zero_grad()
