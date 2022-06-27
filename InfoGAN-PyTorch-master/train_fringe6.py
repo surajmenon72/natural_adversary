@@ -327,9 +327,10 @@ for epoch in range(params['num_epochs']):
         C_loss = loss_c
         optimC.step()
 
-        # if (train_classifier_head):
-        #     print ('Training Classifier Head, continuing')
-        #     continue
+        if (train_classifier_head):
+            print ('Training Classifier Head, continuing')
+            print ('C_Head Loss: %.4f\t' % C_loss.item())
+            continue
 
         netD.train()
         optimD.zero_grad()
