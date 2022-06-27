@@ -291,21 +291,22 @@ for epoch in range(params['num_epochs']):
                 probs_c = torch.squeeze(probs_c)
                 probs_c = F.log_softmax(probs_c, dim=1)
 
-                knn_batches = 1
-                knn_e = torch.zeros((params['knn_batch_size']*knn_batches, output_c.shape[1])).to(device)
-                knn_t = torch.zeros(params['knn_batch_size']*knn_batches).to(device)
-                for j, (data_knn, labels_knn) in enumerate(dataloader_knn, 0):
-                    output = classifier(data_knn.to(device))
-                    labels_knn = labels_knn.to(device)
+                #Pretty sure we don't need any of this
+                # knn_batches = 1
+                # knn_e = torch.zeros((params['knn_batch_size']*knn_batches, output_c.shape[1])).to(device)
+                # knn_t = torch.zeros(params['knn_batch_size']*knn_batches).to(device)
+                # for j, (data_knn, labels_knn) in enumerate(dataloader_knn, 0):
+                #     output = classifier(data_knn.to(device))
+                #     labels_knn = labels_knn.to(device)
 
-                    start_index = j*params['knn_batch_size']
-                    end_index = (j+1)*params['knn_batch_size']
+                #     start_index = j*params['knn_batch_size']
+                #     end_index = (j+1)*params['knn_batch_size']
 
-                    knn_e[start_index:end_index, :] = output[:, :]
-                    knn_t[start_index:end_index] = labels_knn[:]
+                #     knn_e[start_index:end_index, :] = output[:, :]
+                #     knn_t[start_index:end_index] = labels_knn[:]
 
-                    if (j == (knn_batches-1)):
-                        break
+                #     if (j == (knn_batches-1)):
+                #         break
 
                 soft_probs_c = calculate_fuzzy_knn(output_c, knn_e, knn_t, device, k=1000, num_classes=10)
 
@@ -326,9 +327,9 @@ for epoch in range(params['num_epochs']):
         C_loss = loss_c
         optimC.step()
 
-        if (train_classifier_head):
-            print ('Training Classifier Head, continuing')
-            continue
+        # if (train_classifier_head):
+        #     print ('Training Classifier Head, continuing')
+        #     continue
 
         netD.train()
         optimD.zero_grad()
