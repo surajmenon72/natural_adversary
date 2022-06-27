@@ -15,7 +15,7 @@ from utils import *
 from config import params
 
 if(params['dataset'] == 'MNIST'):
-    from models.mnist_model_wtsmooth2 import Generator, Discriminator, DHead, QHead, Encoder, CHead, Stretcher, HHead
+    from models.mnist_model_wtsmooth2 import Generator, Discriminator, DHead, QHead, Encoder, ResNetEncoder, CHead, Stretcher, HHead
 elif(params['dataset'] == 'SVHN'):
     from models.svhn_model import Generator, Discriminator, DHead, QHead
 elif(params['dataset'] == 'CelebA'):
