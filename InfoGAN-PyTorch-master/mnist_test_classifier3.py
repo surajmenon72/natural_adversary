@@ -15,7 +15,7 @@ parser.add_argument('-load_path', required=True, help='Checkpoint to load path f
 args = parser.parse_args()
 
 #from models.mnist_model_exp import Classifier, CHead
-from models.mnist_model_wtsmooth2 import ResNetEncoder, CHead
+from models.mnist_model_wtsmooth2 import Encoder, ResNetEncoder, CHead
 
 
 seed = 1125
@@ -33,7 +33,7 @@ params = state_dict['params']
 
 # Create the generator network.
 classifier = Encoder().to(device)
-#classifier = Classifier().to(device)
+#classifier = ResNetEncoder().to(device)
 netC = CHead().to(device)
 # Load the trained generator weights.
 classifier.load_state_dict(state_dict['classifier'])

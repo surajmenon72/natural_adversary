@@ -222,22 +222,22 @@ def main_worker(args):
     ckpt = './models/adv_pths_best-resnet18.ckpt'
     loaded = torch.load(ckpt, map_location=torch.device('cpu'))
 
-    backbone = ResnetEncoder()
-    #backbone = Encoder()
-    backbone.load_state_dict(
-        {
-            ".".join(k.split(".")[3:]): v
-            for k, v in loaded["state_dict"].items()
-            if (
-                # source_module in k
-                # and "model" in k
-                # and k.split(".")[2] == source_module
-                "model" in k
-                and "ImageEncoder" in k
-            )
-        },
-        strict=True,
-    )
+    #backbone = ResnetEncoder()
+    backbone = Encoder()
+    # backbone.load_state_dict(
+    #     {
+    #         ".".join(k.split(".")[3:]): v
+    #         for k, v in loaded["state_dict"].items()
+    #         if (
+    #             # source_module in k
+    #             # and "model" in k
+    #             # and k.split(".")[2] == source_module
+    #             "model" in k
+    #             and "ImageEncoder" in k
+    #         )
+    #     },
+    #     strict=True,
+    # )
 
     batch_size = 16
     embedding_size = 512
