@@ -285,6 +285,7 @@ for epoch in range(params['num_epochs']):
         #if we want to sample the knn embeddings
         if (train_classifier_head):
             if (epoch % c_train_cadence == 0):
+                print ('Training Classifier Head')
                 output_c = classifier(real_data)
                 probs_c = netC(output_c)
                 probs_c = torch.squeeze(probs_c)
@@ -306,7 +307,7 @@ for epoch in range(params['num_epochs']):
                     if (j == (knn_batches-1)):
                         break
 
-                soft_probs_c = calculate_fuzzy_knn(output_c, knn_e, knn_t, device, k=50, num_classes=10)
+                soft_probs_c = calculate_fuzzy_knn(output_c, knn_e, knn_t, device, k=1000, num_classes=10)
 
                 # check for NaN
                 isnan1 = torch.sum(torch.isnan(probs_c))
@@ -326,6 +327,7 @@ for epoch in range(params['num_epochs']):
         optimC.step()
 
         if (train_classifier_head):
+            print ('Training Classifier Head, continuing')
             continue
 
         netD.train()
