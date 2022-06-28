@@ -44,7 +44,7 @@ netC.load_state_dict(state_dict['netC'])
 classifier.eval()
 netC.eval()
 
-image = torch.load('3-9.pt')
+image = torch.load('7-8.pt')
 image = torch.cat([image, image, image], dim=0) 
 image.resize_(1, 3, 28, 28)
 img_tensor = image.float()
