@@ -24,7 +24,8 @@ torch.manual_seed(seed)
 print("Random Seed: ", seed)
 
 # Load the checkpoint file
-state_dict = torch.load(args.load_path, map_location=torch.device('cpu'))
+path = './checkpoint/model_c_load'
+state_dict = torch.load(path, map_location=map_location=torch.device('cpu'))
 
 # Set the device to run on: GPU or CPU.
 device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
@@ -32,8 +33,8 @@ device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 params = state_dict['params']
 
 # Create the generator network.
-classifier = Encoder().to(device)
-#classifier = ResNetEncoder().to(device)
+#classifier = Encoder().to(device)
+classifier = ResnetEncoder().to(device)
 netC = CHead().to(device)
 # Load the trained generator weights.
 classifier.load_state_dict(state_dict['classifier'])
@@ -56,13 +57,13 @@ for i, (data, true_label) in enumerate(dataloader, 0):
 	print ('Batch')
 	print (i)
 	real_data = data.to(device)
-	#real_data = img_tensor
+	real_data = img_tensor
 	output_c = classifier(real_data)
 	probs_c = netC(output_c)
 	probs_c = F.softmax(probs_c, dim=1)
 
-	# print (probs_c[0])
-	# exit()
+	print (probs_c[0])
+	exit()
 
 	guess = torch.argmax(probs_c, dim=1)
 	 
