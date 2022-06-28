@@ -59,7 +59,7 @@ if(params['dataset'] == 'MNIST'):
     params['num_dis_c'] = 1
     params['dis_c_dim'] = 10
     #params['num_con_c'] = 10 #continuous variable allocated for each class
-    params['num_con_c'] = 2
+    params['num_con_c'] = 1
 elif(params['dataset'] == 'SVHN'):
     params['num_z'] = 124
     params['num_dis_c'] = 4
