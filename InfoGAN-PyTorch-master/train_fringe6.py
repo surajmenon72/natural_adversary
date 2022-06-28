@@ -34,7 +34,7 @@ device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
 load_model = False
-load_classifier = False
+load_classifier = True
 train_classifier_head = True
 
 state_dict = {}
@@ -330,27 +330,6 @@ for epoch in range(params['num_epochs']):
         if (train_classifier_head):
             print ('Training Classifier Head, continuing')
             print ('C_Head Loss: %.4f\t' % C_loss.item())
-
-            #save the model every now and then
-            if (epoch+1) % params['save_epoch'] == 0:
-                torch.save({
-                'netG' : netG.state_dict(),
-                'netGPlus' : netGPlus.state_dict(),
-                'classifier' : classifier.state_dict(),
-                'discriminator': discriminator.state_dict(),
-                'stretcher' : stretcher.state_dict(),
-                'netC' : netC.state_dict(),
-                'netD' : netD.state_dict(),
-                'netQ' : netQ.state_dict(),
-                'netH' : netH.state_dict(),
-                'optimD' : optimD.state_dict(),
-                'optimG' : optimG.state_dict(),
-                'optimS' : optimS.state_dict(),
-                'optimGPlus' : optimGPlus.state_dict(),
-                'optimC' : optimC.state_dict(),
-                'optimE' : optimE.state_dict(),
-                'params' : params
-                }, 'checkpoint/model_fringe_epoch_%d_{}'.format(params['dataset']) %(epoch+1))
             continue
 
         netD.train()
