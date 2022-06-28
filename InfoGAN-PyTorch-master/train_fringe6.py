@@ -35,7 +35,7 @@ print(device, " will be used.\n")
 
 load_model = False
 load_classifier = True
-train_classifier_head = True
+train_classifier_head = False
 
 state_dict = {}
 if (load_model):
