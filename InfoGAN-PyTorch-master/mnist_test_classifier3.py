@@ -25,7 +25,7 @@ print("Random Seed: ", seed)
 
 # Load the checkpoint file
 path = './checkpoint/model_c_load'
-state_dict = torch.load(path, map_location=map_location=torch.device('cpu'))
+state_dict = torch.load(path, map_location=torch.device('cpu'))
 
 # Set the device to run on: GPU or CPU.
 device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
