@@ -10,9 +10,9 @@ import random
 from dataloader import get_data
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument('-load_path', required=True, help='Checkpoint to load path from')
-args = parser.parse_args()
+# parser = argparse.ArgumentParser()
+# parser.add_argument('-load_path', required=True, help='Checkpoint to load path from')
+# args = parser.parse_args()
 
 #from models.mnist_model_exp import Classifier, CHead
 from models.mnist_model_wtsmooth2 import Encoder, ResnetEncoder, CHead
