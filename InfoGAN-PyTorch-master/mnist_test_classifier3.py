@@ -44,7 +44,8 @@ classifier.eval()
 netC.eval()
 
 image = torch.load('8-8.pt')
-image.resize_(1, 1, 28, 28)
+image = torch.cat([image, image, image], dim=0) 
+image.resize_(1, 3, 28, 28)
 img_tensor = image.float()
 
 batch_size = 128
