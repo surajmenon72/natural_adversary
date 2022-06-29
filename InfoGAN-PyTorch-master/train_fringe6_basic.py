@@ -347,7 +347,8 @@ for epoch in range(params['num_epochs']):
             #G_loss = alpha*loss_split + gamma*-gen_d_loss
             G_loss = -gen_d_loss
             totalG_loss += G_loss
-            total_split_loss += loss_split
+            
+            #total_split_loss += loss_split
             total_gen_d_loss += -gen_d_loss
 
             G_loss.backward()
