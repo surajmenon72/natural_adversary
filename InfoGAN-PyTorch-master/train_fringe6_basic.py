@@ -320,7 +320,8 @@ for epoch in range(params['num_epochs']):
         #Split loss 
         if (epoch % g_train_cadence == 0):
             totalG_loss = 0
-            total_split_loss = 0
+            #total_split_loss = 0
+            total_split_loss = torch.zeros(1)
             total_gen_d_loss = 0
 
             # split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
