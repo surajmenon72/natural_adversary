@@ -1,6 +1,7 @@
 import argparse
 
 import torch
+import torchvision as tv
 import torchvision.utils as vutils
 import numpy as np
 import matplotlib.pyplot as plt
@@ -18,7 +19,7 @@ torch.manual_seed(seed)
 print("Random Seed: ", seed)
 
 # Load the checkpoint file
-path = './checkpoints/adv_pths_model_fringe61_epoch_11_MNIST'
+path = './checkpoints/adv_pths_model_fringe62_epoch_5_MNIST'
 state_dict = torch.load(path, map_location=torch.device('cpu'))
 
 # Set the device to run on: GPU or CPU.
@@ -79,6 +80,10 @@ with torch.no_grad():
     generated_img1 = netG(noise1).detach().cpu()
 
 print (generated_img1.shape)
+print ('Converting to Grayscale')
+generated_img1 = tv.transforms.functional.rgb_to_grayscale(generated_img1, num_output_channels=1)
+print (generated_img1.shape)
+
 # Display the generated image.
 fig = plt.figure(figsize=(10, 10))
 plt.axis("off")

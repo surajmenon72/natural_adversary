@@ -323,21 +323,21 @@ for epoch in range(params['num_epochs']):
             total_split_loss = 0
             total_gen_d_loss = 0
 
-            split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
-            fake_data = netG(noise)
-            output_s = classifier(fake_data)
+            # split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
+            # fake_data = netG(noise)
+            # output_s = classifier(fake_data)
 
-            #KLDiv expects log space, already in softmax
-            probs_split = netC(output_s)
-            probs_split = F.log_softmax(probs_split, dim=1)
+            # #KLDiv expects log space, already in softmax
+            # probs_split = netC(output_s)
+            # probs_split = F.log_softmax(probs_split, dim=1)
 
-            #check for NaN
-            isnan1 = torch.sum(torch.isnan(probs_split))
-            isnan2 = torch.sum(torch.isnan(split_labels))
-            if ((isnan1 > 0) or (isnan2 > 0)):
-                print ('NAN VALUE in Split Loss')
+            # #check for NaN
+            # isnan1 = torch.sum(torch.isnan(probs_split))
+            # isnan2 = torch.sum(torch.isnan(split_labels))
+            # if ((isnan1 > 0) or (isnan2 > 0)):
+            #     print ('NAN VALUE in Split Loss')
 
-            loss_split = criterionG(probs_split, split_labels)
+            # loss_split = criterionG(probs_split, split_labels)
 
             output_d = discriminator(fake_data)
             output_d = netD(output_d)
