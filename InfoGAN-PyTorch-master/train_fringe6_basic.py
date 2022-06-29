@@ -318,7 +318,7 @@ for epoch in range(params['num_epochs']):
         optimG.zero_grad()
 
         #Split loss 
-        if (epoch % gp_train_cadence == 0):
+        if (epoch % g_train_cadence == 0):
             totalG_loss = 0
             total_split_loss = 0
             total_gen_d_loss = 0
