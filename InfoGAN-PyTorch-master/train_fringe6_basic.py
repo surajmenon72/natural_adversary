@@ -293,6 +293,11 @@ for epoch in range(params['num_epochs']):
 
             # Generate fake image batch with G
             fake_data = netG(noise)
+            fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1) 
+            fake_data.resize_(params['batch_size'], 3, 28, 28)
+
+            print (fake_data.shape)
+            exit()
 
             # Train with fake
             fake_output = discriminator(fake_data.detach())

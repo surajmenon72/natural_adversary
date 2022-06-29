@@ -9,10 +9,10 @@ def get_data(dataset, batch_size, train_test='train'):
 
     # Get MNIST dataset.
     if dataset == 'MNIST':
-        transform = transforms.Compose([
-            transforms.Resize(28),
-            transforms.CenterCrop(28),
-            transforms.ToTensor()])
+        # transform = transforms.Compose([
+        #     transforms.Resize(28),
+        #     transforms.CenterCrop(28),
+        #     transforms.ToTensor()])
 
         # transform = transforms.Compose([
         #     transforms.Grayscale(num_output_channels=3),
@@ -23,6 +23,13 @@ def get_data(dataset, batch_size, train_test='train'):
         #         mean=[0.1307, 0.1307, 0.1307], std=[0.3081, 0.3081, 0.3081]
         #     ),]
         # )
+
+        transform = transforms.Compose([
+            transforms.Grayscale(num_output_channels=3),
+            transforms.Resize(28),
+            transforms.CenterCrop(28),
+            transforms.ToTensor()])
+
 
         if (train_test == 'train'):
             dataset = dsets.MNIST(root+'mnist/', train='train', 
