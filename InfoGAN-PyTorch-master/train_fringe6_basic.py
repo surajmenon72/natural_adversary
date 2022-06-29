@@ -329,7 +329,7 @@ for epoch in range(params['num_epochs']):
 
             split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
             fake_data = netG(noise)
-            fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1) 
+            #fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1) 
 
             output_s = classifier(fake_data)
 
