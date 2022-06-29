@@ -261,15 +261,6 @@ for epoch in range(params['num_epochs']):
         real_data = data.to(device)
         true_label_g = true_label.to(device)
 
-        #For now set G+ to G
-        # torch.save({
-        #     'netG' : netG.state_dict()
-        #     }, 'checkpoint/gen_save')
-
-        # path = './checkpoint/gen_save'
-        # state_dict = torch.load(path, map_location=device)
-        # netGPlus.load_state_dict(state_dict['netG'])
-
 
         #get labels, targets
         true_labels_hot, targets = get_targets(true_label_g, params['dis_c_dim'], device)
@@ -290,23 +281,6 @@ for epoch in range(params['num_epochs']):
                 probs_c = netC(output_c)
                 probs_c = torch.squeeze(probs_c)
                 probs_c = F.log_softmax(probs_c, dim=1)
-
-                #Pretty sure we don't need any of this
-                # knn_batches = 1
-                # knn_e = torch.zeros((params['knn_batch_size']*knn_batches, output_c.shape[1])).to(device)
-                # knn_t = torch.zeros(params['knn_batch_size']*knn_batches).to(device)
-                # for j, (data_knn, labels_knn) in enumerate(dataloader_knn, 0):
-                #     output = classifier(data_knn.to(device))
-                #     labels_knn = labels_knn.to(device)
-
-                #     start_index = j*params['knn_batch_size']
-                #     end_index = (j+1)*params['knn_batch_size']
-
-                #     knn_e[start_index:end_index, :] = output[:, :]
-                #     knn_t[start_index:end_index] = labels_knn[:]
-
-                #     if (j == (knn_batches-1)):
-                #         break
 
                 soft_probs_c = calculate_fuzzy_knn(output_c, knn_e, knn_t, device, k=1000, num_classes=10)
 
@@ -351,14 +325,8 @@ for epoch in range(params['num_epochs']):
             errD_fake = torch.mean(fake_output)
             D_G_z1 = fake_output.mean().item()
 
-            # Calculate W-div gradient penalty
-            # gradient_penalty = calculate_gradient_penalty(discriminator, netD,
-            #                                               real_data.data, fake_data.data,
-            #                                               device)
-            gradient_penalty = 0
-
             # Add the gradients from the all-real and all-fake batches
-            D_loss = -errD_real + errD_fake + gradient_penalty * 10
+            D_loss = -errD_real + errD_fake 
             D_loss.backward()
         else:
             D_loss = torch.zeros(1)
@@ -506,71 +474,8 @@ for epoch in range(params['num_epochs']):
 
         optimGPlus.step()
 
-        # netG.train()
-        # netQ.train()
-        # optimG.zero_grad()
-        # totalGP_loss = torch.zeros(1)
-
-        # # Fake data treated as real.
-        # if (epoch % g_train_cadence == 0):
-        #      # Now set the latent var
-        #     # fake_data = netGPlus(noise)
-        #     # output_q = discriminator(fake_data)
-
-        #     fake_data = netG(noise)
-        #     output_d = discriminator(fake_data)
-        #     output_d = netD(output_d)
-        #     err_d = torch.mean(output_d) 
-
-        #     fm = discriminator.get_feature_maps(fake_data)
-        #     output_s = stretcher(fake_data, fm)
-        #     #output_s = netH(output_s)
-        #     output_s = netD(output_s)
-        #     err_s = torch.mean(output_s)
-
-        #     output_q = discriminator(fake_data)
-        #     q_logits, q_mu, q_var = netQ(output_q)
-        #     target = torch.LongTensor(idx).to(device)
-        #     # Calculating loss for discrete latent code.
-        #     dis_loss = 0
-
-        #     isnan1 = torch.sum(torch.isnan(q_logits))
-        #     isnan2 = torch.sum(torch.isnan(target))
-        #     if ((isnan1 > 0) or (isnan2 > 0)):
-        #         print ('NAN VALUE in Q Discrete Loss')
-
-        #     # for MNIST, this is always 1
-        #     for j in range(params['num_dis_c']):
-        #         dis_loss += criterionQ_dis(q_logits[:, j*10 : j*10 + 10], target[j])
-
-        #     # align_loss = criterionQ_dis(q_logits, true_label_g)
-        #     # align_loss = 0
-
-        #     isnan1 = torch.sum(torch.isnan(noise))
-        #     isnan2 = torch.sum(torch.isnan(q_mu))
-        #     isnan3 = torch.sum(torch.isnan(q_var))
-        #     if ((isnan1 > 0) or (isnan2 > 0) or (isnan3 > 0)):
-        #         print ('NAN VALUE in Q Continuous Loss')
-
-        #     # Calculating loss for continuous latent code.
-        #     con_loss = 0
-        #     if (params['num_con_c'] != 0):
-        #         con_loss = criterionQ_con(noise[:, params['num_z']+ params['num_dis_c']*params['dis_c_dim'] : ].view(-1, params['num_con_c']), q_mu, q_var)*0.1
-
-        #     # Net loss for generator.
-        #     #G_loss = torch.zeros(1)
-        #     G_loss = -err_d + -err_s*gamma
-        #     #G_loss = -err_d
-        #     Q_loss = dis_loss + con_loss
-        #     #GQ_loss = G_loss + Q_loss
-        #     GQ_loss = G_loss + Q_loss
-        #     # Calculate gradients.
-        #     GQ_loss.backward()
-        # else:
-        #     G_loss = torch.zeros(1)
-        #     Q_loss = torch.zeros(1)
+        #For now no loss here
         G_loss = torch.zeros(1)
-
         # optimG.step()
 
         # Check progress of training.
