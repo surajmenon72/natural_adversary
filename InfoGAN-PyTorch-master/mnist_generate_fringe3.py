@@ -19,7 +19,7 @@ torch.manual_seed(seed)
 print("Random Seed: ", seed)
 
 # Load the checkpoint file
-path = './checkpoints/adv_pths_model_fringe62_epoch_5_MNIST'
+path = './checkpoints/adv_pths_model_fringe63_epoch_5_MNIST'
 state_dict = torch.load(path, map_location=torch.device('cpu'))
 
 # Set the device to run on: GPU or CPU.
@@ -81,7 +81,7 @@ with torch.no_grad():
 
 print (generated_img1.shape)
 print ('Converting to Grayscale')
-generated_img1 = tv.transforms.functional.rgb_to_grayscale(generated_img1, num_output_channels=1)
+#generated_img1 = tv.transforms.functional.rgb_to_grayscale(generated_img1, num_output_channels=1)
 print (generated_img1.shape)
 
 # Display the generated image.
