@@ -322,45 +322,45 @@ for epoch in range(params['num_epochs']):
         #Split loss 
         if (epoch % g_train_cadence == 0):
             totalG_loss = 0
-            #total_split_loss = 0
-            total_split_loss = torch.zeros(1)
+            total_split_loss = 0
+            #total_split_loss = torch.zeros(1)
             total_gen_d_loss = 0
 
-            # split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
+            split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
             fake_data = netG(noise)
             fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1) 
 
-            # output_s = classifier(fake_data)
+            output_s = classifier(fake_data)
 
-            # #KLDiv expects log space, already in softmax
-            # probs_split = netC(output_s)
-            # probs_split = F.log_softmax(probs_split, dim=1)
+            #KLDiv expects log space, already in softmax
+            probs_split = netC(output_s)
+            probs_split = F.log_softmax(probs_split, dim=1)
 
-            # #check for NaN
-            # isnan1 = torch.sum(torch.isnan(probs_split))
-            # isnan2 = torch.sum(torch.isnan(split_labels))
-            # if ((isnan1 > 0) or (isnan2 > 0)):
-            #     print ('NAN VALUE in Split Loss')
+            #check for NaN
+            isnan1 = torch.sum(torch.isnan(probs_split))
+            isnan2 = torch.sum(torch.isnan(split_labels))
+            if ((isnan1 > 0) or (isnan2 > 0)):
+                print ('NAN VALUE in Split Loss')
 
-            # loss_split = criterionG(probs_split, split_labels)
+            loss_split = criterionG(probs_split, split_labels)
 
             output_d = discriminator(fake_data)
             output_d = netD(output_d)
             gen_d_loss = torch.mean(output_d)
 
             #Loss for Split, needs to be tuned
-            #G_loss = alpha*loss_split + gamma*-gen_d_loss
-            G_loss = -gen_d_loss
+            G_loss = alpha*loss_split + gamma*-gen_d_loss
+            #G_loss = -gen_d_loss
             totalG_loss += G_loss
             
-            #total_split_loss += loss_split
+            total_split_loss += loss_split
             total_gen_d_loss += -gen_d_loss
 
             G_loss.backward()
 
             fake_data = netG(noise)
             fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1) 
-            
+
             output_q = discriminator(fake_data)
             q_logits, q_mu, q_var = netQ(output_q)
             target = torch.LongTensor(idx).to(device)
