@@ -345,12 +345,11 @@ for epoch in range(params['num_epochs']):
 
             #Loss for Split, needs to be tuned
             G_loss = alpha*loss_split + gamma*-gen_d_loss
-            totalGP_loss += GP_loss
+            totalG_loss += G_loss
             total_split_loss += loss_split
             total_gen_d_loss += -gen_d_loss
 
-            totalGP_loss /= gp_iters
-            totalGP_loss.backward()
+            G_loss.backward()
 
             fake_data = netG(noise)
             output_q = discriminator(fake_data)
