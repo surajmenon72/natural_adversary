@@ -294,7 +294,7 @@ for epoch in range(params['num_epochs']):
 
             # Generate fake image batch with G
             fake_data = netG(noise)
-            fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1) 
+            #fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1) 
 
 
             # Train with fake
@@ -360,7 +360,7 @@ for epoch in range(params['num_epochs']):
             G_loss.backward()
 
             fake_data = netG(noise)
-            fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1) 
+            #fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1) 
 
             output_q = discriminator(fake_data)
             q_logits, q_mu, q_var = netQ(output_q)
