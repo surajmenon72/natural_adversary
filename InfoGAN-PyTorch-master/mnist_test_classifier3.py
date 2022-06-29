@@ -34,8 +34,8 @@ state_dict = torch.load(path, map_location=device)
 params = state_dict['params']
 
 # Create the generator network.
-#classifier = Encoder().to(device)
-classifier = ResnetEncoder().to(device)
+classifier = Encoder().to(device)
+#classifier = ResnetEncoder().to(device)
 netC = CHead().to(device)
 # Load the trained generator weights.
 classifier.load_state_dict(state_dict['classifier'])

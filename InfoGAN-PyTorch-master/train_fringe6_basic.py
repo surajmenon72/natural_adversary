@@ -102,7 +102,8 @@ netQ = QHead().to(device)
 netQ.apply(weights_init)
 print(netQ)
 
-classifier = ResnetEncoder().to(device)
+#classifier = ResnetEncoder().to(device)
+classifier = Encoder().to(device)
 classifier.apply(weights_init)
 print (classifier)
 
