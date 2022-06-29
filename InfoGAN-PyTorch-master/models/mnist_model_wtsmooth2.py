@@ -40,8 +40,8 @@ class Discriminator(nn.Module):
         super().__init__()
 
         #1 or 3 channels
-        self.conv1 = nn.Conv2d(3, 64, 4, 2, 1)
-        #self.conv1 = nn.Conv2d(1, 64, 4, 2, 1)
+        #self.conv1 = nn.Conv2d(3, 64, 4, 2, 1)
+        self.conv1 = nn.Conv2d(1, 64, 4, 2, 1)
 
         self.conv2 = nn.Conv2d(64, 128, 4, 2, 1, bias=False)
         self.bn2 = nn.BatchNorm2d(128)
