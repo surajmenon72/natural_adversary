@@ -18,6 +18,7 @@ import torch.nn.functional as F
 from torch import nn, optim
 import torch.distributed as dist
 import torchvision.datasets as datasets
+from torchvision.models import resnet18, resnet34, resnet50
 from torchvision import transforms
 
 import augmentations as aug
@@ -101,6 +102,38 @@ class Encoder(nn.Module):
         x = x.view(-1, 1024)
         x = F.relu(self.fc1(x))
 
+        return x
+
+class ResnetEncoder(nn.Module):
+    def __init__(
+        self,
+        model="resnet18",
+        use_pretrained=False,
+        **kwargs,
+    ):
+        super().__init__()
+
+        encoder = eval(model)(pretrained=use_pretrained)
+        self.f = []
+        """for name, module in encoder.named_children():
+            if name == "conv1":
+                module = nn.Conv2d(
+                    3, 64, kernel_size=3, stride=1, padding=1, bias=False
+                )
+            if not isinstance(module, nn.Linear) and not isinstance(
+                module, nn.MaxPool2d
+            ):
+                self.f.append(module)"""
+        for name, module in encoder.named_children():
+            if not isinstance(module, nn.Linear):
+                self.f.append(module)
+        self.f = nn.Sequential(*self.f)
+        self.feature_size = encoder.fc.in_features
+        self.d_model = encoder.fc.in_features
+
+    def forward(self, x):
+        x = self.f(x)
+        x = torch.flatten(x, start_dim=1)
         return x
 
 def main(args):
@@ -226,12 +259,13 @@ def main(args):
                 optimizer=optimizer.state_dict(),
             )
             torch.save(state, args.exp_dir / "model.pth")
+            torch.save(model.backbone.state_dict(), args.exp_dir / "model_backbone.pth")
 
         current_time = time.time()
         epoch_time = current_time - epoch_start_time
         print ("Time taken for Epoch %d: %.2fs" %(epoch + 1, epoch_time))
     if args.rank == 0:
-        torch.save(model.backbone.state_dict(), args.exp_dir / "resnet50.pth")
+        torch.save(model.backbone.state_dict(), args.exp_dir / "model_backbone.pth")
         #torch.save(model.module.backbone.state_dict(), args.exp_dir / "resnet50.pth")
 
 def adjust_learning_rate(args, optimizer, loader, step):
