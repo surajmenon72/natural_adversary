@@ -48,6 +48,8 @@ def get_arguments():
                         help='Architecture of the backbone encoder network')
     parser.add_argument("--mlp", default="2048-2048-2048",
                         help='Size and number of layers of the MLP expander head')
+    parser.add_argument("--encoder", default="base",
+                        help='Type of encoder we should use')
 
     # Optim
     parser.add_argument("--epochs", type=int, default=100,
@@ -148,7 +150,13 @@ def main(args):
     #     print(" ".join(sys.argv))
     #     print(" ".join(sys.argv), file=stats_file)
 
-    transforms = aug.TrainTransformMNIST()
+    if (args.encoder == "base"):
+        transforms = aug.TrainTransformMNIST()
+    elif (args.encoder == "resnet"):
+        transforms = aug.TrainTransformMNISTResnet()
+    else:
+        print ("No valid Encoder given")
+        exit()
 
     # dataset = datasets.ImageFolder(args.data_dir / "train", transforms)
 
@@ -294,8 +302,15 @@ class VICReg(nn.Module):
         # self.backbone, self.embedding = resnet.__dict__[args.arch](
         #     zero_init_residual=True
         # )
-        self.backbone = Encoder()
-        self.embedding = 256
+        if (args.encoder == "base"):
+            self.backbone = Encoder()
+            self.embedding = 256
+        elif (args.encoder == "resnet"):
+            self.backbone = ResnetEncoder()
+            self.embedding = 512
+        else:
+            print ("No Valid Encoder given")
+            exit()
         self.projector = Projector(args, self.embedding)
 
     def forward(self, x, y):

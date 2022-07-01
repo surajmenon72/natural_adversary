@@ -16,6 +16,7 @@ from unagi.models.embeddings.embeddings import (
     SquarePatchEmbed,
 )
 from unagi.models.encoders.image.resnet.resnet import ResnetEncoder
+from unagi.models.encoders.image.resnet.resnet import Encoder
 from unagi.models.encoders.sequence.bert.bert import BertEncoder
 from unagi.models.encoders.sequence.mixer.mixer import MixerEncoder
 from unagi.models.encoders.sequence.transformer.transformer import TransformerEncoder
@@ -50,6 +51,7 @@ MODULE_DICTS = {
         "mixer": MixerEncoder,
         "transformer": TransformerEncoder,
         "resnet": ResnetEncoder,
+        "base" : Encoder, 
         "bert": BertEncoder,
     },
     "decoders": {
