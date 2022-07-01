@@ -303,9 +303,11 @@ class VICReg(nn.Module):
         #     zero_init_residual=True
         # )
         if (args.encoder == "base"):
+            print ('Using Base Encoder')
             self.backbone = Encoder()
             self.embedding = 256
         elif (args.encoder == "resnet"):
+            print ('Using Resnet Encoder')
             self.backbone = ResnetEncoder()
             self.embedding = 512
         else:
