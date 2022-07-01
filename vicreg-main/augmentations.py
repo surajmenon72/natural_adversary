@@ -92,6 +92,7 @@ class TrainTransformMNIST(object):
     def __init__(self):
         self.transform = transforms.Compose(
             [
+                #transforms.Grayscale(num_output_channels=3), 
                 transforms.RandomResizedCrop(
                     28, interpolation=InterpolationMode.BILINEAR
                 ),
@@ -115,6 +116,7 @@ class TrainTransformMNIST(object):
         )
         self.transform_prime = transforms.Compose(
             [
+                #transforms.Grayscale(num_output_channels=3),
                 transforms.RandomResizedCrop(
                     28, interpolation=InterpolationMode.BILINEAR
                 ),
