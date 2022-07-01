@@ -86,7 +86,7 @@ class TrainTransform(object):
     def __call__(self, sample):
         x1 = self.transform(sample)
         x2 = self.transform_prime(sample)
-        return x1, 
+        return x1, x2
 
 class TrainTransformMNIST(object):
     def __init__(self):
@@ -136,6 +136,11 @@ class TrainTransformMNIST(object):
                 ),
             ]
         )
+
+    def __call__(self, sample):
+        x1 = self.transform(sample)
+        x2 = self.transform_prime(sample)
+        return x1, x2
 
 class TrainTransformMNISTResnet(object):
     def __init__(self):
