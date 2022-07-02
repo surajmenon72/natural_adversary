@@ -465,7 +465,7 @@ def main_worker(args):
     # print ('Validation Accuracy w/ K-Means')
     # print (accuracy)
 
-    def calculate_fuzzy_knn(model_output, knn_e, knn_t, k=1000, num_classes=10):
+    def calculate_fuzzy_knn(model_output, knn_e, knn_t, k=100, num_classes=10):
         b_size = model_output.shape[0]
         e_size = model_output.shape[1]
         knn_size = knn_e.shape[0]
@@ -476,6 +476,39 @@ def main_worker(args):
 
         distances = torch.cdist(model_output_r, knn_e_r, p=2) #verified this works
         distances = distances.view((b_size, knn_size))
+
+        knn_guesses = torch.zeros((b_size, num_classes))
+        for i in range(b_size):
+            d = distances[i, :]
+            d_s, d_s_i = torch.sort(d)
+            max_val = torch.max(d_s)
+            for j in range(k):
+                knn_guesses[i, int(knn_t[d_s_i[j]])] += max_val - d_s[j]
+
+            #knn_guesses[i, :] /= torch.max(knn_guesses[i, :])
+
+        #print (knn_guesses[0])
+
+        #sm_knn = torch.nn.functional.softmax(knn_guesses, dim=1)
+
+        #sm_knn = knn_guesses/torch.sum(knn_guesses, dim=1)
+        sm_knn = knn_guesses/(torch.sum(knn_guesses, dim=1).view((knn_guesses.shape[0], 1)))
+
+        return sm_knn
+
+    def calculate_fuzzy_knn_eff(model_output, knn_e, knn_t, k=100, num_classes=10):
+        b_size = model_output.shape[0]
+        e_size = model_output.shape[1]
+        knn_size = knn_e.shape[0]
+
+        distances = torch.zeros((b_size, knn_size))
+        knn_e_r = knn_e.view((1, knn_size, e_size))
+        for b in range(b_size):
+            output_chunk = model_output[b, :]
+            output_chunk_r = output_chunk.view((1, 1, e_size))
+            distance_b = torch.cdist(output_chunk_r, knn_e_r, p=2)
+            distance_b = distance_b.view((knn_size))
+            distances[b, :] = distance_b[:]
 
         knn_guesses = torch.zeros((b_size, num_classes))
         for i in range(b_size):
@@ -514,7 +547,8 @@ def main_worker(args):
 
         # img_test = img_tensor
         # output = model(img_test.to(device))
-        fuzzy_guesses = calculate_fuzzy_knn(output, knn_e, knn_t)
+        #fuzzy_guesses = calculate_fuzzy_knn(output, knn_e, knn_t, k=100)
+        fuzzy_guesses = calculate_fuzzy_knn_eff(output, knn_e, knn_t, k=100)
 
         # print (fuzzy_guesses.shape)
         # print (fuzzy_guesses[0])
