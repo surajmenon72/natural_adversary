@@ -219,7 +219,7 @@ def main_worker(args):
     # missing_keys, unexpected_keys = backbone.load_state_dict(state_dict, strict=False)
     # assert missing_keys == [] and unexpected_keys == []
 
-    ckpt = './models/adv_pths_best-resnet18.ckpt'
+    ckpt = './models/thanos_resnet_15.ckpt'
     loaded = torch.load(ckpt, map_location=torch.device('cpu'))
 
     backbone = ResnetEncoder()
