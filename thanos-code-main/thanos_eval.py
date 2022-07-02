@@ -298,7 +298,7 @@ def main_worker(args):
     print (len(train_loader))
     batches_for_knn = len(train_loader)-1
     exp_dir = './models/knn.pth'
-    train_knn = True
+    train_knn = False
     knn_e = torch.zeros((batches_for_knn*batch_size, embedding_size))
     knn_t = torch.zeros(batches_for_knn*batch_size)
 
@@ -328,52 +328,6 @@ def main_worker(args):
         knn_e = copy.deepcopy(knn_dict["knn_e"])
         knn_t = copy.deepcopy(knn_dict["knn_t"])
         print ('KNN loaded')
-
-    # def calculate_fuzzy_k_means(model_output, k_means):
-    #     b_size = model_output.shape[0]
-    #     e_size = model_output.shape[1]
-    #     k_size = k_means.shape[0]
-
-    #     model_output_r = model_output.view((b_size, 1, e_size))
-    #     k_means_r = k_means.view((1, k_size, e_size))
-    #     k_means_r = k_means_r.repeat(b_size, 1, 1)
-
-    #     distances = torch.cdist(model_output_r, k_means_r, p=2) #verified this works
-    #     distances = distances.view((b_size, k_size))
-
-    #     sm_probs = torch.nn.functional.softmax(distances, dim=1)
-
-    #     return sm_probs
-
-    #Validation tasks
-
-    # #Now see how well the K-means work
-    # batches_to_test = 10
-    # total_correct = 0
-    # total_samples = 0
-    # print ('Validating on K-Means')
-    # for i, (images, target) in enumerate(val_loader):
-    #     print ('Val Batch')
-    #     print (i)
-    #     output = model(images.to(device))
-    #     fuzzy_guesses = calculate_fuzzy_k_means(output, k_means)
-
-    #     guesses = torch.argmax(fuzzy_guesses, dim=1)
-    #     print (guesses)
-        
-    #     correct = (guesses == target)
-    #     num_correct = torch.sum(correct, dim=0)
-
-    #     total_correct += num_correct
-    #     total_samples += batch_size
-
-    #     if (i == batches_to_test):
-    #         break
-
-    # accuracy = total_correct/total_samples
-
-    # print ('Validation Accuracy w/ K-Means')
-    # print (accuracy)
 
     def calculate_fuzzy_knn(model_output, knn_e, knn_t, k=100, num_classes=10):
         b_size = model_output.shape[0]
