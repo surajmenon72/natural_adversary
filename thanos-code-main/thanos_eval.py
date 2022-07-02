@@ -388,7 +388,7 @@ def main_worker(args):
     print (len(train_loader))
     batches_for_knn = len(train_loader)-1
     exp_dir = './models/knn.pth'
-    train_knn = 'True'
+    train_knn = 'False'
     knn_e = torch.zeros((batches_for_knn*batch_size, embedding_size))
     knn_t = torch.zeros(batches_for_knn*batch_size)
 
@@ -535,7 +535,7 @@ def main_worker(args):
     # img_tensor = image.float()
 
     #Now lets validate w/ KNN
-    batches_to_test = 100
+    batches_to_test = 10
     total_correct = 0
     total_samples = 0
     print ('Validating w/ KNN')
