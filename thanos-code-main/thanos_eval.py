@@ -565,7 +565,9 @@ def main_worker(args):
         total_correct += num_correct
         total_samples += batch_size
 
-        targets[int(target)] += 1
+        for b in range(batch_size):
+            index = int(target[b])
+            targets[index] += 1
 
         if (i == batches_to_test):
             break
