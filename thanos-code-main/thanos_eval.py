@@ -385,7 +385,7 @@ def main_worker(args):
 
     #Set knn,works only if targets are about evenly distributed in training set
     model.eval()
-    batches_for_knn = 400
+    batches_for_knn = len(train_loader)
     exp_dir = './models/knn.pth'
     train_knn = 'True'
     knn_e = torch.zeros((batches_for_knn*batch_size, embedding_size))
