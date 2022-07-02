@@ -386,7 +386,6 @@ def main_worker(args):
     #Set knn,works only if targets are about evenly distributed in training set
     model.eval()
     print (len(train_loader))
-    exit()
     batches_for_knn = len(train_loader)
     exp_dir = './models/knn.pth'
     train_knn = 'True'
