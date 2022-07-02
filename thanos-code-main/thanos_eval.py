@@ -7,6 +7,7 @@ import signal
 import sys
 import time
 import urllib
+import copy
 
 from torch import nn, optim
 from torchvision import datasets, transforms
@@ -266,70 +267,6 @@ def main_worker(args):
     optimizer = optim.SGD(param_groups, 0, momentum=0.9, weight_decay=args.weight_decay)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, args.epochs)
 
-    # automatically resume from checkpoint if it exists
-    # if (args.exp_dir / "checkpoint.pth").is_file():
-    #     ckpt = torch.load(args.exp_dir / "checkpoint.pth", map_location="cpu")
-    #     start_epoch = ckpt["epoch"]
-    #     best_acc = ckpt["best_acc"]
-    #     k_means = ckpt["k_means"]
-    #     model.load_state_dict(ckpt["model"])
-    #     optimizer.load_state_dict(ckpt["optimizer"])
-    #     scheduler.load_state_dict(ckpt["scheduler"])
-    # else:
-    #     start_epoch = 0
-    #     best_acc = argparse.Namespace(top1=0, top5=0)
-
-    # Data loading code
-    # traindir = args.data_dir / "train"
-    # valdir = args.data_dir / "val"
-    # normalize = transforms.Normalize(
-    #     mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-    # )
-
-    # train_dataset = datasets.ImageFolder(
-    #     traindir,
-    #     transforms.Compose(
-    #         [
-    #             transforms.RandomResizedCrop(224),
-    #             transforms.RandomHorizontalFlip(),
-    #             transforms.ToTensor(),
-    #             normalize,
-    #         ]
-    #     ),
-    # )
-    # val_dataset = datasets.ImageFolder(
-    #     valdir,
-    #     transforms.Compose(
-    #         [
-    #             transforms.Resize(256),
-    #             transforms.CenterCrop(224),
-    #             transforms.ToTensor(),
-    #             normalize,
-    #         ]
-    #     ),
-    # )
-
-
-
-    # if args.train_percent in {1, 10}:
-    #     train_dataset.samples = []
-    #     for fname in args.train_files:
-    #         fname = fname.decode().strip()
-    #         cls = fname.split("_")[0]
-    #         train_dataset.samples.append(
-    #             (traindir / cls / fname, train_dataset.class_to_idx[cls])
-    #         )
-
-    # train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
-    # kwargs = dict(
-    #     batch_size=args.batch_size // args.world_size,
-    #     num_workers=args.workers,
-    #     pin_memory=True,
-    # )
-    # train_loader = torch.utils.data.DataLoader(
-    #     train_dataset, sampler=train_sampler, **kwargs
-    # )
-    # val_loader = torch.utils.data.DataLoader(val_dataset, **kwargs)
 
     #Load MNIST
     transform = transforms.Compose([
@@ -355,46 +292,17 @@ def main_worker(args):
                                             batch_size=batch_size, 
                                             shuffle=True)
 
-    #Set the k-means
-    # num_classes = 10
-    # batches_to_avg = 100
-    # k_means = torch.zeros((num_classes, embedding_size))
-    # if (args.train_k_means == "True"):
-    #     print ('Training K-Means')
-    #     totals = torch.zeros((num_classes, 1))
-    #     for i, (images, target) in enumerate(train_loader):
-    #         print ('Batch')
-    #         print (i)
-    #         output = model(images.to(device))
-    #         for j in range(batch_size):
-    #             k_means[target[j], :] += output[j, :]
-    #             totals[target[j], :] += 1
-
-    #         if (i == (batches_to_avg-1)):
-    #             break
-
-    #     k_means = k_means/totals
-    #     state = dict(
-    #         k_means=k_means,
-    #     )
-    #     torch.save(state, args.exp_dir / "k_means.pth")
-    # else:
-    #     k_dict = torch.load(args.exp_dir / "k_means.pth")
-    #     k_means = k_dict["k_means"]
-    #     print ('K_means loaded')
-
-    # print (k_means.shape)
 
     #Set knn,works only if targets are about evenly distributed in training set
     model.eval()
     print (len(train_loader))
     batches_for_knn = len(train_loader)-1
     exp_dir = './models/knn.pth'
-    train_knn = 'False'
+    train_knn = True
     knn_e = torch.zeros((batches_for_knn*batch_size, embedding_size))
     knn_t = torch.zeros(batches_for_knn*batch_size)
 
-    if (train_knn == "True"):
+    if (train_knn == True):
         print ('Training KNN')
         for i, (images, target) in enumerate(train_loader):
             print ('Batch')
@@ -404,8 +312,8 @@ def main_worker(args):
             start_index = i*batch_size
             end_index = (i+1)*batch_size
 
-            knn_e[start_index:end_index, :] = output[:, :]
-            knn_t[start_index:end_index] = target[:]
+            knn_e[start_index:end_index, :] = copy.deepcopy(output[:, :])
+            knn_t[start_index:end_index] = copy.deepcopy(target[:])
 
             if (i == (batches_for_knn-1)):
                 break
@@ -417,8 +325,8 @@ def main_worker(args):
         torch.save(state, exp_dir)
     else:
         knn_dict = torch.load(exp_dir)
-        knn_e = knn_dict["knn_e"]
-        knn_t = knn_dict["knn_t"]
+        knn_e = copy.deepcopy(knn_dict["knn_e"])
+        knn_t = copy.deepcopy(knn_dict["knn_t"])
         print ('KNN loaded')
 
     # def calculate_fuzzy_k_means(model_output, k_means):
