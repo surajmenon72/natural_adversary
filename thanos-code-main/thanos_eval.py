@@ -541,6 +541,7 @@ def main_worker(args):
     total_correct = 0
     total_samples = 0
     print ('Validating w/ KNN')
+    targets = torch.zeros((10))
     for i, (images, target) in enumerate(val_loader):
         print ('Val Batch')
         print (i)
@@ -564,6 +565,8 @@ def main_worker(args):
         total_correct += num_correct
         total_samples += batch_size
 
+        targets[int(target)] += 1
+
         if (i == batches_to_test):
             break
 
@@ -571,6 +574,10 @@ def main_worker(args):
 
     print ('Validation Accuracy w/ KNN')
     print (accuracy)
+
+    print ('Target Distribution')
+    print (targets)
+
 
 if __name__ == "__main__":
     main()
