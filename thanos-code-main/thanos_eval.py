@@ -225,7 +225,7 @@ def main_worker(args):
 
     backbone = ResnetEncoder()
     #backbone = Encoder()
-    load_model = False
+    load_model = True
     if (load_model == True):
         backbone.load_state_dict(
             {
@@ -298,7 +298,7 @@ def main_worker(args):
     print (len(train_loader))
     batches_for_knn = len(train_loader)-1
     exp_dir = './models/knn.pth'
-    train_knn = False
+    train_knn = True
     knn_e = torch.zeros((batches_for_knn*batch_size, embedding_size))
     knn_t = torch.zeros(batches_for_knn*batch_size)
 
@@ -328,6 +328,55 @@ def main_worker(args):
         knn_e = copy.deepcopy(knn_dict["knn_e"])
         knn_t = copy.deepcopy(knn_dict["knn_t"])
         print ('KNN loaded')
+
+    # image = torch.load('3-9.pt')
+    # image = torch.cat([image, image, image], dim=0) 
+    # image.resize_(1, 3, 28, 28)
+    # img_tensor = image.float()
+
+    #Now lets validate w/ KNN
+    batches_to_test = 10
+    total_correct = 0
+    total_samples = 0
+    print ('Validating w/ KNN')
+    targets = torch.zeros((10))
+    for i, (images, target) in enumerate(val_loader):
+        print ('Val Batch')
+        print (i)
+
+        output = model(images.to(device))
+
+        # img_test = img_tensor
+        # output = model(img_test.to(device))
+        #fuzzy_guesses = calculate_fuzzy_knn(output, knn_e, knn_t, k=100)
+        fuzzy_guesses = calculate_fuzzy_knn_eff(output, knn_e, knn_t, k=100)
+
+        # print (fuzzy_guesses.shape)
+        # print (fuzzy_guesses[0])
+        # exit()
+
+        guesses = torch.argmax(fuzzy_guesses, dim=1)
+        
+        correct = (guesses == target)
+        num_correct = torch.sum(correct, dim=0)
+
+        total_correct += num_correct
+        total_samples += batch_size
+
+        for b in range(batch_size):
+            index = int(target[b])
+            targets[index] += 1
+
+        if (i == batches_to_test):
+            break
+
+    accuracy = total_correct/total_samples
+
+    print ('Validation Accuracy w/ KNN')
+    print (accuracy)
+
+    print ('Target Distribution')
+    print (targets)
 
     def calculate_fuzzy_knn(model_output, knn_e, knn_t, k=100, num_classes=10):
         b_size = model_output.shape[0]
@@ -392,55 +441,6 @@ def main_worker(args):
         sm_knn = knn_guesses/(torch.sum(knn_guesses, dim=1).view((knn_guesses.shape[0], 1)))
 
         return sm_knn
-
-    # image = torch.load('3-9.pt')
-    # image = torch.cat([image, image, image], dim=0) 
-    # image.resize_(1, 3, 28, 28)
-    # img_tensor = image.float()
-
-    #Now lets validate w/ KNN
-    batches_to_test = 10
-    total_correct = 0
-    total_samples = 0
-    print ('Validating w/ KNN')
-    targets = torch.zeros((10))
-    for i, (images, target) in enumerate(val_loader):
-        print ('Val Batch')
-        print (i)
-
-        output = model(images.to(device))
-
-        # img_test = img_tensor
-        # output = model(img_test.to(device))
-        #fuzzy_guesses = calculate_fuzzy_knn(output, knn_e, knn_t, k=100)
-        fuzzy_guesses = calculate_fuzzy_knn_eff(output, knn_e, knn_t, k=100)
-
-        # print (fuzzy_guesses.shape)
-        # print (fuzzy_guesses[0])
-        # exit()
-
-        guesses = torch.argmax(fuzzy_guesses, dim=1)
-        
-        correct = (guesses == target)
-        num_correct = torch.sum(correct, dim=0)
-
-        total_correct += num_correct
-        total_samples += batch_size
-
-        for b in range(batch_size):
-            index = int(target[b])
-            targets[index] += 1
-
-        if (i == batches_to_test):
-            break
-
-    accuracy = total_correct/total_samples
-
-    print ('Validation Accuracy w/ KNN')
-    print (accuracy)
-
-    print ('Target Distribution')
-    print (targets)
 
 
 if __name__ == "__main__":
