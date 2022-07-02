@@ -239,7 +239,7 @@ def main_worker(args):
         strict=True,
     )
 
-    batch_size = 16
+    batch_size = 128
     embedding_size = 512
     output_size = 10
     head = nn.Linear(embedding_size, output_size)
