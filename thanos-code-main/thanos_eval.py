@@ -287,9 +287,14 @@ def main_worker(args):
 
     ckpt = './models/thanos_resnet_15.ckpt'
     loaded = torch.load(ckpt, map_location=torch.device('cpu'))
+    use_base_resnet = 'resnet'
 
-    backbone = ResnetEncoder()
-    #backbone = Encoder()
+    backbone = None
+    if (use_base_resnet == 'resnet'):
+        backbone = ResnetEncoder()
+    else:
+        backbone = Encoder()
+
     load_model = True
     if (load_model == True):
         backbone.load_state_dict(
@@ -308,7 +313,10 @@ def main_worker(args):
         )
 
     batch_size = 128
-    embedding_size = 512
+    if (use_base_resnet == 'resnet'):
+        embedding_size = 512
+    else:
+        embedding_size = 256
     output_size = 10
     head = nn.Linear(embedding_size, output_size)
     head.weight.data.normal_(mean=0.0, std=0.01)
@@ -334,15 +342,23 @@ def main_worker(args):
 
 
     #Load MNIST
-    transform = transforms.Compose([
-            transforms.Grayscale(num_output_channels=3),
-            transforms.Resize(28),
-            transforms.CenterCrop(28),
-            transforms.ToTensor(),
-            transforms.Normalize(
-                mean=[0.1307, 0.1307, 0.1307], std=[0.3081, 0.3081, 0.3081]
-            ),]
-    )
+    transform = None
+    if (use_base_resnet == 'resnet'): 
+        transform = transforms.Compose([
+                transforms.Grayscale(num_output_channels=3),
+                transforms.Resize(28),
+                transforms.CenterCrop(28),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.1307, 0.1307, 0.1307], std=[0.3081, 0.3081, 0.3081]
+                ),]
+        )
+    else:
+        transform = transforms.Compose([
+                transforms.Resize(28),
+                transforms.CenterCrop(28),
+                transforms.ToTensor(),]
+        )
 
     root = 'data/'
     train_dataset = datasets.MNIST(root+'mnist/', train='train', 

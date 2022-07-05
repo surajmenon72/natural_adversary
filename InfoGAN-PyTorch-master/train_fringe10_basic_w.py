@@ -34,7 +34,11 @@ device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
 load_model = False
-load_classifier = True
+load_classifier = False
+use_base_resnet = 'base'
+use_thanos_vicreg = 'vicreg'
+load_encoder = False
+train_classifier = False
 train_classifier_head = False
 
 state_dict = {}
@@ -111,6 +115,7 @@ netC = CHead().to(device)
 netC.apply(weights_init)
 print (netC)
 
+knn_path = ' '
 
 if (load_model):
     netG.load_state_dict(state_dict['netG'])
@@ -126,28 +131,66 @@ elif (load_classifier):
     print ('Loaded Classifer and CHead')
 else:
     #need to load classifier regardless
-    path = './checkpoints/adv_pths_best-resnet18.ckpt'
-    state_dict = torch.load(path, map_location=device)
-    #missing_keys, unexpected_keys = classifier.load_state_dict(state_dict['state_dict', strict=False)
-    classifier.load_state_dict(
-        {
-            ".".join(k.split(".")[3:]): v
-            for k, v in state_dict["state_dict"].items()
-            if (
-                # source_module in k
-                # and "model" in k
-                # and k.split(".")[2] == source_module
-                "model" in k
-                and "ImageEncoder" in k
-            )
-        },
-        strict=True,
-    )
-    print ('Loaded classifier')
+    if (load_encoder == True):
+        if(use_thanos_vicreg == 'thanos'):
+            if (use_base_resnet == 'resnet'):
+                path = './checkpoints/thanos_resnet_15.ckpt'
+                knn_path = './checkpoints/thanos_resnet_knn.pth'
+                state_dict = torch.load(path, map_location=device)
+                #missing_keys, unexpected_keys = classifier.load_state_dict(state_dict['state_dict', strict=False)
+                classifier.load_state_dict(
+                    {
+                        ".".join(k.split(".")[3:]): v
+                        for k, v in state_dict["state_dict"].items()
+                        if (
+                            # source_module in k
+                            # and "model" in k
+                            # and k.split(".")[2] == source_module
+                            "model" in k
+                            and "ImageEncoder" in k
+                        )
+                    },
+                    strict=True,
+                )
+                print ('Loaded classifier')
+            else:
+                path = './checkpoints/thanos_base_15.ckpt'
+                knn_path = './checkpoints/thanos_base_knn.pth'
+                state_dict = torch.load(path, map_location=device)
 
+                classifier.load_state_dict(
+                    {
+                        ".".join(k.split(".")[3:]): v
+                        for k, v in state_dict["state_dict"].items()
+                        if (
+                            # source_module in k
+                            # and "model" in k
+                            # and k.split(".")[2] == source_module
+                            "model" in k
+                            and "ImageEncoder" in k
+                        )
+                    },
+                    strict=True,
+                )
+                print ('Loaded classifier')
+        else:
+            #using Vicreg
+            if (use_base_resnet == 'resnet'):
+                path = './checkpoints/vicreg_backbone_resnet_60.pth'
+                knn_path = './checkpoints/vicreg_resnet_knn.pth'
+                state_dict = torch.load(path, map_location=device)
 
-#load knn dict
-path = './checkpoints/knn.pth'
+                missing_keys, unexpected_keys = classifier.load_state_dict(state_dict['state_dict'], strict=False)
+            else:
+                path = './checkpoints/vicreg_backbone_base_60.pth'
+                knn_path = './checkpoints/vicreg_base_knn.pth'
+                state_dict = torch.load(path, map_location=device)
+
+                missing_keys, unexpected_keys = classifier.load_state_dict(state_dict['state_dict'], strict=False)
+
+#load knn dict regardless, assume that it matches the encoder we are using.
+if (knn_path == ' '):
+    knn_path = './checkpoints/knn.pth'
 knn_dict = torch.load(path)
 knn_e = knn_dict["knn_e"].to(device)
 knn_t = knn_dict["knn_t"].to(device)
@@ -167,8 +210,9 @@ criterionQ_dis = nn.CrossEntropyLoss()
 criterionQ_con = NormalNLLLoss()
 
 #which networks don't require grad
-classifier.requires_grad_(False)
-classifier.eval()
+if (train_classifier == False)
+    classifier.requires_grad_(False)
+    classifier.eval()
 
 # Adam optimiser is used.
 optimE = optim.Adam([{'params': classifier.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
@@ -220,6 +264,7 @@ beta = 1
 gamma = 1
 clip_value_1 = 1
 clip_value_2 = 1
+clip_grads = True
 
 c_train_cadence = 1
 d_train_cadence = 1
@@ -244,6 +289,8 @@ for epoch in range(params['num_epochs']):
         #get noise sample
         noise, idx, c_nums = noise_sample_target(params['num_dis_c'], params['dis_c_dim'], params['num_con_c'], params['num_z'], b_size, device, targets)
 
+        if (train_classifier):
+            classifier.train()
         # Updating discriminator and DHead
         netC.train()
         optimC.zero_grad()
@@ -258,7 +305,7 @@ for epoch in range(params['num_epochs']):
                 probs_c = torch.squeeze(probs_c)
                 probs_c = F.log_softmax(probs_c, dim=1)
 
-                soft_probs_c = calculate_fuzzy_knn(output_c, knn_e, knn_t, device, k=1000, num_classes=10)
+                soft_probs_c = calculate_fuzzy_knn(output_c, knn_e, knn_t, device, k=100, num_classes=10)
 
                 # check for NaN
                 isnan1 = torch.sum(torch.isnan(probs_c))
@@ -275,6 +322,9 @@ for epoch in range(params['num_epochs']):
 
         #Net loss for classifier
         C_loss = loss_c
+        if (train_classifier):
+            optimE.step()
+
         optimC.step()
 
         if (train_classifier_head):
@@ -309,8 +359,9 @@ for epoch in range(params['num_epochs']):
         else:
             D_loss = torch.zeros(1)
 
-        nn.utils.clip_grad_value_(discriminator.parameters(), clip_value_1)
-        nn.utils.clip_grad_value_(netD.parameters(), clip_value_1)
+        if (clip_grads):
+            nn.utils.clip_grad_value_(discriminator.parameters(), clip_value_1)
+            nn.utils.clip_grad_value_(netD.parameters(), clip_value_1)
         optimD.step()
         #need to clip WGAN for Lipshitz
         # clip_module_weights(discriminator, min_v=-.01, max_v=.01)
