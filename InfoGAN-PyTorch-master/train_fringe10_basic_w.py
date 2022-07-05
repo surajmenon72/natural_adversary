@@ -44,6 +44,7 @@ train_classifier = False
 train_classifier_head = False
 train_using_knn = False
 
+load_path = ' '
 state_dict = {}
 if (load_model):
     load_path = './checkpoint/model_load'
