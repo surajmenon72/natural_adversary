@@ -288,7 +288,7 @@ def main_worker(args):
     ckpt = './models/thanos_base_20.ckpt'
     loaded = torch.load(ckpt, map_location=torch.device('cpu'))
     use_base_resnet = 'base'
-    train_knn = True
+    train_knn = False
 
     backbone = None
     if (use_base_resnet == 'resnet'):
