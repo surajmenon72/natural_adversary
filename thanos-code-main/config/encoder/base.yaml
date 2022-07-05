@@ -1,2 +1,3 @@
 module: base
+model : base
 _target_: null
