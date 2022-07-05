@@ -35,11 +35,14 @@ print(device, " will be used.\n")
 
 load_model = False
 load_classifier = False
+
 use_base_resnet = 'base'
 use_thanos_vicreg = 'vicreg'
 load_encoder = False
+
 train_classifier = False
 train_classifier_head = False
+train_using_knn = False
 
 state_dict = {}
 if (load_model):
@@ -309,7 +312,8 @@ for epoch in range(params['num_epochs']):
                 probs_c = torch.squeeze(probs_c)
                 probs_c = F.log_softmax(probs_c, dim=1)
 
-                soft_probs_c = calculate_fuzzy_knn(output_c, knn_e, knn_t, device, k=100, num_classes=10)
+                if (train_using_knn):
+                    soft_probs_c = calculate_fuzzy_knn(output_c, knn_e, knn_t, device, k=100, num_classes=10)
 
                 # check for NaN
                 isnan1 = torch.sum(torch.isnan(probs_c))
@@ -317,7 +321,10 @@ for epoch in range(params['num_epochs']):
                 if ((isnan1 > 0) or (isnan2 > 0)):
                     print ('NAN VALUE in Classifier Loss')
 
-                loss_c = criterionC(probs_c, soft_probs_c)
+                if (train_using_knn):
+                    loss_c = criterionC(probs_c, soft_probs_c)
+                else:
+                    loss_c = criterionC(probs_c, true_label_g)
                 loss_c = loss_c*beta
                 # Calculate gradients
                 loss_c.backward()
