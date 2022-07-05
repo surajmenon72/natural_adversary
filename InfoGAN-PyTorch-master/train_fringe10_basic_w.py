@@ -52,7 +52,7 @@ elif (load_classifier):
 use_3_channel = False
 if (use_base_resnet == 'resnet'):
     use_3_channel = True
-    
+
 dataloader = get_data(params['dataset'], params['batch_size'], use_3_channel=use_3_channel)
 dataloader_knn = get_data(params['dataset'], params['knn_batch_size'], use_3_channel=use_3_channel)
 
@@ -384,7 +384,9 @@ for epoch in range(params['num_epochs']):
 
             split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
             fake_data = netG(noise)
-            #fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1) 
+
+            if (use_3_channel):
+                fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1) 
 
             output_s = classifier(fake_data)
 

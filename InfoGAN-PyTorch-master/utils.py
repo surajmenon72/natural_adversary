@@ -106,8 +106,8 @@ def noise_sample_target(n_dis_c, dis_c_dim, n_con_c, n_z, batch_size, device, ta
             # full_num = torch.rand(1, n_con_c, 1, 1)
             # con_c[i, :, :, :] = full_num
 
-            num = torch.rand(1, 1, 1, 1)
-            #num = 0.6 #hack for testing
+            #num = torch.rand(1, 1, 1, 1)
+            num = 0.5 #hack for testing
             con_c[i, t, :, :] = num
             c_nums.append(num)
 
@@ -149,21 +149,21 @@ def get_split_labels(true_label, targets, c_nums, num_classes, device):
         c_num = c_nums[i]
         # c_num /= 2 #divide in half as original is between 0-1, we want between 0-0.5
 
-        #calc remainder to smoothen this
-        tolerance_factor = 5
-        remainder = c_num/tolerance_factor
-        c_num_r = c_num - remainder
-        remainder_fill = (remainder/(num_classes-2))
+        #calc remainder to smoothen this, can add this later
+        # tolerance_factor = 5
+        # remainder = c_num/tolerance_factor
+        # c_num_r = c_num - remainder
+        # remainder_fill = (remainder/(num_classes-2))
 
         tl = true_label[i]
         #t = targets[i]
-        t = 3
+        t = 3 #for now just test 1/2 1/2 w/ 3
         if (tl != t):
-            labels[i, :] = remainder_fill
+            # labels[i, :] = remainder_fill
+            # labels[i, tl] = 1-c_num
+            # labels[i, t] = c_num_r
             labels[i, tl] = 1-c_num
-            labels[i, t] = c_num_r
-            # labels[i, tl] = 0.5
-            # labels[i, t] = 0.5
+            labels[i, t] = c_num
 
         else:
             labels[i, tl] = 1
