@@ -96,13 +96,34 @@ def get_arguments():
         default="False",
         type=str,
         choices=("True", "False"),
-        help="should reset the k-means")
+        help="should reset the k-means"
+    )
+    parser.add_argument(
+        "--use_base_resnet",
+        default="resnet",
+        type=str,
+        choices=("base", "resnet"),
+        help="use base or resnet model"
+    )
+    parser.add_argument(
+        "--use_thanos_vicreg",
+        default="vicreg",
+        type=str,
+        choices=("thanos", "vicreg"),
+        help="load thanos or vicreg encoder"
+    )
     parser.add_argument(
         "--train_knn",
-        default="False",
-        type=str,
-        choices=("True", "False"),
-        help="should train the knn"),
+        default=False,
+        typ=bool,
+        help="should train the knn"
+    )
+    parser.add_argument(
+        "--load_model",
+        default=True,
+        typ=bool,
+        help="should load or use random encoder"
+    )
 
     # Running
     parser.add_argument(
@@ -285,9 +306,15 @@ def main_worker(args):
     # missing_keys, unexpected_keys = backbone.load_state_dict(state_dict, strict=False)
     # assert missing_keys == [] and unexpected_keys == []
 
-    use_base_resnet = 'resnet'
-    use_thanos_vicreg = 'vicreg'
-    load_model = True
+    # use_base_resnet = 'resnet'
+    # use_thanos_vicreg = 'vicreg'
+    # load_model = True
+    # train_knn = False
+
+    use_base_resnet = args.use_base_resnet
+    use_thanos_vicreg = args.use_thanos_vicreg
+    load_model = args.load_model
+    train_knn = args.train_knn
 
     backbone = None
     if (use_base_resnet == 'resnet'):
@@ -410,7 +437,6 @@ def main_worker(args):
     print (len(train_loader))
     batches_for_knn = len(train_loader)-1
     exp_dir = './models/knn.pth'
-    train_knn = False
     knn_e = torch.zeros((batches_for_knn*batch_size, embedding_size))
     knn_t = torch.zeros(batches_for_knn*batch_size)
 
