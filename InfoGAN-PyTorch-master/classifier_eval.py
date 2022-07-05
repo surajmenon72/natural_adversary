@@ -341,6 +341,7 @@ def main_worker(args):
                 loaded = torch.load(ckpt, map_location=torch.device('cpu'))
                 missing_keys, unexpected_keys = backbone.load_state_dict(loaded['state_dict'], strict=False)
 
+        print ('Model Loaded!')
 
     batch_size = 128
     if (use_base_resnet == 'resnet'):

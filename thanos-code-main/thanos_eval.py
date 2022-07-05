@@ -311,6 +311,7 @@ def main_worker(args):
             },
             strict=True,
         )
+        print ('Model Loaded!')
 
     batch_size = 128
     if (use_base_resnet == 'resnet'):
