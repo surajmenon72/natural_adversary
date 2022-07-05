@@ -148,10 +148,10 @@ class ResnetEncoder(nn.Module):
         return x
 
 class Encoder(nn.Module):
-    def __init__(self):
+    def __init__(self, model='base', **kwargs,):
         super().__init__()
 
-        self.conv1 = nn.Conv2d(3, 64, 4, 2, 1)
+        self.conv1 = nn.Conv2d(1, 64, 4, 2, 1)
 
         self.conv2 = nn.Conv2d(64, 128, 4, 2, 1, bias=False)
         self.bn2 = nn.BatchNorm2d(128)
@@ -159,7 +159,7 @@ class Encoder(nn.Module):
         self.conv3 = nn.Conv2d(128, 1024, 7, bias=False)
         self.bn3 = nn.BatchNorm2d(1024)
 
-        self.fc1 = nn.Linear(1024, 512)
+        self.fc1 = nn.Linear(1024, 256)
 
     def forward(self, x):
         x = F.leaky_relu(self.conv1(x), 0.1, inplace=True)
@@ -285,9 +285,9 @@ def main_worker(args):
     # missing_keys, unexpected_keys = backbone.load_state_dict(state_dict, strict=False)
     # assert missing_keys == [] and unexpected_keys == []
 
-    ckpt = './models/thanos_resnet_15.ckpt'
+    ckpt = './models/thanos_base_20.ckpt'
     loaded = torch.load(ckpt, map_location=torch.device('cpu'))
-    use_base_resnet = 'resnet'
+    use_base_resnet = 'base'
 
     backbone = None
     if (use_base_resnet == 'resnet'):
@@ -379,7 +379,7 @@ def main_worker(args):
     print (len(train_loader))
     batches_for_knn = len(train_loader)-1
     exp_dir = './models/knn.pth'
-    train_knn = False
+    train_knn = True
     knn_e = torch.zeros((batches_for_knn*batch_size, embedding_size))
     knn_t = torch.zeros(batches_for_knn*batch_size)
 
