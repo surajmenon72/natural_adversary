@@ -105,7 +105,7 @@ discriminator = Discriminator().to(device)
 discriminator.apply(weights_init)
 print (discriminator)
 
-netD = DHead().to(device)
+netD = DHead_KL().to(device)
 netD.apply(weights_init)
 print(netD)
 
@@ -267,11 +267,10 @@ iters = 0
 
 #Realness vs. Classification Hyperparams
 alpha = 1
-beta = 1
 gamma = 1
+beta = 1
 clip_value_1 = 1
-clip_value_2 = 1
-clip_grads = True
+clip_grads = False
 
 c_train_cadence = 1
 d_train_cadence = 1
@@ -290,7 +289,7 @@ for epoch in range(params['num_epochs']):
         true_label_g = true_label.to(device)
 
 
-        #get labels, targets
+        #get labels, targets for split
         true_labels_hot, targets = get_targets(true_label_g, params['dis_c_dim'], device)
 
         #get noise sample
@@ -325,7 +324,6 @@ for epoch in range(params['num_epochs']):
                     loss_c = criterionC(probs_c, soft_probs_c)
                 else:
                     loss_c = criterionC(probs_c, true_label_g)
-                loss_c = loss_c*beta
                 # Calculate gradients
                 loss_c.backward()
         else:
@@ -348,25 +346,25 @@ for epoch in range(params['num_epochs']):
 
         if (epoch % d_train_cadence == 0):
             # Real data
+            label = torch.full((b_size, ), real_label, device=device)
             real_output = discriminator(real_data)
-            real_output = netD(real_output)
-            errD_real = torch.mean(real_output)
-            D_x = real_output.mean().item()
+            probs_real = netD(output1).view(-1)
+            label = label.to(torch.float32)
+            loss_real = criterionD(probs_real, label)
+            #calculate grad
+            loss_real.backward()
 
             # Generate fake image batch with G
             fake_data = netG(noise)
             #fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1) 
 
-
             # Train with fake
+            label.fill_(fake_label)
             fake_output = discriminator(fake_data.detach())
-            fake_output = netD(fake_output)
-            errD_fake = torch.mean(fake_output)
-            D_G_z1 = fake_output.mean().item()
-
-            # Add the gradients from the all-real and all-fake batches
-            D_loss = -errD_real + errD_fake 
-            D_loss.backward()
+            probs_fake = netD(fake_output).view(-1)
+            loss_fake = criterionD(probs_fake, label)
+            #calculate grad
+            loss_fake.backward()
         else:
             D_loss = torch.zeros(1)
 
@@ -393,7 +391,7 @@ for epoch in range(params['num_epochs']):
             fake_data = netG(noise)
 
             if (use_3_channel):
-                fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1) 
+                fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1)
 
             output_s = classifier(fake_data)
 
@@ -409,17 +407,20 @@ for epoch in range(params['num_epochs']):
 
             loss_split = criterionG(probs_split, split_labels)
 
+
+            label = torch.full((b_size, ), real_label, device=device)
+            fake_data = netG(noise)
             output_d = discriminator(fake_data)
-            output_d = netD(output_d)
-            gen_d_loss = torch.mean(output_d)
+            probs_fake = netD(output).view(-1)
+            gen_d_loss = criterionD(probs_fake, label)
 
             #Loss for Split, needs to be tuned
-            G_loss = alpha*loss_split + gamma*-gen_d_loss
+            G_loss = alpha*loss_split + gamma*gen_d_loss
             #G_loss = -gen_d_loss
             totalG_loss += G_loss
             
             total_split_loss += loss_split
-            total_gen_d_loss += -gen_d_loss
+            total_gen_d_loss += gen_d_loss
 
             G_loss.backward()
 
@@ -456,6 +457,7 @@ for epoch in range(params['num_epochs']):
                 con_loss = criterionQ_con(noise[:, params['num_z']+ params['num_dis_c']*params['dis_c_dim'] : ].view(-1, params['num_con_c']), q_mu, q_var)*0.1
 
             Q_loss = dis_loss + con_loss
+            Q_loss = beta*Q_loss
             Q_loss.backward()
 
         else:

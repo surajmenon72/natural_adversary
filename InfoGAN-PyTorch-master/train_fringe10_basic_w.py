@@ -290,7 +290,7 @@ for epoch in range(params['num_epochs']):
         true_label_g = true_label.to(device)
 
 
-        #get labels, targets
+        #get labels, targets for split
         true_labels_hot, targets = get_targets(true_label_g, params['dis_c_dim'], device)
 
         #get noise sample
