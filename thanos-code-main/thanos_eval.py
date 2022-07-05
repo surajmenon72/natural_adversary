@@ -288,7 +288,7 @@ def main_worker(args):
     ckpt = './models/thanos_base_20.ckpt'
     loaded = torch.load(ckpt, map_location=torch.device('cpu'))
     use_base_resnet = 'base'
-    train_knn = False
+    train_knn = True
 
     backbone = None
     if (use_base_resnet == 'resnet'):
@@ -296,7 +296,7 @@ def main_worker(args):
     else:
         backbone = Encoder()
 
-    load_model = True
+    load_model = False
     if (load_model == True):
         backbone.load_state_dict(
             {
