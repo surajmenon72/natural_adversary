@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torchvision.models import resnet18, resnet34, resnet50  # noqa: F401
+import torch.nn.functional as F
 
 
 class ResnetEncoder(nn.Module):
