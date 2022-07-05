@@ -285,9 +285,9 @@ def main_worker(args):
     # missing_keys, unexpected_keys = backbone.load_state_dict(state_dict, strict=False)
     # assert missing_keys == [] and unexpected_keys == []
 
-    ckpt = './models/thanos_resnet_15.ckpt'
-    loaded = torch.load(ckpt, map_location=torch.device('cpu'))
     use_base_resnet = 'resnet'
+    use_thanos_vicreg = 'vicreg'
+    load_model = True
 
     backbone = None
     if (use_base_resnet == 'resnet'):
@@ -295,22 +295,52 @@ def main_worker(args):
     else:
         backbone = Encoder()
 
-    load_model = True
     if (load_model == True):
-        backbone.load_state_dict(
-            {
-                ".".join(k.split(".")[3:]): v
-                for k, v in loaded["state_dict"].items()
-                if (
-                    # source_module in k
-                    # and "model" in k
-                    # and k.split(".")[2] == source_module
-                    "model" in k
-                    and "ImageEncoder" in k
+        if (use_thanos_vicreg == 'thanos'):
+            if (use_base_resnet == 'resnet'):
+                ckpt = './checkpoints/thanos_resnet_15.ckpt'
+                loaded = torch.load(ckpt, map_location=torch.device('cpu'))
+                backbone.load_state_dict(
+                    {
+                        ".".join(k.split(".")[3:]): v
+                        for k, v in loaded["state_dict"].items()
+                        if (
+                            # source_module in k
+                            # and "model" in k
+                            # and k.split(".")[2] == source_module
+                            "model" in k
+                            and "ImageEncoder" in k
+                        )
+                    },
+                    strict=True,
                 )
-            },
-            strict=True,
-        )
+            else:
+                ckpt = './checkpoints/thanos_base_15.ckpt'
+                loaded = torch.load(ckpt, map_location=torch.device('cpu'))
+                backbone.load_state_dict(
+                    {
+                        ".".join(k.split(".")[3:]): v
+                        for k, v in loaded["state_dict"].items()
+                        if (
+                            # source_module in k
+                            # and "model" in k
+                            # and k.split(".")[2] == source_module
+                            "model" in k
+                            and "ImageEncoder" in k
+                        )
+                    },
+                    strict=True,
+                )
+        else:
+            if (use_base_resnet == 'resnet'):
+                ckpt = './checkpoints/vicreg_backbone_resnet_60.pth'
+                loaded = torch.load(ckpt, map_location=torch.device('cpu'))
+                missing_keys, unexpected_keys = backbone.load_state_dict(loaded['state_dict'], strict=False)
+            else:
+                ckpt = './checkpoints/vicreg_backbone_base_60.pth'
+                loaded = torch.load(ckpt, map_location=torch.device('cpu'))
+                missing_keys, unexpected_keys = backbone.load_state_dict(loaded['state_dict'], strict=False)
+
 
     batch_size = 128
     if (use_base_resnet == 'resnet'):

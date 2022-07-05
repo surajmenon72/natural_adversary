@@ -49,8 +49,12 @@ elif (load_classifier):
     load_path = './checkpoint/model_c_load'
     state_dict = torch.load(load_path, map_location=device)
 
-dataloader = get_data(params['dataset'], params['batch_size'])
-dataloader_knn = get_data(params['dataset'], params['knn_batch_size'])
+use_3_channel = False
+if (use_base_resnet == 'resnet'):
+    use_3_channel = True
+    
+dataloader = get_data(params['dataset'], params['batch_size'], use_3_channel=use_3_channel)
+dataloader_knn = get_data(params['dataset'], params['knn_batch_size'], use_3_channel=use_3_channel)
 
 # Set appropriate hyperparameters depending on the dataset used.
 # The values given in the InfoGAN paper are used.

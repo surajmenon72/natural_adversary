@@ -5,24 +5,25 @@ import torchvision.datasets as dsets
 # Directory containing the data.
 root = 'data/'
 
-def get_data(dataset, batch_size, train_test='train'):
+def get_data(dataset, batch_size, train_test='train', use_3_channel=False):
 
     # Get MNIST dataset.
     if dataset == 'MNIST':
-        transform = transforms.Compose([
-            transforms.Resize(28),
-            transforms.CenterCrop(28),
-            transforms.ToTensor()])
-
-        # transform = transforms.Compose([
-        #     transforms.Grayscale(num_output_channels=3),
-        #     transforms.Resize(28),
-        #     transforms.CenterCrop(28),
-        #     transforms.ToTensor(),
-        #     transforms.Normalize(
-        #         mean=[0.1307, 0.1307, 0.1307], std=[0.3081, 0.3081, 0.3081]
-        #     ),]
-        # )
+        if (use_3_channel == False):
+            transform = transforms.Compose([
+                transforms.Resize(28),
+                transforms.CenterCrop(28),
+                transforms.ToTensor()])
+        else:
+            transform = transforms.Compose([
+                transforms.Grayscale(num_output_channels=3),
+                transforms.Resize(28),
+                transforms.CenterCrop(28),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.1307, 0.1307, 0.1307], std=[0.3081, 0.3081, 0.3081]
+                ),]
+            )
 
         # transform = transforms.Compose([
         #     transforms.Grayscale(num_output_channels=3),
