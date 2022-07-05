@@ -36,7 +36,7 @@ class ResnetEncoder(nn.Module):
         return x
 
 class Encoder(nn.Module):
-    def __init__(self, model='base'):
+    def __init__(self, model='base', **kwargs,):
         super().__init__()
 
         self.conv1 = nn.Conv2d(1, 64, 4, 2, 1)
