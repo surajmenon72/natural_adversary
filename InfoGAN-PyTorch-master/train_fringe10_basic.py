@@ -40,8 +40,8 @@ use_base_resnet = 'base'
 use_thanos_vicreg = 'vicreg'
 load_encoder = False
 
-train_classifier = False
-train_classifier_head = False
+train_classifier = True
+train_classifier_head = True
 train_using_knn = False
 
 load_path = ' '
