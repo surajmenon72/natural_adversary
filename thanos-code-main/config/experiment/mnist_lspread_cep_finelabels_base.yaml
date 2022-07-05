@@ -1,6 +1,6 @@
 # @package _global_
 defaults:
-  - /experiment/cifar10_lspread_cep_finelabels_resnet18
+  - /experiment/cifar10_lspread_cep_finelabels_base
   - override /dataflow: mnist
   - override /dataflow/transforms@dataflow.transforms: mnist_base
 
