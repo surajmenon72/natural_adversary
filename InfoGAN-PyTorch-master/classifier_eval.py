@@ -115,13 +115,13 @@ def get_arguments():
     parser.add_argument(
         "--train_knn",
         default=False,
-        typ=bool,
+        type=bool,
         help="should train the knn"
     )
     parser.add_argument(
         "--load_model",
         default=True,
-        typ=bool,
+        type=bool,
         help="should load or use random encoder"
     )
 

@@ -313,7 +313,7 @@ for epoch in range(params['num_epochs']):
                 probs_c = F.log_softmax(probs_c, dim=1)
 
                 if (train_using_knn):
-                    soft_probs_c = calculate_fuzzy_knn(output_c, knn_e, knn_t, device, k=100, num_classes=10)
+                    soft_probs_c = calculate_fuzzy_knn_eff(output_c, knn_e, knn_t, device, k=100, num_classes=10)
 
                 # check for NaN
                 isnan1 = torch.sum(torch.isnan(probs_c))
