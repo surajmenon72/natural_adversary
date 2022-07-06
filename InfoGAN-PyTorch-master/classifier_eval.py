@@ -114,14 +114,16 @@ def get_arguments():
     )
     parser.add_argument(
         "--train_knn",
-        default=False,
-        type=bool,
+        default='False',
+        type=str,
+        choices=('False', 'True'),
         help="should train the knn"
     )
     parser.add_argument(
         "--load_model",
-        default=True,
-        type=bool,
+        default='False',
+        type=str,
+        choices=('False', 'True'),
         help="should load or use random encoder"
     )
 
@@ -313,8 +315,14 @@ def main_worker(args):
 
     use_base_resnet = args.use_base_resnet
     use_thanos_vicreg = args.use_thanos_vicreg
-    load_model = args.load_model
-    train_knn = args.train_knn
+
+    load_model = False
+    if (args.load_model == 'True'):
+        load_model = True
+
+    train_knn = False
+    if (args.train_knn == 'True'):
+        train_knn = True
 
     print (args.use_base_resnet)
     print (args.use_thanos_vicreg)
