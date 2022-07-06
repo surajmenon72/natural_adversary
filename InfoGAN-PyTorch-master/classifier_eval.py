@@ -324,13 +324,6 @@ def main_worker(args):
     if (args.train_knn == 'True'):
         train_knn = True
 
-    print (args.use_base_resnet)
-    print (args.use_thanos_vicreg)
-    print (args.load_model)
-    print (args.train_knn)
-    print (train_knn)
-    exit()
-
     backbone = None
     if (use_base_resnet == 'resnet'):
         backbone = ResnetEncoder()
