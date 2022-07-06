@@ -316,6 +316,9 @@ def main_worker(args):
     load_model = args.load_model
     train_knn = args.train_knn
 
+    print (train_knn)
+    exit()
+
     backbone = None
     if (use_base_resnet == 'resnet'):
         backbone = ResnetEncoder()
