@@ -362,11 +362,11 @@ def main_worker(args):
             if (use_base_resnet == 'resnet'):
                 ckpt = './checkpoints/vicreg_backbone_resnet_60.pth'
                 loaded = torch.load(ckpt, map_location=torch.device('cpu'))
-                missing_keys, unexpected_keys = backbone.load_state_dict(loaded['state_dict'], strict=False)
+                missing_keys, unexpected_keys = backbone.load_state_dict(loaded, strict=False)
             else:
                 ckpt = './checkpoints/vicreg_backbone_base_60.pth'
                 loaded = torch.load(ckpt, map_location=torch.device('cpu'))
-                missing_keys, unexpected_keys = backbone.load_state_dict(loaded['state_dict'], strict=False)
+                missing_keys, unexpected_keys = backbone.load_state_dict(loaded, strict=False)
 
         print ('Model Loaded!')
 
