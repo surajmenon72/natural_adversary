@@ -316,6 +316,10 @@ def main_worker(args):
     load_model = args.load_model
     train_knn = args.train_knn
 
+    print (args.use_base_resnet)
+    print (args.use_thanos_vicreg)
+    print (args.load_model)
+    print (args.train_knn)
     print (train_knn)
     exit()
 
