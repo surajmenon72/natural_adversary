@@ -143,7 +143,7 @@ else:
         if(use_thanos_vicreg == 'thanos'):
             if (use_base_resnet == 'resnet'):
                 path = './checkpoints/thanos_resnet_15.ckpt'
-                knn_path = './checkpoints/thanos_resnet_knn.pth'
+                knn_path = './checkpoints/knn_thanos_resnet.pth'
                 state_dict = torch.load(path, map_location=device)
                 #missing_keys, unexpected_keys = classifier.load_state_dict(state_dict['state_dict', strict=False)
                 classifier.load_state_dict(
@@ -163,7 +163,7 @@ else:
                 print ('Loaded classifier')
             else:
                 path = './checkpoints/thanos_base_15.ckpt'
-                knn_path = './checkpoints/thanos_base_knn.pth'
+                knn_path = './checkpoints/knn_thanos_base.pth'
                 state_dict = torch.load(path, map_location=device)
 
                 classifier.load_state_dict(
@@ -185,13 +185,13 @@ else:
             #using Vicreg
             if (use_base_resnet == 'resnet'):
                 path = './checkpoints/vicreg_backbone_resnet_60.pth'
-                knn_path = './checkpoints/vicreg_resnet_knn.pth'
+                knn_path = './checkpoints/knn_vicreg_resnet.pth'
                 state_dict = torch.load(path, map_location=device)
 
                 missing_keys, unexpected_keys = classifier.load_state_dict(state_dict['state_dict'], strict=False)
             else:
                 path = './checkpoints/vicreg_backbone_base_60.pth'
-                knn_path = './checkpoints/vicreg_base_knn.pth'
+                knn_path = './checkpoints/knn_vicreg_base.pth'
                 state_dict = torch.load(path, map_location=device)
 
                 missing_keys, unexpected_keys = classifier.load_state_dict(state_dict['state_dict'], strict=False)
