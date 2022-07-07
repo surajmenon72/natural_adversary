@@ -218,7 +218,7 @@ criterionQ_dis = nn.CrossEntropyLoss()
 criterionQ_con = NormalNLLLoss()
 
 #which networks don't require grad
-if (train_classifier == False)
+if (train_classifier == False):
     classifier.requires_grad_(False)
     classifier.eval()
 
