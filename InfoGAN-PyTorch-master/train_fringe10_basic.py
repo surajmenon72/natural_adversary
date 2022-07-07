@@ -321,13 +321,16 @@ for epoch in range(params['num_epochs']):
                     isnan2 = torch.sum(torch.isnan(soft_probs_c))
                 else:
                     isnan2 = 0
-            
+
                 if ((isnan1 > 0) or (isnan2 > 0)):
                     print ('NAN VALUE in Classifier Loss')
 
                 if (train_using_knn):
                     loss_c = criterionC(probs_c, soft_probs_c)
                 else:
+                    print (probs_c.shape)
+                    print (true_label_g.shape)
+                    exit()
                     loss_c = criterionC(probs_c, true_label_g)
                 # Calculate gradients
                 loss_c.backward()
