@@ -199,7 +199,7 @@ else:
 #load knn dict regardless, assume that it matches the encoder we are using.
 if (knn_path == ' '):
     knn_path = './checkpoints/knn.pth'
-knn_dict = torch.load(path)
+knn_dict = torch.load(knn_path)
 knn_e = knn_dict["knn_e"].to(device)
 knn_t = knn_dict["knn_t"].to(device)
 print ('Loaded KNN')
