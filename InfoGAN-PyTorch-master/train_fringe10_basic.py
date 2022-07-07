@@ -343,8 +343,8 @@ for epoch in range(params['num_epochs']):
         optimC.step()
 
         if (train_classifier_head):
-            print ('Training Classifier Head, continuing')
-            print ('C_Head Loss: %.4f\t' % C_loss.item())
+            # print ('Training Classifier Head, continuing')
+            # print ('C_Head Loss: %.4f\t' % C_loss.item())
             continue
 
         netD.train()
