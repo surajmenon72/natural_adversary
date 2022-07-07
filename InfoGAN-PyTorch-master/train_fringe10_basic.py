@@ -197,12 +197,12 @@ else:
                 missing_keys, unexpected_keys = classifier.load_state_dict(state_dict['state_dict'], strict=False)
 
 #load knn dict regardless, assume that it matches the encoder we are using.
-if (knn_path == ' '):
-    knn_path = './checkpoints/knn.pth'
-knn_dict = torch.load(knn_path)
-knn_e = knn_dict["knn_e"].to(device)
-knn_t = knn_dict["knn_t"].to(device)
-print ('Loaded KNN')
+if (knn_path != ' '):
+    #knn_path = './checkpoints/knn.pth'
+    knn_dict = torch.load(knn_path)
+    knn_e = knn_dict["knn_e"].to(device)
+    knn_t = knn_dict["knn_t"].to(device)
+    print ('Loaded KNN')
 
 # Loss for discrimination between real and fake images.
 criterionD = nn.BCELoss()
