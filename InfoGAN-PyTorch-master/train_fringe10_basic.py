@@ -307,7 +307,7 @@ for epoch in range(params['num_epochs']):
         #if we want to sample the knn embeddings
         if (train_classifier_head):
             if (epoch % c_train_cadence == 0):
-                print ('Training Classifier Head')
+                #print ('Training Classifier Head')
                 output_c = classifier(real_data)
                 probs_c = netC(output_c)
                 probs_c = torch.squeeze(probs_c)
