@@ -206,10 +206,11 @@ if (knn_path != ' '):
 
 # Loss for discrimination between real and fake images.
 criterionD = nn.BCELoss()
-# criterionH = nn.BCELoss()
 # Loss for classifier
-# criterionC = nn.CrossEntropyLoss()
-criterionC = nn.KLDivLoss()
+if (train_using_knn):
+    criterionC = nn.KLDivLoss()
+else:
+    criterionC = nn.CrossEntropyLoss()
 # Loss for split between identity and controversy, just use CrossEntropy
 criterionG = nn.KLDivLoss()
 # Loss for discrete latent code.
@@ -328,9 +329,6 @@ for epoch in range(params['num_epochs']):
                 if (train_using_knn):
                     loss_c = criterionC(probs_c, soft_probs_c)
                 else:
-                    print (probs_c.shape)
-                    print (true_label_g.shape)
-                    exit()
                     loss_c = criterionC(probs_c, true_label_g)
                 # Calculate gradients
                 loss_c.backward()
