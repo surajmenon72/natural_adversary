@@ -317,7 +317,11 @@ for epoch in range(params['num_epochs']):
 
                 # check for NaN
                 isnan1 = torch.sum(torch.isnan(probs_c))
-                isnan2 = torch.sum(torch.isnan(soft_probs_c))
+                if (train_using_knn):
+                    isnan2 = torch.sum(torch.isnan(soft_probs_c))
+                else:
+                    isnan2 = 0
+            
                 if ((isnan1 > 0) or (isnan2 > 0)):
                     print ('NAN VALUE in Classifier Loss')
 
