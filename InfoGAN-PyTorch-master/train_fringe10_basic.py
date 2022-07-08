@@ -282,8 +282,8 @@ for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
 
     for i, (data, true_label) in enumerate(dataloader, 0):
-        # print ('Batch')
-        # print (i)
+        print ('Batch')
+        print (i)
         # Get batch size
         b_size = data.size(0)
         # Transfer data tensor to GPU/CPU (device)
@@ -343,8 +343,8 @@ for epoch in range(params['num_epochs']):
         optimC.step()
 
         if (train_classifier_head):
-            # print ('Training Classifier Head, continuing')
-            # print ('C_Head Loss: %.4f\t' % C_loss.item())
+            print ('Training Classifier Head, continuing')
+            print ('C_Head Loss: %.4f\t' % C_loss.item())
             continue
 
         netD.train()
