@@ -239,7 +239,7 @@ def calculate_fuzzy_knn_eff(model_output, knn_e, knn_t, device, k=100, num_class
         distance_b = distance_b.view((knn_size))
         distances[b, :] = deepcopy(distance_b[:])
 
-    knn_guesses = torch.zeros((b_size, num_classes))
+    knn_guesses = torch.zeros((b_size, num_classes)).to(device)
     for i in range(b_size):
         d = distances[i, :]
         d_s, d_s_i = torch.sort(d)
