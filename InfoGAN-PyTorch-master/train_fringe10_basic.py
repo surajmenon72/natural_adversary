@@ -38,11 +38,11 @@ load_classifier = False
 
 use_base_resnet = 'base'
 use_thanos_vicreg = 'vicreg'
-load_encoder = False
+load_encoder = True
 
-train_classifier = True
+train_classifier = False
 train_classifier_head = True
-train_using_knn = False
+train_using_knn = True
 
 load_path = ' '
 state_dict = {}
