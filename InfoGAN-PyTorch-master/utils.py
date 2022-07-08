@@ -225,7 +225,7 @@ def calculate_fuzzy_knn(model_output, knn_e, knn_t, device, k=1000, num_classes=
 
     return sm_knn
 
-def calculate_fuzzy_knn_eff(model_output, knn_e, knn_t, k=100, num_classes=10):
+def calculate_fuzzy_knn_eff(model_output, knn_e, knn_t, device, k=100, num_classes=10):
     b_size = model_output.shape[0]
     e_size = model_output.shape[1]
     knn_size = knn_e.shape[0]
