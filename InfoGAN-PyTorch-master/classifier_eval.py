@@ -243,7 +243,7 @@ def calculate_fuzzy_knn_eff(model_output, knn_e, knn_t, k=100, num_classes=10):
         output_chunk_r = output_chunk.view((1, 1, e_size))
         distance_b = torch.cdist(output_chunk_r, knn_e_r, p=2)
         distance_b = distance_b.view((knn_size))
-        distances[b, :] = distance_b[:]
+        distances[b, :] = copy.deepcopy(distance_b[:])
 
     knn_guesses = torch.zeros((b_size, num_classes))
     for i in range(b_size):

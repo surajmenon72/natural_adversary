@@ -188,13 +188,13 @@ else:
                 knn_path = './checkpoints/knn_vicreg_resnet.pth'
                 state_dict = torch.load(path, map_location=device)
 
-                missing_keys, unexpected_keys = classifier.load_state_dict(state_dict['state_dict'], strict=False)
+                missing_keys, unexpected_keys = classifier.load_state_dict(state_dict, strict=False)
             else:
                 path = './checkpoints/vicreg_backbone_base_60.pth'
                 knn_path = './checkpoints/knn_vicreg_base.pth'
                 state_dict = torch.load(path, map_location=device)
 
-                missing_keys, unexpected_keys = classifier.load_state_dict(state_dict['state_dict'], strict=False)
+                missing_keys, unexpected_keys = classifier.load_state_dict(state_dict, strict=False)
 
 #load knn dict regardless, assume that it matches the encoder we are using.
 if (knn_path != ' '):
@@ -422,7 +422,6 @@ for epoch in range(params['num_epochs']):
 
             #Loss for Split, needs to be tuned
             G_loss = alpha*loss_split + gamma*gen_d_loss
-            #G_loss = -gen_d_loss
             totalG_loss += G_loss
             
             total_split_loss += loss_split
