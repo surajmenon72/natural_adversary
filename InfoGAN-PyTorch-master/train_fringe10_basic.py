@@ -351,7 +351,7 @@ for epoch in range(params['num_epochs']):
 
         if (train_classifier_head):
             print ('Training Classifier Head, continuing')
-            print ('C_Head Loss: %.4f\t' % C_loss.item()/len(dataloader))
+            print ('C_Head Loss: %.4f\t' % (C_loss/len(dataloader)).item())
             total_c_loss += C_loss
             continue
 
