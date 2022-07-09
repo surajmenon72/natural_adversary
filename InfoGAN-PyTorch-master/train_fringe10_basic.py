@@ -203,6 +203,12 @@ if (knn_path != ' '):
     knn_e = knn_dict["knn_e"].to(device)
     knn_t = knn_dict["knn_t"].to(device)
     print ('Loaded KNN')
+else:
+    knn_path = './checkpoints/knn_vicreg_base.pth'
+    knn_dict = torch.load(knn_path)
+    knn_e = knn_dict["knn_e"].to(device)
+    knn_t = knn_dict["knn_t"].to(device)
+    print ('Loaded KNN')
 
 # Loss for discrimination between real and fake images.
 criterionD = nn.BCELoss()
