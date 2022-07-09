@@ -287,7 +287,7 @@ g_train_cadence = 1
 for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
 
-    total_c_loss = torch.zeros(1)
+    total_c_loss = torch.zeros(1).to(device)
     for i, (data, true_label) in enumerate(dataloader, 0):
         print ('Batch')
         print (i)
