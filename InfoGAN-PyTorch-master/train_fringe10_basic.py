@@ -351,7 +351,7 @@ for epoch in range(params['num_epochs']):
 
         if (train_classifier_head):
             print ('Training Classifier Head, continuing')
-            print ('C_Head Loss: %.4f\t' % (C_loss/len(dataloader)).item())
+            print ('C_Head Loss: %.4f\t' % (C_loss).item())
             total_c_loss += C_loss
             continue
 
@@ -514,7 +514,7 @@ for epoch in range(params['num_epochs']):
         plt.close('all')
 
     if (train_classifier_head):
-        print ('C_Head Avg Loss: %.4f\t' % total_c_loss.item()/len(dataloader))
+        print ('C_Head Avg Loss: %.4f\t' % (total_c_loss/len(dataloader)).item())
 
     # Save network weights.
     if (epoch+1) % params['save_epoch'] == 0:
