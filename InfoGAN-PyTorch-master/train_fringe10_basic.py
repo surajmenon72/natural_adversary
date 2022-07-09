@@ -34,7 +34,7 @@ device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
 load_model = False
-load_classifier = False
+load_classifier = True
 
 use_base_resnet = 'base'
 use_thanos_vicreg = 'vicreg'
@@ -281,6 +281,7 @@ g_train_cadence = 1
 for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
 
+    total_c_loss = torch.zeros(1)
     for i, (data, true_label) in enumerate(dataloader, 0):
         print ('Batch')
         print (i)
@@ -344,7 +345,8 @@ for epoch in range(params['num_epochs']):
 
         if (train_classifier_head):
             print ('Training Classifier Head, continuing')
-            print ('C_Head Loss: %.4f\t' % C_loss.item())
+            print ('C_Head Loss: %.4f\t' % C_loss.item()/len(dataloader))
+            total_c_loss += C_loss
             continue
 
         netD.train()
@@ -504,6 +506,9 @@ for epoch in range(params['num_epochs']):
         plt.imshow(np.transpose(vutils.make_grid(gen_data, nrow=10, padding=2, normalize=True), (1,2,0)))
         plt.savefig("Epoch_%d {}".format(params['dataset']) %(epoch+1))
         plt.close('all')
+
+    if (train_classifier_head):
+        print ('C_Head Avg Loss: %.4f\t' % total_c_loss.item()/len(dataloader))
 
     # Save network weights.
     if (epoch+1) % params['save_epoch'] == 0:
