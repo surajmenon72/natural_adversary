@@ -159,7 +159,7 @@ else:
                 )
                 print ('Loaded classifier')
             else:
-                path = './checkpoints/thanos_base_15.ckpt'
+                path = './checkpoints/thanos_base_20.ckpt'
                 state_dict = torch.load(path, map_location=device)
 
                 classifier.load_state_dict(
