@@ -34,10 +34,10 @@ device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
 load_model = False
-load_classifier = True
+load_classifier = False
 
 use_base_resnet = 'base'
-use_thanos_vicreg = 'vicreg'
+use_thanos_vicreg = 'thanos'
 load_encoder = True
 
 train_classifier = False
@@ -123,8 +123,6 @@ netC = CHead().to(device)
 netC.apply(weights_init)
 print (netC)
 
-knn_path = ' '
-
 if (load_model):
     netG.load_state_dict(state_dict['netG'])
     classifier.load_state_dict(state_dict['classifier'])
@@ -143,7 +141,6 @@ else:
         if(use_thanos_vicreg == 'thanos'):
             if (use_base_resnet == 'resnet'):
                 path = './checkpoints/thanos_resnet_15.ckpt'
-                knn_path = './checkpoints/knn_thanos_resnet.pth'
                 state_dict = torch.load(path, map_location=device)
                 #missing_keys, unexpected_keys = classifier.load_state_dict(state_dict['state_dict', strict=False)
                 classifier.load_state_dict(
@@ -163,7 +160,6 @@ else:
                 print ('Loaded classifier')
             else:
                 path = './checkpoints/thanos_base_15.ckpt'
-                knn_path = './checkpoints/knn_thanos_base.pth'
                 state_dict = torch.load(path, map_location=device)
 
                 classifier.load_state_dict(
@@ -196,15 +192,22 @@ else:
 
                 missing_keys, unexpected_keys = classifier.load_state_dict(state_dict, strict=False)
 
+knn_path = ' '
+if (train_using_knn):
+    if (use_thanos_vicreg == 'thanos'):
+        if (use_base_resnet == 'resnet'):
+            knn_path = './checkpoints/knn_thanos_resnet.pth'
+        else:
+            knn_path = './checkpoints/knn_thanos_base.pth'
+    else:
+        if (use_base_resnet == 'resnet'):
+            knn_path = './checkpoints/knn_vicreg_resnet.pth'
+        else:
+            knn_path = './checkpoints/knn_vicreg_base.pth'
+
 #load knn dict regardless, assume that it matches the encoder we are using.
 if (knn_path != ' '):
     #knn_path = './checkpoints/knn.pth'
-    knn_dict = torch.load(knn_path)
-    knn_e = knn_dict["knn_e"].to(device)
-    knn_t = knn_dict["knn_t"].to(device)
-    print ('Loaded KNN')
-else:
-    knn_path = './checkpoints/knn_vicreg_base.pth'
     knn_dict = torch.load(knn_path)
     knn_e = knn_dict["knn_e"].to(device)
     knn_t = knn_dict["knn_t"].to(device)
