@@ -34,15 +34,15 @@ device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
 load_model = False
-load_classifier = False
+load_classifier = True
 
 use_base_resnet = 'base'
 use_thanos_vicreg = 'thanos'
 load_encoder = True
 
 train_classifier = False
-train_classifier_head = True
-train_using_knn = True
+train_classifier_head = False
+train_using_knn = False
 
 load_path = ' '
 state_dict = {}
