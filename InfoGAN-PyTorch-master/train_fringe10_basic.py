@@ -383,6 +383,8 @@ for epoch in range(params['num_epochs']):
             loss_fake = criterionD(probs_fake, label)
             #calculate grad
             loss_fake.backward()
+
+            D_loss = loss_real + loss_fake
         else:
             D_loss = torch.zeros(1)
 
