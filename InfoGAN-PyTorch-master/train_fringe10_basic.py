@@ -379,6 +379,7 @@ for epoch in range(params['num_epochs']):
             label.fill_(fake_label)
             fake_output = discriminator(fake_data.detach())
             probs_fake = netD(fake_output).view(-1)
+            label = label.to(torch.float32)
             loss_fake = criterionD(probs_fake, label)
             #calculate grad
             loss_fake.backward()
@@ -429,6 +430,7 @@ for epoch in range(params['num_epochs']):
             fake_data = netG(noise)
             output_d = discriminator(fake_data)
             probs_fake = netD(output_d).view(-1)
+            label = label.to(torch.float32)
             gen_d_loss = criterionD(probs_fake, label)
 
             #Loss for Split, needs to be tuned
