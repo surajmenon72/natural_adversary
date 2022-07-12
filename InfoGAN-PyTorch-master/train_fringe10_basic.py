@@ -428,7 +428,7 @@ for epoch in range(params['num_epochs']):
             label = torch.full((b_size, ), real_label, device=device)
             fake_data = netG(noise)
             output_d = discriminator(fake_data)
-            probs_fake = netD(output).view(-1)
+            probs_fake = netD(output_d).view(-1)
             gen_d_loss = criterionD(probs_fake, label)
 
             #Loss for Split, needs to be tuned
