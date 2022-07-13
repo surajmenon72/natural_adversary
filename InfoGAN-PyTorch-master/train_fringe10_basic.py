@@ -278,7 +278,7 @@ iters = 0
 
 #Realness vs. Classification Hyperparams
 alpha = 1
-gamma = 1
+gamma = .5
 beta = 1
 clip_value_1 = 1
 clip_grads = False
