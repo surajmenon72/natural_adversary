@@ -16,7 +16,7 @@ knn_dict = torch.load(exp_dir)
 knn_e = copy.deepcopy(knn_dict["knn_e"])
 knn_t = copy.deepcopy(knn_dict["knn_t"])
 
-train_dim_red = True
+train_dim_red = False
 
 if (train_dim_red == True):
 	print ('Doing PCA')

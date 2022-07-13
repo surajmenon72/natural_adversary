@@ -19,7 +19,7 @@ torch.manual_seed(seed)
 print("Random Seed: ", seed)
 
 # Load the checkpoint file
-path = './checkpoints/adv_pths_model_fringe_thanos_epoch_30_MNIST'
+path = './checkpoints/adv_pths_model_fringe_thanos_.5_epoch_30_MNIST'
 state_dict = torch.load(path, map_location=torch.device('cpu'))
 
 # Set the device to run on: GPU or CPU.
