@@ -418,6 +418,10 @@ for epoch in range(params['num_epochs']):
 
             output_s = classifier(fake_data)
 
+            print (z_noise.shape)
+            print (output_s.shape)
+            exit()
+
             G_loss = criterionDecode(output_s, z_noise)
 
 
