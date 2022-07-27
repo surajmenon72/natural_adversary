@@ -310,7 +310,7 @@ for epoch in range(params['num_epochs']):
 
         #get noise sample
         noise, idx, c_nums = noise_sample_target(params['num_dis_c'], params['dis_c_dim'], params['num_con_c'], params['num_z'], b_size, device, targets, dist='Uniform')
-
+        z_noise = noise[:, :params['num_z']]
         # if (train_classifier):
         #     classifier.train()
         # Updating discriminator and DHead
@@ -376,7 +376,7 @@ for epoch in range(params['num_epochs']):
             loss_real.backward()
 
             # Generate fake image batch with G
-            fake_data = netG(noise)
+            fake_data = netG(z_noise)
             #fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1) 
 
             # Train with fake
@@ -408,7 +408,6 @@ for epoch in range(params['num_epochs']):
             total_gen_d_loss = 0
 
             #split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
-            z_noise = noise[:, :params['num_z']]
             fake_data = netG(z_noise)
 
             # if (use_3_channel):
