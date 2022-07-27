@@ -415,8 +415,8 @@ for epoch in range(params['num_epochs']):
 
             output_s = classifier(fake_data)
 
-            z_noise = torch.squeeze(z_noise)
-            dec_loss = criterionDecode(output_s, z_noise)
+            z_noise_s = torch.squeeze(z_noise)
+            dec_loss = criterionDecode(output_s, z_noise_s)
 
 
             #KLDiv expects log space, already in softmax
