@@ -66,7 +66,7 @@ def noise_sample(n_dis_c, dis_c_dim, n_con_c, n_z, batch_size, device):
 
     return noise, idx
 
-def noise_sample_target(n_dis_c, dis_c_dim, n_con_c, n_z, batch_size, device, targets):
+def noise_sample_target(n_dis_c, dis_c_dim, n_con_c, n_z, batch_size, device, targets, dist='Normal'):
     """
     Sample random noise vector for training. Assuming we are training for targets
 
@@ -82,6 +82,9 @@ def noise_sample_target(n_dis_c, dis_c_dim, n_con_c, n_z, batch_size, device, ta
     """
 
     z = torch.randn(batch_size, n_z, 1, 1, device=device)
+
+    if (dist != 'Normal'):
+        z = torch.rand(batch_size, n_z, 1, 1, device=device)
     c_nums = []
 
     #should be the same as the original infoGAN
