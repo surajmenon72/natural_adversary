@@ -433,7 +433,7 @@ for epoch in range(params['num_epochs']):
 
 
             label = torch.full((b_size, ), real_label, device=device)
-            fake_data = netG(noise)
+            fake_data = netG(z_noise)
             output_d = discriminator(fake_data)
             probs_fake = netD(output_d).view(-1)
             label = label.to(torch.float32)
