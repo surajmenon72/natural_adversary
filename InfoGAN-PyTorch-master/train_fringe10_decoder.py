@@ -410,14 +410,13 @@ for epoch in range(params['num_epochs']):
             #total_gen_d_loss = 0
 
             #split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
-            fake_data = netG(noise)
+            z_noise = noise[:, :params['num_z']]
+            fake_data = netG(z_noise)
 
             # if (use_3_channel):
             #     fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1)
 
             output_s = classifier(fake_data)
-
-            z_noise = noise[:, :params['num_z']]
 
             G_loss = criterionDecode(output_s, z_noise)
 
