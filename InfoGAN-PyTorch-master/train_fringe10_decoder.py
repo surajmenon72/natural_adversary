@@ -241,21 +241,21 @@ optimC = optim.Adam([{'params': netC.parameters()}], lr=params['learning_rate'],
 optimG = optim.Adam([{'params': netG.parameters()}, {'params': netQ.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 
 # Fixed Noise
-z = torch.randn(100, params['num_z'], 1, 1, device=device)
-fixed_noise = z
-if(params['num_dis_c'] != 0):
-    idx = np.arange(params['dis_c_dim']).repeat(10)
-    dis_c = torch.zeros(100, params['num_dis_c'], params['dis_c_dim'], device=device)
-    for i in range(params['num_dis_c']):
-        dis_c[torch.arange(0, 100), i, idx] = 1.0
+# z = torch.randn(100, params['num_z'], 1, 1, device=device)
+# fixed_noise = z
+# if(params['num_dis_c'] != 0):
+#     idx = np.arange(params['dis_c_dim']).repeat(10)
+#     dis_c = torch.zeros(100, params['num_dis_c'], params['dis_c_dim'], device=device)
+#     for i in range(params['num_dis_c']):
+#         dis_c[torch.arange(0, 100), i, idx] = 1.0
 
-    dis_c = dis_c.view(100, -1, 1, 1)
+#     dis_c = dis_c.view(100, -1, 1, 1)
 
-    fixed_noise = torch.cat((fixed_noise, dis_c), dim=1)
+#     fixed_noise = torch.cat((fixed_noise, dis_c), dim=1)
 
-if(params['num_con_c'] != 0):
-    con_c = torch.rand(100, params['num_con_c'], 1, 1, device=device) * 2 - 1
-    fixed_noise = torch.cat((fixed_noise, con_c), dim=1)
+# if(params['num_con_c'] != 0):
+#     con_c = torch.rand(100, params['num_con_c'], 1, 1, device=device) * 2 - 1
+#     fixed_noise = torch.cat((fixed_noise, con_c), dim=1)
 
 #only if using a binary loss for fake/real
 real_label = 1
@@ -519,9 +519,9 @@ for epoch in range(params['num_epochs']):
     epoch_time = time.time() - epoch_start_time
     print("Time taken for Epoch %d: %.2fs" %(epoch + 1, epoch_time))
     # Generate image after each epoch to check performance of the generator. Used for creating animated gif later.
-    with torch.no_grad():
-        gen_data = netG(fixed_noise).detach().cpu()
-    img_list.append(vutils.make_grid(gen_data, nrow=10, padding=2, normalize=True))
+    # with torch.no_grad():
+    #     gen_data = netG(fixed_noise).detach().cpu()
+    # img_list.append(vutils.make_grid(gen_data, nrow=10, padding=2, normalize=True))
 
     # Generate image to check performance of generator.
     if((epoch+1) == 1 or (epoch+1) == params['num_epochs']/2):
