@@ -411,6 +411,7 @@ for epoch in range(params['num_epochs']):
 
             #split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
             z_noise = noise[:, :params['num_z']]
+            z_noise = z_noise.squeeze()
             fake_data = netG(z_noise)
 
             # if (use_3_channel):
