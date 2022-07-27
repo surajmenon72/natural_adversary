@@ -362,43 +362,43 @@ for epoch in range(params['num_epochs']):
         #     total_c_loss += C_loss
         #     continue
 
-        # netD.train()
-        # optimD.zero_grad()
+        netD.train()
+        optimD.zero_grad()
 
-        # if (epoch % d_train_cadence == 0):
-        #     # Real data
-        #     label = torch.full((b_size, ), real_label, device=device)
-        #     real_output = discriminator(real_data)
-        #     probs_real = netD(real_output).view(-1)
-        #     label = label.to(torch.float32)
-        #     loss_real = criterionD(probs_real, label)
-        #     #calculate grad
-        #     loss_real.backward()
+        if (epoch % d_train_cadence == 0):
+            # Real data
+            label = torch.full((b_size, ), real_label, device=device)
+            real_output = discriminator(real_data)
+            probs_real = netD(real_output).view(-1)
+            label = label.to(torch.float32)
+            loss_real = criterionD(probs_real, label)
+            #calculate grad
+            loss_real.backward()
 
-        #     # Generate fake image batch with G
-        #     fake_data = netG(noise)
-        #     #fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1) 
+            # Generate fake image batch with G
+            fake_data = netG(noise)
+            #fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1) 
 
-        #     # Train with fake
-        #     label.fill_(fake_label)
-        #     fake_output = discriminator(fake_data.detach())
-        #     probs_fake = netD(fake_output).view(-1)
-        #     label = label.to(torch.float32)
-        #     loss_fake = criterionD(probs_fake, label)
-        #     #calculate grad
-        #     loss_fake.backward()
+            # Train with fake
+            label.fill_(fake_label)
+            fake_output = discriminator(fake_data.detach())
+            probs_fake = netD(fake_output).view(-1)
+            label = label.to(torch.float32)
+            loss_fake = criterionD(probs_fake, label)
+            #calculate grad
+            loss_fake.backward()
 
-        #     D_loss = loss_real + loss_fake
-        # else:
-        #     D_loss = torch.zeros(1)
+            D_loss = loss_real + loss_fake
+        else:
+            D_loss = torch.zeros(1)
 
-        # if (clip_grads):
-        #     nn.utils.clip_grad_value_(discriminator.parameters(), clip_value_1)
-        #     nn.utils.clip_grad_value_(netD.parameters(), clip_value_1)
-        # optimD.step()
-        #need to clip WGAN for Lipshitz
-        # clip_module_weights(discriminator, min_v=-.01, max_v=.01)
-        # clip_module_weights(netD, min_v=-.01, max_v=.01)
+        if (clip_grads):
+            nn.utils.clip_grad_value_(discriminator.parameters(), clip_value_1)
+            nn.utils.clip_grad_value_(netD.parameters(), clip_value_1)
+        optimD.step()
+        need to clip WGAN for Lipshitz
+        clip_module_weights(discriminator, min_v=-.01, max_v=.01)
+        clip_module_weights(netD, min_v=-.01, max_v=.01)
 
         netG.train()
         #netQ.train()
@@ -407,9 +407,8 @@ for epoch in range(params['num_epochs']):
         #Split loss 
         if (epoch % g_train_cadence == 0):
             totalG_loss = 0
-            #total_split_loss = 0
-            #total_split_loss = torch.zeros(1)
-            #total_gen_d_loss = 0
+            total_dec_loss = 0
+            total_gen_d_loss = 0
 
             #split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
             z_noise = noise[:, :params['num_z']]
@@ -421,7 +420,7 @@ for epoch in range(params['num_epochs']):
             output_s = classifier(fake_data)
 
             z_noise = torch.squeeze(z_noise)
-            G_loss = criterionDecode(output_s, z_noise)
+            dec_loss = criterionDecode(output_s, z_noise)
 
 
             #KLDiv expects log space, already in softmax
@@ -437,19 +436,20 @@ for epoch in range(params['num_epochs']):
             # loss_split = criterionG(probs_split, split_labels)
 
 
-            # label = torch.full((b_size, ), real_label, device=device)
-            # fake_data = netG(noise)
-            # output_d = discriminator(fake_data)
-            # probs_fake = netD(output_d).view(-1)
-            # label = label.to(torch.float32)
-            # gen_d_loss = criterionD(probs_fake, label)
+            label = torch.full((b_size, ), real_label, device=device)
+            fake_data = netG(noise)
+            output_d = discriminator(fake_data)
+            probs_fake = netD(output_d).view(-1)
+            label = label.to(torch.float32)
+            gen_d_loss = criterionD(probs_fake, label)
 
             #Loss for Split, needs to be tuned
-            # G_loss = alpha*loss_split + gamma*gen_d_loss
+            #G_loss = alpha*loss_split + gamma*gen_d_loss
+            G_loss = dec_loss + gen_d_loss
             totalG_loss += G_loss
             
-            # total_split_loss += loss_split
-            # total_gen_d_loss += gen_d_loss
+            total_dec_loss += dec_loss
+            total_gen_d_loss += gen_d_loss
 
             G_loss.backward()
 
@@ -497,8 +497,8 @@ for epoch in range(params['num_epochs']):
         Q_loss = torch.zeros(1)
         D_loss = torch.zeros(1)
         C_loss = torch.zeros(1)
-        total_split_loss = torch.zeros(1)
-        total_gen_d_loss = torch.zeros(1)
+        # total_dec_loss = torch.zeros(1)
+        # total_gen_d_loss = torch.zeros(1)
 
         # Check progress of training.
         if i != 0 and i%100 == 0:
@@ -506,9 +506,9 @@ for epoch in range(params['num_epochs']):
             print('[%d/%d][%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f\tLoss_C: %.4f\tLoss_Q: %.4f'
                   % (epoch+1, params['num_epochs'], i, len(dataloader), 
                     D_loss.item(), G_loss.item(), C_loss.item(), Q_loss.item()))
-            print('[%d/%d][%d/%d]\tLoss_Split: %.4f\tLoss_Gen_D: %.4f'
+            print('[%d/%d][%d/%d]\tLoss_Dec: %.4f\tLoss_Gen_D: %.4f'
                   % (epoch+1, params['num_epochs'], i, len(dataloader), 
-                    total_split_loss.item(), total_gen_d_loss.item()))
+                    total_dec_loss.item(), total_gen_d_loss.item()))
 
         # Save the losses for plotting.
         G_losses.append(G_loss.item())

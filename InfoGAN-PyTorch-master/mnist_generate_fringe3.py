@@ -13,13 +13,13 @@ import random
 
 from models.mnist_model_wtsmooth2 import Generator
 
-seed = 1125
+seed = 1115
 random.seed(seed)
 torch.manual_seed(seed)
 print("Random Seed: ", seed)
 
 # Load the checkpoint file
-path = './checkpoints/adv_pths_model_fringe_thanos_.5_epoch_30_MNIST'
+path = './checkpoints/adv_pths_model_fringe70_epoch_15_MNIST'
 state_dict = torch.load(path, map_location=torch.device('cpu'))
 
 # Set the device to run on: GPU or CPU.
@@ -70,10 +70,11 @@ dis_c[torch.arange(0, 100), idx] = 1.0
 # Discrete latent code.
 c1 = dis_c.view(100, -1, 1, 1)
 
-z = torch.randn(100, 62, 1, 1, device=device)
+z = torch.randn(100, 256, 1, 1, device=device)
 
 # To see variation along c2 (Horizontally) and c1 (Vertically)
-noise1 = torch.cat((z, c1, c2), dim=1)
+#noise1 = torch.cat((z, c1, c2), dim=1)
+noise1 = z
 
 # Generate image.
 with torch.no_grad():
