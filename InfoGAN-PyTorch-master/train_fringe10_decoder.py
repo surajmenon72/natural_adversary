@@ -281,7 +281,7 @@ start_time = time.time()
 iters = 0
 
 #Realness vs. Classification Hyperparams
-alpha = 10
+alpha = 0.8
 gamma = 1
 beta = 1
 clip_value_1 = 1
@@ -441,8 +441,8 @@ for epoch in range(params['num_epochs']):
 
             #Loss for Split, needs to be tuned
             #G_loss = alpha*loss_split + gamma*gen_d_loss
-            #G_loss = dec_loss + gen_d_loss
-            G_loss = gen_d_loss
+            G_loss = alpha*dec_loss + gamma*gen_d_loss
+            #G_loss = gen_d_loss
             totalG_loss += G_loss
             
             total_dec_loss += dec_loss
