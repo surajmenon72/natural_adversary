@@ -33,7 +33,7 @@ print("Random Seed: ", seed)
 device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
-load_model = False
+load_model = True
 load_classifier = False
 
 use_base_resnet = 'base'
@@ -416,7 +416,7 @@ for epoch in range(params['num_epochs']):
             embedding = torch.reshape(embedding, (ea, eb, 1, 1))
 
             #test using the real embedding
-            fixed_noise = embedding[:100]
+            #fixed_noise = embedding[:100]
  
             #print (embedding[0])
 
