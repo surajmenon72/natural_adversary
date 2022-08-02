@@ -33,7 +33,7 @@ print("Random Seed: ", seed)
 device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
-load_model = True
+load_model = False
 load_classifier = False
 
 use_base_resnet = 'base'
@@ -438,7 +438,7 @@ for epoch in range(params['num_epochs']):
             #print (real_data.shape)
             #print (reconstruction.shape)
 
-            reconstruction_loss = criterionRecon(real_data, reconstruction)
+            reconstruction_loss = criterionRecon(reconstruction, real_data)
             #print (reconstruction_loss)
 
             # if (use_3_channel):
