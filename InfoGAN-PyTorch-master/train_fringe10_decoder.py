@@ -456,7 +456,7 @@ for epoch in range(params['num_epochs']):
             totalG_loss += G_loss
             
             #total_dec_loss += dec_loss
-            total_gen_d_loss += gen_d_loss
+            #total_gen_d_loss += gen_d_loss
 
             G_loss.backward()
 
