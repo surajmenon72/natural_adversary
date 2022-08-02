@@ -480,6 +480,7 @@ for epoch in range(params['num_epochs']):
             total_grad = 0
             for j, p in enumerate(netG.parameters()):
                 #print (p.grad.norm())
+                print (p.grad.norm())
                 total_grad += p.grad.norm()
 
             print (total_grad)
