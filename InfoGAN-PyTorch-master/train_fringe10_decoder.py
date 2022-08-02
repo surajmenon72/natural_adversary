@@ -228,7 +228,8 @@ criterionQ_dis = nn.CrossEntropyLoss()
 criterionQ_con = NormalNLLLoss()
 
 criterionDecode = nn.MSELoss()
-criterionRecon = nn.BCELoss(reduction='mean')
+#criterionRecon = nn.BCELoss(reduction='mean')
+criterionRecon = nn.MSELoss()
 
 #which networks don't require grad
 if (train_classifier == False):
@@ -433,7 +434,6 @@ for epoch in range(params['num_epochs']):
             print (reconstruction.shape)
 
             reconstruction_loss = criterionRecon(real_data, reconstruction)
-            reconstruction_loss /= 100000
             print (reconstruction_loss)
 
             # if (use_3_channel):
