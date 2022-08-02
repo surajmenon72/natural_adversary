@@ -415,7 +415,7 @@ for epoch in range(params['num_epochs']):
             eb = embedding.shape[1]
             embedding = torch.reshape(embedding, (ea, eb, 1, 1))
 
-            print (embedding[0])
+            #print (embedding[0])
 
             # isnan = torch.sum(torch.isnan(embedding))
             # print ('Is Embedding NAN')
@@ -426,17 +426,17 @@ for epoch in range(params['num_epochs']):
             #reconstruction = netG(embedding)
             reconstruction = netG.f_logits(embedding)
 
-            print (reconstruction[0])
+            #print (reconstruction[0])
 
             # isnan = torch.sum(torch.isnan(reconstruction))
             # print ('Is Reconstruction NAN')
             # print (isnan)
 
-            print (real_data.shape)
-            print (reconstruction.shape)
+            #print (real_data.shape)
+            #print (reconstruction.shape)
 
             reconstruction_loss = criterionRecon(real_data, reconstruction)
-            print (reconstruction_loss)
+            #print (reconstruction_loss)
 
             # if (use_3_channel):
             #     fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1)
@@ -479,14 +479,14 @@ for epoch in range(params['num_epochs']):
 
             G_loss.backward()
 
-            total_grad = 0
-            for j, p in enumerate(netG.parameters()):
-                #print (p.grad.norm())
-                print (p.grad.norm())
-                total_grad += p.grad.norm()
+            # total_grad = 0
+            # for j, p in enumerate(netG.parameters()):
+            #     #print (p.grad.norm())
+            #     print (p.grad.norm())
+            #     total_grad += p.grad.norm()
 
-            print (total_grad)
-            exit()
+            # print (total_grad)
+            # exit()
 
             # fake_data = netG(noise)
             # #fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1) 
@@ -527,7 +527,7 @@ for epoch in range(params['num_epochs']):
         else:
             totalG_loss = torch.zeros(1)
 
-        nn.utils.clip_grad_value_(netG.parameters(), clip_value_1)
+        #nn.utils.clip_grad_value_(netG.parameters(), clip_value_1)
         optimG.step()
 
         Q_loss = torch.zeros(1)
