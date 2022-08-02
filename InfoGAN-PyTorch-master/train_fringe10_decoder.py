@@ -433,6 +433,8 @@ for epoch in range(params['num_epochs']):
 
             print (reconstruction_loss)
 
+            exit()
+
             # if (use_3_channel):
             #     fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1)
 
