@@ -424,13 +424,14 @@ for epoch in range(params['num_epochs']):
             reconstruction = netG(embedding)
 
             print (reconstruction[0])
-            exit()
 
             # isnan = torch.sum(torch.isnan(reconstruction))
             # print ('Is Reconstruction NAN')
             # print (isnan)
 
             reconstruction_loss = criterionRecon(real_data, reconstruction)
+
+            print (reconstruction_loss)
 
             # if (use_3_channel):
             #     fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1)
