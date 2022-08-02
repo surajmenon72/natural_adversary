@@ -410,6 +410,9 @@ for epoch in range(params['num_epochs']):
 
             embedding = classifier(real_data)
 
+            print (embedding.shape)
+            exit()
+
             #split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
             #fake_data = netG(z_noise)
             reconstruction = netG(embedding)
