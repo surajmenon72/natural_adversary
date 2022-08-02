@@ -431,12 +431,10 @@ for epoch in range(params['num_epochs']):
 
             print (real_data.shape)
             print (reconstruction.shape)
-            
+
             reconstruction_loss = criterionRecon(real_data, reconstruction)
 
             print (reconstruction_loss)
-
-            exit()
 
             # if (use_3_channel):
             #     fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1)
@@ -478,6 +476,14 @@ for epoch in range(params['num_epochs']):
             #total_gen_d_loss += gen_d_loss
 
             G_loss.backward()
+
+            total_grad = 0
+            for j, p in enumerate(netG.parameters()):
+                #print (p.grad.norm())
+                total_grad += p.grad.norm()
+
+            print (total_grad)
+            exit()
 
             # fake_data = netG(noise)
             # #fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1) 
