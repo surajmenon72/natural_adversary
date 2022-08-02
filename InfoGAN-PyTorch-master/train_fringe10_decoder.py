@@ -413,17 +413,17 @@ for epoch in range(params['num_epochs']):
             eb = embedding.shape[1]
             embedding = torch.reshape(embedding, (ea, eb, 1, 1))
 
-            isnan = torch.sum(torch.isnan(embedding))
-            print ('Is Embedding NAN')
-            print (isnan)
+            # isnan = torch.sum(torch.isnan(embedding))
+            # print ('Is Embedding NAN')
+            # print (isnan)
 
             #split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
             #fake_data = netG(z_noise)
             reconstruction = netG(embedding)
 
-            isnan = torch.sum(torch.isnan(reconstruction))
-            print ('Is Reconstruction NAN')
-            print (isnan)
+            # isnan = torch.sum(torch.isnan(reconstruction))
+            # print ('Is Reconstruction NAN')
+            # print (isnan)
 
             reconstruction_loss = criterionRecon(real_data, reconstruction)
 
@@ -507,6 +507,7 @@ for epoch in range(params['num_epochs']):
         else:
             totalG_loss = torch.zeros(1)
 
+        nn.utils.clip_grad_value_(netG.parameters(), clip_value_1)
         optimG.step()
 
         Q_loss = torch.zeros(1)
