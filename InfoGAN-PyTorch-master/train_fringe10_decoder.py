@@ -430,7 +430,7 @@ for epoch in range(params['num_epochs']):
             # print (isnan)
 
             print (real_data.shape)
-            print (reconstruction_loss.shape)
+            print (reconstruction.shape)
             
             reconstruction_loss = criterionRecon(real_data, reconstruction)
 
