@@ -229,8 +229,8 @@ criterionQ_con = NormalNLLLoss()
 
 criterionDecode = nn.MSELoss()
 #criterionRecon = nn.BCELoss(reduction='mean')
-criterionRecon = nn.MSELoss()
-#criterionRecon = nn.BCEWithLogitsLoss(reduction='mean')
+#criterionRecon = nn.MSELoss()
+criterionRecon = nn.BCEWithLogitsLoss(reduction='mean')
 
 #which networks don't require grad
 if (train_classifier == False):
@@ -426,8 +426,8 @@ for epoch in range(params['num_epochs']):
 
             #split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
             #fake_data = netG(z_noise)
-            reconstruction = netG(embedding)
-            #reconstruction = netG.f_logits(embedding)
+            #reconstruction = netG(embedding)
+            reconstruction = netG.f_logits(embedding)
 
             #print (reconstruction[0])
 
