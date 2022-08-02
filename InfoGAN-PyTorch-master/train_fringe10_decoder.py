@@ -433,7 +433,7 @@ for epoch in range(params['num_epochs']):
             print (reconstruction.shape)
 
             reconstruction_loss = criterionRecon(real_data, reconstruction)
-            reconstruction_loss /= 100
+            reconstruction_loss /= 100000
             print (reconstruction_loss)
 
             # if (use_3_channel):
