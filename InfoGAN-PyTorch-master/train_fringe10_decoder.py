@@ -414,6 +414,10 @@ for epoch in range(params['num_epochs']):
             #fake_data = netG(z_noise)
             reconstruction = netG(embedding)
 
+            print (embedding.shape)
+            print (reconstruction.shape)
+            exit()
+
             reconstruction_loss = criterionRecon(real_data, reconstruction)
 
             # if (use_3_channel):
