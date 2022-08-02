@@ -415,10 +415,9 @@ for epoch in range(params['num_epochs']):
             eb = embedding.shape[1]
             embedding = torch.reshape(embedding, (ea, eb, 1, 1))
 
-            print (fixed_noise.shape)
-            print (embedding.shape)
-            exit()
-
+            #test using the real embedding
+            fixed_noise = embedding[:100]
+ 
             #print (embedding[0])
 
             # isnan = torch.sum(torch.isnan(embedding))
