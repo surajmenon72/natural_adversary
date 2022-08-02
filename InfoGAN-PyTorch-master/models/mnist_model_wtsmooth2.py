@@ -36,6 +36,16 @@ class Generator(nn.Module):
 
         return img
 
+    def f_logits(self, x):
+        x = F.relu(self.bn1(self.tconv1(x)))
+        x = F.relu(self.bn2(self.tconv2(x)))
+        x = F.relu(self.bn3(self.tconv3(x)))
+
+        logits = self.tconv4(x)
+
+        return logits
+
+
 class Discriminator(nn.Module):
     def __init__(self):
         super().__init__()
