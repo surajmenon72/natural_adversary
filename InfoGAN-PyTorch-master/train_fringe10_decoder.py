@@ -228,7 +228,7 @@ criterionQ_dis = nn.CrossEntropyLoss()
 criterionQ_con = NormalNLLLoss()
 
 criterionDecode = nn.MSELoss()
-criterionRecon = nn.BCELoss(reduce=mean)
+criterionRecon = nn.BCELoss(reduction='mean')
 
 #which networks don't require grad
 if (train_classifier == False):
