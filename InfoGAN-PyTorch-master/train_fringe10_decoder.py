@@ -419,7 +419,7 @@ for epoch in range(params['num_epochs']):
 
             #test using the real embedding
             #fixed_noise = embedding[:100]
-            fake_data = torch.randn(batch_size, 1, 28, 28, device=device)
+            fake_data = torch.randn(b_size, 1, 28, 28, device=device)
             print (fake_data.shape)
             fake_embedding = classifier(real_data)
             fake_embedding = torch.reshape(fake_embedding, (ea, eb, 1, 1))
