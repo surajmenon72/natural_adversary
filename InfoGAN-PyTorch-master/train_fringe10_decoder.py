@@ -410,8 +410,6 @@ for epoch in range(params['num_epochs']):
             total_dec_loss = 0
             total_gen_d_loss = 0
 
-            print (real_data.shape)
-
             embedding = classifier(real_data)
             ea = embedding.shape[0]
             eb = embedding.shape[1]
@@ -420,11 +418,9 @@ for epoch in range(params['num_epochs']):
             #test using the real embedding
             #fixed_noise = embedding[:100]
             fake_data = torch.randn(b_size, 1, 28, 28, device=device)
-            print (fake_data.shape)
             fake_embedding = classifier(real_data)
             fake_embedding = torch.reshape(fake_embedding, (ea, eb, 1, 1))
-            print (fake_embedding.shape)
-            exit()
+            fixed_noise = fake_embedding[:100]
  
             #print (embedding[0])
 
