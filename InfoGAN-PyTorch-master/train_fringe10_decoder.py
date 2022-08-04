@@ -425,8 +425,15 @@ for epoch in range(params['num_epochs']):
             # fixed_noise = fake_embedding[:100]
 
             #trying a spectrum test
-            print (embedding.shape)
-            exit()
+            for s in range(10):
+                index = 10*s
+                fixed_noise[index] = embedding[index]
+                fixed_noise[index+9] = embedding[index+1]
+                diff = embedding[index+1] - embedding[index]
+                diff = diff/8
+                for sp in range(1, 9):
+                    fixed_noise[index+sp] = fixed_noise[index+sp-1] + diff
+            
  
             #print (embedding[0])
 
