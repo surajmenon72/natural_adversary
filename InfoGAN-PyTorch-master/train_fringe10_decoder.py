@@ -33,11 +33,11 @@ print("Random Seed: ", seed)
 device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
-load_model = True
+load_model = False
 load_classifier = False
 
 use_base_resnet = 'base'
-use_thanos_vicreg = 'thanos'
+use_thanos_vicreg = 'vicreg'
 load_encoder = True
 
 train_classifier = False
@@ -430,8 +430,7 @@ for epoch in range(params['num_epochs']):
                 fixed_noise[index] = embedding[index]
                 fixed_noise[index+9] = embedding[index+1]
                 diff = embedding[index+1] - embedding[index]
-                #diff = diff/8
-                diff = diff/16
+                diff = diff/8
                 for sp in range(1, 9):
                     fixed_noise[index+sp] = fixed_noise[index+sp-1] + diff
 
