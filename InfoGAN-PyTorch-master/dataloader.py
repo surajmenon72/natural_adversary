@@ -33,7 +33,7 @@ def get_data(dataset, batch_size, train_test='train', use_3_channel=False):
 
 
         if (train_test == 'train'):
-            dataset = dsets.MNIST(root+'mnist/', train='train', 
+            dataset = dsets.MNIST(root+'mnist/', train=True, 
                                 download=True, transform=transform)
         else:
             dataset = dsets.MNIST(root+'mnist/', train=False, 
@@ -70,6 +70,24 @@ def get_data(dataset, batch_size, train_test='train', use_3_channel=False):
                 (0.5, 0.5, 0.5))])
 
         dataset = dsets.ImageFolder(root=root+'celeba/', transform=transform)
+
+    elif dataset == 'Cifar10':
+        transform = transforms.Compose([
+            transforms.Resize(32),
+            transforms.CenterCrop(32),
+            transforms.ToTensor(),
+            transforms.Normalize(
+                    mean=[0.49139968, 0.48215841, 0.44653091], 
+                    std=[0.24703223, 0.24348513, 0.26158784]
+                ),]
+            )
+
+        if (train_test == 'train'):
+            dataset = dsets.CIFAR10(root=root+'cifar10/', train=True, 
+                                    download=True, transform=transform)
+        else:
+            dataset = dsets.CIFAR10(root=root+'cifar10/', train=False, 
+                        download=True, transform=transform)
 
     # Create dataloader.
     dataloader = torch.utils.data.DataLoader(dataset, 

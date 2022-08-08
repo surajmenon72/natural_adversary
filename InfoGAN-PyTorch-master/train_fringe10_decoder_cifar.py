@@ -14,14 +14,7 @@ from dataloader import get_data
 from utils import *
 from config import params
 
-if(params['dataset'] == 'MNIST'):
-    from models.mnist_model_wtsmooth2 import Generator, Discriminator, DHead, DHead_KL, QHead, Encoder, ResnetEncoder, CHead, Stretcher, HHead
-elif(params['dataset'] == 'SVHN'):
-    from models.svhn_model import Generator, Discriminator, DHead, QHead
-elif(params['dataset'] == 'CelebA'):
-    from models.celeba_model import Generator, Discriminator, DHead, QHead
-elif(params['dataset'] == 'FashionMNIST'):
-    from models.mnist_model import Generator, Discriminator, DHead, QHead
+from models.mnist_model_wtsmooth2 import Generator, Discriminator, DHead, DHead_KL, QHead, Encoder, ResnetEncoder, CHead, Stretcher, HHead
 
 # Set random seed for reproducibility.
 seed = 1123
@@ -36,8 +29,8 @@ print(device, " will be used.\n")
 load_model = False
 load_classifier = False
 
-use_base_resnet = 'base'
-use_thanos_vicreg = 'vicreg'
+use_base_resnet = 'resnet'
+use_thanos_vicreg = 'thanos'
 load_encoder = True
 
 train_classifier = False
@@ -66,27 +59,12 @@ dataloader_knn = get_data(params['dataset'], params['knn_batch_size'], use_3_cha
 # num_dis_c : number of discrete latent code used.
 # dis_c_dim : dimension of discrete latent code.
 # num_con_c : number of continuous latent code used.
-if(params['dataset'] == 'MNIST'):
-    params['num_z'] = 256
-    params['num_dis_c'] = 1
-    params['dis_c_dim'] = 10
-    #params['num_con_c'] = 10 #continuous variable allocated for each class
-    params['num_con_c'] = 1
-elif(params['dataset'] == 'SVHN'):
-    params['num_z'] = 124
-    params['num_dis_c'] = 4
-    params['dis_c_dim'] = 10
-    params['num_con_c'] = 4
-elif(params['dataset'] == 'CelebA'):
-    params['num_z'] = 128
-    params['num_dis_c'] = 10
-    params['dis_c_dim'] = 10
-    params['num_con_c'] = 0
-elif(params['dataset'] == 'FashionMNIST'):
-    params['num_z'] = 62
-    params['num_dis_c'] = 1
-    params['dis_c_dim'] = 10
-    params['num_con_c'] = 2
+
+params['num_z'] = 512
+params['num_dis_c'] = 1
+params['dis_c_dim'] = 10
+#params['num_con_c'] = 10 #continuous variable allocated for each class
+params['num_con_c'] = 1
 
 # Plot the training images.
 sample_batch = next(iter(dataloader))
@@ -114,8 +92,8 @@ netQ = QHead().to(device)
 netQ.apply(weights_init)
 print(netQ)
 
-#classifier = ResnetEncoder().to(device)
-classifier = Encoder().to(device)
+classifier = ResnetEncoder().to(device)
+#classifier = Encoder().to(device)
 classifier.apply(weights_init)
 print (classifier)
 
@@ -140,7 +118,7 @@ else:
     if (load_encoder == True):
         if(use_thanos_vicreg == 'thanos'):
             if (use_base_resnet == 'resnet'):
-                path = './checkpoints/thanos_resnet_15.ckpt'
+                path = './checkpoints/thanos_resnet_cifar10_60.ckpt'
                 state_dict = torch.load(path, map_location=device)
                 #missing_keys, unexpected_keys = classifier.load_state_dict(state_dict['state_dict', strict=False)
                 classifier.load_state_dict(
