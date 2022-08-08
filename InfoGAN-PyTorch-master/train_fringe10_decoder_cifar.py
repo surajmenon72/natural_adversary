@@ -389,11 +389,9 @@ for epoch in range(params['num_epochs']):
             total_gen_d_loss = 0
 
             embedding = classifier(real_data)
-            print (embedding.shape)
             ea = embedding.shape[0]
             eb = embedding.shape[1]
             embedding = torch.reshape(embedding, (ea, eb, 1, 1))
-            print (embedding.shape)
 
             #test using the real embedding
             #fixed_noise = embedding[:100]
@@ -404,15 +402,16 @@ for epoch in range(params['num_epochs']):
             # fake_embedding = torch.reshape(fake_embedding, (ea, eb, 1, 1))
             # fixed_noise = fake_embedding[:100]
 
-            #trying a spectrum test
-            for s in range(10):
-                index = 10*s
-                fixed_noise[index] = embedding[index]
-                fixed_noise[index+9] = embedding[index+1]
-                diff = embedding[index+1] - embedding[index]
-                diff = diff/8
-                for sp in range(1, 9):
-                    fixed_noise[index+sp] = fixed_noise[index+sp-1] + diff
+            #trying a spectrum test, do on 5th batch each time
+            if (i == 5):
+                for s in range(10):
+                    index = 10*s
+                    fixed_noise[index] = embedding[index]
+                    fixed_noise[index+9] = embedding[index+1]
+                    diff = embedding[index+1] - embedding[index]
+                    diff = diff/8
+                    for sp in range(1, 9):
+                        fixed_noise[index+sp] = fixed_noise[index+sp-1] + diff
 
  
             #print (embedding[0])
@@ -426,9 +425,6 @@ for epoch in range(params['num_epochs']):
             #reconstruction = netG(embedding)
             reconstruction = netG.f_logits(embedding)
             reconstruction = torch.tanh(reconstruction)
-
-            print (reconstruction.shape)
-            exit()
 
             #print (reconstruction[0])
 
