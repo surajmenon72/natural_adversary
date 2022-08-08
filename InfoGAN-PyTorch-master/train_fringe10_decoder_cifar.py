@@ -14,7 +14,7 @@ from dataloader import get_data
 from utils import *
 from config import params
 
-from models.mnist_model_wtsmooth2 import Generator, Discriminator, DHead, DHead_KL, QHead, Encoder, ResnetEncoder, CHead, Stretcher, HHead
+from models.mnist_model_wtsmooth2 import Generator, Generator_Resnet, Discriminator, DHead, DHead_KL, QHead, Encoder, ResnetEncoder, CHead, Stretcher, HHead
 
 # Set random seed for reproducibility.
 seed = 1123
@@ -76,7 +76,7 @@ plt.savefig('Training Images {}'.format(params['dataset']))
 plt.close('all')
 
 # Initialise the network.
-netG = Generator().to(device)
+netG = Generator_Resnet().to(device)
 netG.apply(weights_init)
 print(netG)
 
@@ -423,6 +423,9 @@ for epoch in range(params['num_epochs']):
             #fake_data = netG(z_noise)
             #reconstruction = netG(embedding)
             reconstruction = netG.f_logits(embedding)
+
+            print (reconstruction.shape)
+            exit()
 
             #print (reconstruction[0])
 
