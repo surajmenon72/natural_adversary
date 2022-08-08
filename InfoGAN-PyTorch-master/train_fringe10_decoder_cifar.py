@@ -389,9 +389,11 @@ for epoch in range(params['num_epochs']):
             total_gen_d_loss = 0
 
             embedding = classifier(real_data)
+            print (embedding.shape)
             ea = embedding.shape[0]
             eb = embedding.shape[1]
             embedding = torch.reshape(embedding, (ea, eb, 1, 1))
+            print (embedding.shape)
 
             #test using the real embedding
             #fixed_noise = embedding[:100]
@@ -424,6 +426,9 @@ for epoch in range(params['num_epochs']):
             #reconstruction = netG(embedding)
             reconstruction = netG.f_logits(embedding)
             reconstruction = torch.tanh(reconstruction)
+
+            print (reconstruction.shape)
+            exit()
 
             #print (reconstruction[0])
 
