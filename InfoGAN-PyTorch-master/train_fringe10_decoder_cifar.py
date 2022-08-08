@@ -424,9 +424,6 @@ for epoch in range(params['num_epochs']):
             #reconstruction = netG(embedding)
             reconstruction = netG.f_logits(embedding)
 
-            print (reconstruction.shape)
-            exit()
-
             #print (reconstruction[0])
 
             # isnan = torch.sum(torch.isnan(reconstruction))
