@@ -69,6 +69,8 @@ class Generator_Resnet(nn.Module):
 
         img = torch.tanh(self.tconv5(x))
 
+        return img
+
     def f_logits(self, x):
         x = F.relu(self.bn1(self.tconv1(x)))
         x = F.relu(self.bn2(self.tconv2(x)))

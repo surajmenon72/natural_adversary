@@ -404,7 +404,6 @@ for epoch in range(params['num_epochs']):
 
             #trying a spectrum test, do on 5th batch each time
             if (i == 5):
-                print ('Setting Fixed Point')
                 for s in range(10):
                     index = 10*s
                     fixed_noise[index] = embedding[index]
