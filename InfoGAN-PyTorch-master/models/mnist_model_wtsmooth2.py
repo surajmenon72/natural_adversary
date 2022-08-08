@@ -77,7 +77,7 @@ class Generator_Resnet(nn.Module):
 
         logits = self.tconv5(x)
 
-        return img
+        return logits
 
 
 class Discriminator(nn.Module):
