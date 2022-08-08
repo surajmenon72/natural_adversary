@@ -207,8 +207,8 @@ criterionQ_con = NormalNLLLoss()
 
 criterionDecode = nn.MSELoss()
 #criterionRecon = nn.BCELoss(reduction='mean')
-#criterionRecon = nn.MSELoss()
-criterionRecon = nn.BCEWithLogitsLoss(reduction='mean')
+criterionRecon = nn.MSELoss()
+#criterionRecon = nn.BCEWithLogitsLoss(reduction='mean')
 
 #which networks don't require grad
 if (train_classifier == False):
@@ -423,6 +423,7 @@ for epoch in range(params['num_epochs']):
             #fake_data = netG(z_noise)
             #reconstruction = netG(embedding)
             reconstruction = netG.f_logits(embedding)
+            reconstruction = torch.tanh(reconstruction)
 
             #print (reconstruction[0])
 
