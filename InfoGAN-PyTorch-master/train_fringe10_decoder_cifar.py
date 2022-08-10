@@ -575,10 +575,10 @@ for epoch in range(params['num_epochs']):
         with torch.no_grad():
             gen_data = netG(fixed_noise).detach().cpu()
         #plt.figure(figsize=(10, 10))
-        plt.figure(figsize=(1, 1))
+        plt.figure(figsize=(1, 10))
         plt.axis("off")
         #plt.imshow(np.transpose(vutils.make_grid(gen_data, nrow=10, padding=2, normalize=True), (1,2,0)))
-        plt.imshow(np.transpose(vutils.make_grid(gen_data[:10], nrow=1, padding=2, normalize=False), (1,2,0)))
+        plt.imshow(np.transpose(vutils.make_grid(gen_data[:10], nrow=1, padding=2, normalize=True), (1,2,0)))
         plt.savefig("Epoch_%d {}".format(params['dataset']) %(epoch+1))
         plt.close('all')
 
