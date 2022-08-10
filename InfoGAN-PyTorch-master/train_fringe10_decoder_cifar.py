@@ -425,6 +425,15 @@ for epoch in range(params['num_epochs']):
             reconstruction = netG.f_logits(embedding)
             reconstruction = torch.tanh(reconstruction)
 
+            d1 = real_data[0].permute(1, 2, 0)
+            d2 = reconstruction[0].permute(1, 2, 0)
+
+            plt.imshow(d1.detach().cpu())
+            plt.savefig('D1.png')
+            plt.imshow(d2.detach().cpu())
+            plt.savefig('D2.png')
+            exit()
+
             #print (reconstruction[0])
 
             # isnan = torch.sum(torch.isnan(reconstruction))
