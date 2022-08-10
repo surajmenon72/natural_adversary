@@ -285,6 +285,9 @@ for epoch in range(params['num_epochs']):
         real_data = data.to(device)
         true_label_g = true_label.to(device)
 
+        print (real_data[0].shape)
+        print (real_data[0])
+        exit()
 
         #get labels, targets for split
         true_labels_hot, targets = get_targets(true_label_g, params['dis_c_dim'], device)
