@@ -26,7 +26,7 @@ print("Random Seed: ", seed)
 device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
-load_model = True
+load_model = False
 load_classifier = False
 
 use_base_resnet = 'resnet'
@@ -424,10 +424,6 @@ for epoch in range(params['num_epochs']):
             #reconstruction = netG(embedding)
             reconstruction = netG.f_logits(embedding)
             reconstruction = torch.tanh(reconstruction)
-
-            print (real_data[0])
-            print (reconstruction[0])
-            exit()
 
             #print (reconstruction[0])
 
