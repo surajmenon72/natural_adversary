@@ -574,12 +574,14 @@ for epoch in range(params['num_epochs']):
     if (epoch+1) % params['save_epoch'] == 0:
         with torch.no_grad():
             gen_data = netG(fixed_noise).detach().cpu()
-        #plt.figure(figsize=(10, 10))
-        plt.figure(figsize=(1, 1))
+        plt.figure(figsize=(10, 10))
+        #plt.figure(figsize=(1, 1))
         plt.axis("off")
-        #plt.imshow(np.transpose(vutils.make_grid(gen_data, nrow=10, padding=2, normalize=True), (1,2,0)))
-        plt.imshow(np.transpose(vutils.make_grid(gen_data[5:6], nrow=1, padding=2, normalize=True), (1,2,0)))
+        plt.imshow(np.transpose(vutils.make_grid(gen_data, nrow=10, padding=2, normalize=True), (1,2,0)))
+        #plt.imshow(np.transpose(vutils.make_grid(gen_data[5:6], nrow=1, padding=2, normalize=True), (1,2,0)))
         plt.savefig("Epoch_%d {}".format(params['dataset']) %(epoch+1))
+        plt.imshow(gen_data[2])
+        plt.savefig("Test_%d" %(epoch+1))
         plt.close('all')
 
     if (train_classifier_head):
