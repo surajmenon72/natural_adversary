@@ -26,7 +26,7 @@ print("Random Seed: ", seed)
 device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
-load_model = False
+load_model = True
 load_classifier = False
 
 use_base_resnet = 'resnet'
@@ -207,8 +207,8 @@ criterionQ_con = NormalNLLLoss()
 
 criterionDecode = nn.MSELoss()
 #criterionRecon = nn.BCELoss(reduction='mean')
-#criterionRecon = nn.MSELoss()
-criterionRecon = nn.BCEWithLogitsLoss(reduction='mean')
+criterionRecon = nn.MSELoss()
+#criterionRecon = nn.BCEWithLogitsLoss(reduction='mean')
 
 #which networks don't require grad
 if (train_classifier == False):
@@ -423,7 +423,7 @@ for epoch in range(params['num_epochs']):
             #fake_data = netG(z_noise)
             #reconstruction = netG(embedding)
             reconstruction = netG.f_logits(embedding)
-            #reconstruction = torch.tanh(reconstruction)
+            reconstruction = torch.tanh(reconstruction)
 
             # d1 = real_data[0].permute(1, 2, 0)
             # d2 = reconstruction[0].permute(1, 2, 0)
