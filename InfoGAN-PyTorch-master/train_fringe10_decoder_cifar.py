@@ -580,7 +580,8 @@ for epoch in range(params['num_epochs']):
         plt.imshow(np.transpose(vutils.make_grid(gen_data, nrow=10, padding=2, normalize=True), (1,2,0)))
         #plt.imshow(np.transpose(vutils.make_grid(gen_data[5:6], nrow=1, padding=2, normalize=True), (1,2,0)))
         plt.savefig("Epoch_%d {}".format(params['dataset']) %(epoch+1))
-        plt.imshow(gen_data[0].permute(1, 2, 0), normalize=True)
+        gen_test = (gen_data[0]+1)/2 #simple shifting
+        plt.imshow(gen_test.permute(1, 2, 0))
         plt.savefig("Test_%d" %(epoch+1))
         plt.close('all')
 
