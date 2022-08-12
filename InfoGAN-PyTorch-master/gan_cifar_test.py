@@ -155,6 +155,7 @@ for epoch in range(niter):
         real_cpu = data[0].to(device)
         batch_size = real_cpu.size(0)
         label = torch.full((batch_size,), real_label, device=device)
+        label = label.to(torch.float32)
 
         output = netD(real_cpu)
         errD_real = criterion(output, label)
@@ -165,6 +166,7 @@ for epoch in range(niter):
         noise = torch.randn(batch_size, nz, 1, 1, device=device)
         fake = netG(noise)
         label.fill_(fake_label)
+        label = label.to(torch.float32)
         output = netD(fake.detach())
         errD_fake = criterion(output, label)
         errD_fake.backward()
@@ -177,6 +179,7 @@ for epoch in range(niter):
         ###########################
         netG.zero_grad()
         label.fill_(real_label)  # fake labels are real for generator cost
+        label = label.to(torch.float32)
         output = netD(fake)
         errG = criterion(output, label)
         errG.backward()
