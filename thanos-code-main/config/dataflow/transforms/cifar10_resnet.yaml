@@ -3,7 +3,7 @@ image_pil:
     prob: 0.5
   - type: RandomResizedCrop
     prob: 1.0
-    size: 32
+    size: 64
     scale: [0.2, 1.]
   - type: HorizontalFlip
     prob: 0.5
@@ -16,6 +16,8 @@ image_pil:
   - type: RandomGrayscale
     p: 0.2
 image_pil_default_transform:
+  - type: Resize
+    size: 64
   - type: ToTensor
   - type: Normalize
     # mean: [0.49139968, 0.48215841, 0.44653091]

@@ -73,8 +73,8 @@ def get_data(dataset, batch_size, train_test='train', use_3_channel=False):
 
     elif dataset == 'Cifar10':
         transform = transforms.Compose([
-            transforms.Resize(32),
-            transforms.CenterCrop(32),
+            transforms.Resize(64),
+            transforms.CenterCrop(64),
             transforms.ToTensor(),
             transforms.Normalize(
                     #mean=[0.49139968, 0.48215841, 0.44653091], 
