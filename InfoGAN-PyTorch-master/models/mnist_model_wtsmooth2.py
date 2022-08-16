@@ -362,9 +362,9 @@ class ResNet18Dec(nn.Module):
         self.in_planes = planes
         return nn.Sequential(*layers)
 
-    def forward(self, z):
+    def forward(self, x):
         #x = self.linear(z) #no VAE
-        x = x.view(z.size(0), 512, 1, 1)
+        x = x.view(x.size(0), 512, 1, 1)
         x = F.interpolate(x, scale_factor=4)
         x = self.layer4(x)
         x = self.layer3(x)
