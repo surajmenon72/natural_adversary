@@ -14,7 +14,7 @@ from dataloader import get_data
 from utils import *
 from config import params
 
-from models.mnist_model_wtsmooth2 import Generator, Generator_Resnet, Discriminator, DHead, DHead_KL, QHead, Encoder, ResnetEncoder, CHead, Stretcher, HHead
+from models.mnist_model_wtsmooth2 import Generator, Generator_Resnet, Discriminator, DHead, DHead_KL, QHead, Encoder, ResnetEncoder, ResNet18Dec, CHead, Stretcher, HHead
 
 # Set random seed for reproducibility.
 seed = 1123
@@ -76,7 +76,8 @@ plt.savefig('Training Images {}'.format(params['dataset']))
 plt.close('all')
 
 # Initialise the network.
-netG = Generator_Resnet().to(device)
+#netG = Generator_Resnet().to(device)
+netG = ResNet18Dec().to(device)
 netG.apply(weights_init)
 print(netG)
 
@@ -118,7 +119,7 @@ else:
     if (load_encoder == True):
         if(use_thanos_vicreg == 'thanos'):
             if (use_base_resnet == 'resnet'):
-                path = './checkpoints/thanos_resnet_cifar10_60.ckpt'
+                path = './checkpoints/thanos_resnet_cifar10_64_50.ckpt'
                 state_dict = torch.load(path, map_location=device)
                 #missing_keys, unexpected_keys = classifier.load_state_dict(state_dict['state_dict', strict=False)
                 classifier.load_state_dict(
@@ -421,9 +422,9 @@ for epoch in range(params['num_epochs']):
 
             #split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
             #fake_data = netG(z_noise)
-            #reconstruction = netG(embedding)
-            reconstruction = netG.f_logits(embedding)
-            reconstruction = torch.tanh(reconstruction)
+            reconstruction = netG(embedding)
+            #reconstruction = netG.f_logits(embedding)
+            #reconstruction = torch.tanh(reconstruction)
 
             # d1 = real_data[0].permute(1, 2, 0)
             # d2 = reconstruction[0].permute(1, 2, 0)
