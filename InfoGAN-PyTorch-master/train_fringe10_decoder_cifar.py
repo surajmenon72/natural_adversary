@@ -444,6 +444,9 @@ for epoch in range(params['num_epochs']):
             #print (real_data.shape)
             #print (reconstruction.shape)
 
+            print (reconstruction.shape)
+            print (real_data.shape)
+            exit()
             reconstruction_loss = criterionRecon(reconstruction, real_data)
             #print (reconstruction_loss)
 
