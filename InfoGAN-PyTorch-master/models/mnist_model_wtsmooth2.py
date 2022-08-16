@@ -203,7 +203,6 @@ class Encoder(nn.Module):
 
         return x
 
-
 class ResnetEncoder(nn.Module):
     def __init__(
         self,
@@ -234,6 +233,19 @@ class ResnetEncoder(nn.Module):
     def forward(self, x):
         x = self.f(x)
         x = torch.flatten(x, start_dim=1)
+        return x
+
+class ResizeConv2d(nn.Module):
+
+    def __init__(self, in_channels, out_channels, kernel_size, scale_factor, mode='nearest'):
+        super().__init__()
+        self.scale_factor = scale_factor
+        self.mode = mode
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride=1, padding=1)
+
+    def forward(self, x):
+        x = F.interpolate(x, scale_factor=self.scale_factor, mode=self.mode)
+        x = self.conv(x)
         return x
 
 class BasicBlockEnc(nn.Module):
