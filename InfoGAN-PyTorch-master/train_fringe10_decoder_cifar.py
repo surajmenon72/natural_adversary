@@ -485,8 +485,9 @@ for epoch in range(params['num_epochs']):
 
 
             # label = torch.full((b_size, ), real_label, device=device)
-            # fake_data = netG(z_noise)
-            fake_output = discriminator(reconstruction)
+            fake_data = netG(z_noise)
+            #fake_data = reconstruction
+            fake_output = discriminator(fake_data)
             # shape = fake_output.shape
             # fake_output = torch.reshape(fake_output, (shape[0], shape[1], 1, 1))
             #probs_fake = netD(fake_output).view(-1)
