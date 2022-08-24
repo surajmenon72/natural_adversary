@@ -353,6 +353,7 @@ for epoch in range(params['num_epochs']):
             # shape = real_output.shape
             # real_output = torch.reshape(real_output, (shape[0], shape[1], 1, 1))
             probs_real = netD(real_output).view(-1)
+            print (real_output.shape)
             print (probs_real.shape)
             exit()
             label = label.to(torch.float32)
