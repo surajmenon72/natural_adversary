@@ -362,14 +362,14 @@ for epoch in range(params['num_epochs']):
             loss_real.backward()
 
             # Generate fake image batch with G
-            #fake_data = netG(z_noise)
+            fake_data = netG(z_noise)
             #fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1)
 
             embedding = classifier(real_data)
             ea = embedding.shape[0]
             eb = embedding.shape[1]
             embedding = torch.reshape(embedding, (ea, eb, 1, 1))
-            fake_data = netG(embedding)
+            #fake_data = netG(embedding)
 
 
             # Train with fake
