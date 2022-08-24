@@ -180,7 +180,7 @@ class DHead_Resnet(nn.Module):
     def __init__(self):
         super().__init__()
 
-        self.conv = nn.Conv2d(256, 1, 1)
+        self.conv = nn.Conv2d(256, 1, 4)
 
     def forward(self, x):
         output = torch.sigmoid(self.conv(x))

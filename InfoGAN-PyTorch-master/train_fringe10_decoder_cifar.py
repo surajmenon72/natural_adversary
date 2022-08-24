@@ -350,11 +350,11 @@ for epoch in range(params['num_epochs']):
             # Real data
             label = torch.full((b_size, ), real_label, device=device)
             real_output = discriminator(real_data)
-            print (real_output.shape)
-            exit()
-            shape = real_output.shape
-            real_output = torch.reshape(real_output, (shape[0], shape[1], 1, 1))
+            # shape = real_output.shape
+            # real_output = torch.reshape(real_output, (shape[0], shape[1], 1, 1))
             probs_real = netD(real_output).view(-1)
+            print (probs_real.shape)
+            exit()
             label = label.to(torch.float32)
             loss_real = criterionD(probs_real, label)
             #calculate grad
