@@ -603,7 +603,7 @@ for epoch in range(params['num_epochs']):
         vutils.save_image(gen_data,'Epoch_%03d.png' % (epoch),normalize=True)
         gen_test = (gen_data[0]+1)/2 #simple shifting
         plt.imshow(gen_test.permute(1, 2, 0))
-        plt.savefig("Test_%d" %(epoch+1))
+        #plt.savefig("Test_%d" %(epoch+1))
         plt.close('all')
 
     if (train_classifier_head):
