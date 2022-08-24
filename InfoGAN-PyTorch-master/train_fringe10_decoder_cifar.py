@@ -81,7 +81,7 @@ netG = ResNet18Dec().to(device)
 netG.apply(weights_init)
 print(netG)
 
-discriminator = ResnetEncoder().to(device)
+discriminator = Discriminator_Resnet().to(device)
 discriminator.apply(weights_init)
 print (discriminator)
 
@@ -350,6 +350,8 @@ for epoch in range(params['num_epochs']):
             # Real data
             label = torch.full((b_size, ), real_label, device=device)
             real_output = discriminator(real_data)
+            print (real_output.shape)
+            exit()
             shape = real_output.shape
             real_output = torch.reshape(real_output, (shape[0], shape[1], 1, 1))
             probs_real = netD(real_output).view(-1)
@@ -496,8 +498,8 @@ for epoch in range(params['num_epochs']):
             G_loss = alpha*reconstruction_loss + gamma*gen_d_loss
             totalG_loss += G_loss
             
-            #total_dec_loss += dec_loss
-            #total_gen_d_loss += gen_d_loss
+            total_dec_loss += alpha*reconstruction_loss
+            total_gen_d_loss += gamma*gen_d_loss
 
             G_loss.backward()
 
@@ -553,10 +555,10 @@ for epoch in range(params['num_epochs']):
         optimG.step()
 
         Q_loss = torch.zeros(1)
-        D_loss = torch.zeros(1)
+        #D_loss = torch.zeros(1)
         C_loss = torch.zeros(1)
-        total_dec_loss = torch.zeros(1)
-        total_gen_d_loss = torch.zeros(1)
+        #total_dec_loss = torch.zeros(1)
+        #total_gen_d_loss = torch.zeros(1)
 
         # Check progress of training.
         if i != 0 and i%100 == 0:

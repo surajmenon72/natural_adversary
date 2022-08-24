@@ -133,6 +133,25 @@ class Discriminator(nn.Module):
 
         return fm
 
+class Discriminator_Resnet(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        self.conv1 = nn.Conv2d(3, 64, 4, 2, 1)
+
+        self.conv2 = nn.Conv2d(64, 128, 4, 2, 1, bias=False)
+        self.bn2 = nn.BatchNorm2d(128)
+
+        self.conv3 = nn.Conv2d(128, 256, 4, 2, 1, bias=False)
+        self.bn3 = nn.BatchNorm2d(256)
+
+    def forward(self, x):
+        x = F.leaky_relu(self.conv1(x), 0.1, inplace=True)
+        x = F.leaky_relu(self.bn2(self.conv2(x)), 0.1, inplace=True)
+        x = F.leaky_relu(self.bn3(self.conv3(x)), 0.1, inplace=True)
+
+        return x
+
 class DHead(nn.Module):
     def __init__(self):
         super().__init__()
@@ -161,7 +180,7 @@ class DHead_Resnet(nn.Module):
     def __init__(self):
         super().__init__()
 
-        self.conv = nn.Conv2d(512, 1, 1)
+        self.conv = nn.Conv2d(256, 1, 1)
 
     def forward(self, x):
         output = torch.sigmoid(self.conv(x))
