@@ -466,7 +466,7 @@ class Generator_CIFAR(nn.Module):
             return output
 
 class Discriminator_CIFAR(nn.Module):
-    def __init__(self, ngpu):
+    def __init__(self, ngpu=1):
         super(Discriminator, self).__init__()
         self.ngpu = ngpu
         self.main = nn.Sequential(
