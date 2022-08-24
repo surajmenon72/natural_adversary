@@ -157,6 +157,17 @@ class DHead_KL(nn.Module):
 
         return output
 
+class DHead_Resnet(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        self.conv = nn.Conv2d(512, 1, 1)
+
+    def forward(self, x):
+        output = torch.sigmoid(self.conv(x))
+
+        return output
+
 class QHead(nn.Module):
     def __init__(self):
         super().__init__()
