@@ -356,8 +356,6 @@ for epoch in range(params['num_epochs']):
             # real_output = torch.reshape(real_output, (shape[0], shape[1], 1, 1))
             #probs_real = netD(real_output).view(-1)
             probs_real = real_output
-            print (probs_real.shape)
-            exit()
             label = label.to(torch.float32)
             loss_real = criterionD(probs_real, label)
             #calculate grad
@@ -379,7 +377,8 @@ for epoch in range(params['num_epochs']):
             fake_output = discriminator(fake_data.detach())
             # shape = fake_output.shape
             # fake_output = torch.reshape(fake_output, (shape[0], shape[1], 1, 1))
-            probs_fake = netD(fake_output).view(-1)
+            #probs_fake = netD(fake_output).view(-1)
+            probs_fake = fake_output
             label = label.to(torch.float32)
             loss_fake = criterionD(probs_fake, label)
             #calculate grad
@@ -490,15 +489,16 @@ for epoch in range(params['num_epochs']):
             fake_output = discriminator(reconstruction)
             # shape = fake_output.shape
             # fake_output = torch.reshape(fake_output, (shape[0], shape[1], 1, 1))
-            probs_fake = netD(fake_output).view(-1)
+            #probs_fake = netD(fake_output).view(-1)
+            probs_fake = fake_output
             label = label.to(torch.float32)
             gen_d_loss = criterionD(probs_fake, label)
 
             #Loss for Split, needs to be tuned
             #G_loss = alpha*loss_split + gamma*gen_d_loss
             #G_loss = alpha*dec_loss + gamma*gen_d_loss
-            #G_loss = gen_d_loss
-            G_loss = alpha*reconstruction_loss + gamma*gen_d_loss
+            G_loss = gamma*gen_d_loss
+            #G_loss = alpha*reconstruction_loss + gamma*gen_d_loss
             totalG_loss += G_loss
             
             total_dec_loss += alpha*reconstruction_loss
