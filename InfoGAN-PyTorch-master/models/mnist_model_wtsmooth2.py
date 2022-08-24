@@ -145,7 +145,7 @@ class Discriminator_Resnet(nn.Module):
         self.conv3 = nn.Conv2d(128, 256, 4, 2, 1, bias=False)
         self.bn3 = nn.BatchNorm2d(256)
 
-        self.conv4 = nn.Conv2d(256, 512, 9, bias=False)
+        self.conv4 = nn.Conv2d(256, 512, 8, bias=False)
         self.bn4 = nn.BatchNorm2d(512)
 
     def forward(self, x):
