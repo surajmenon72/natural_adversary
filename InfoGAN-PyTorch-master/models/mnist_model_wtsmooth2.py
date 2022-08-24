@@ -433,7 +433,7 @@ ndf = 64
 
 class Generator_CIFAR(nn.Module):
     def __init__(self, ngpu=1):
-        super(Generator, self).__init__()
+        super(Generator_CIFAR, self).__init__()
         self.ngpu = ngpu
         self.main = nn.Sequential(
             # input is Z, going into a convolution
@@ -467,7 +467,7 @@ class Generator_CIFAR(nn.Module):
 
 class Discriminator_CIFAR(nn.Module):
     def __init__(self, ngpu=1):
-        super(Discriminator, self).__init__()
+        super(Discriminator_CIFAR, self).__init__()
         self.ngpu = ngpu
         self.main = nn.Sequential(
             # input is (nc) x 64 x 64
