@@ -430,6 +430,8 @@ nz = 512
 ngf = 64
 #number of discriminator filters
 ndf = 64
+#number colors
+nc=3
 
 class Generator_CIFAR(nn.Module):
     def __init__(self, ngpu=1):
