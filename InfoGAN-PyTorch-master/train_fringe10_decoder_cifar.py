@@ -353,9 +353,6 @@ for epoch in range(params['num_epochs']):
             # shape = real_output.shape
             # real_output = torch.reshape(real_output, (shape[0], shape[1], 1, 1))
             probs_real = netD(real_output).view(-1)
-            print (real_output.shape)
-            print (probs_real.shape)
-            exit()
             label = label.to(torch.float32)
             loss_real = criterionD(probs_real, label)
             #calculate grad
@@ -375,8 +372,8 @@ for epoch in range(params['num_epochs']):
             # Train with fake
             label.fill_(fake_label)
             fake_output = discriminator(fake_data.detach())
-            shape = fake_output.shape
-            fake_output = torch.reshape(fake_output, (shape[0], shape[1], 1, 1))
+            # shape = fake_output.shape
+            # fake_output = torch.reshape(fake_output, (shape[0], shape[1], 1, 1))
             probs_fake = netD(fake_output).view(-1)
             label = label.to(torch.float32)
             loss_fake = criterionD(probs_fake, label)
@@ -486,8 +483,8 @@ for epoch in range(params['num_epochs']):
             # label = torch.full((b_size, ), real_label, device=device)
             # fake_data = netG(z_noise)
             fake_output = discriminator(reconstruction)
-            shape = fake_output.shape
-            fake_output = torch.reshape(fake_output, (shape[0], shape[1], 1, 1))
+            # shape = fake_output.shape
+            # fake_output = torch.reshape(fake_output, (shape[0], shape[1], 1, 1))
             probs_fake = netD(fake_output).view(-1)
             label = label.to(torch.float32)
             gen_d_loss = criterionD(probs_fake, label)
