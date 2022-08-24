@@ -369,7 +369,7 @@ for epoch in range(params['num_epochs']):
             ea = embedding.shape[0]
             eb = embedding.shape[1]
             embedding = torch.reshape(embedding, (ea, eb, 1, 1))
-            #fake_data = netG(embedding)
+            fake_data = netG(embedding)
 
 
             # Train with fake
@@ -486,7 +486,7 @@ for epoch in range(params['num_epochs']):
 
             label = torch.full((b_size, ), real_label, device=device)
             fake_data = netG(z_noise)
-            #fake_data = reconstruction
+            fake_data = reconstruction
             fake_output = discriminator(fake_data)
             # shape = fake_output.shape
             # fake_output = torch.reshape(fake_output, (shape[0], shape[1], 1, 1))
