@@ -77,11 +77,13 @@ plt.close('all')
 
 # Initialise the network.
 #netG = Generator_Resnet().to(device)
-netG = ResNet18Dec().to(device)
+#netG = ResNet18Dec().to(device)
+netG = Generator_CIFAR().to(device)
 netG.apply(weights_init)
 print(netG)
 
-discriminator = Discriminator_Resnet().to(device)
+#discriminator = Discriminator_Resnet().to(device)
+discriminator = Discriminator_CIFAR().to(device)
 discriminator.apply(weights_init)
 print (discriminator)
 
@@ -352,7 +354,10 @@ for epoch in range(params['num_epochs']):
             real_output = discriminator(real_data)
             # shape = real_output.shape
             # real_output = torch.reshape(real_output, (shape[0], shape[1], 1, 1))
-            probs_real = netD(real_output).view(-1)
+            #probs_real = netD(real_output).view(-1)
+            probs_real = real_output
+            print (probs_real.shape)
+            exit()
             label = label.to(torch.float32)
             loss_real = criterionD(probs_real, label)
             #calculate grad
