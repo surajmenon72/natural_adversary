@@ -484,7 +484,7 @@ for epoch in range(params['num_epochs']):
             # loss_split = criterionG(probs_split, split_labels)
 
 
-            # label = torch.full((b_size, ), real_label, device=device)
+            label = torch.full((b_size, ), real_label, device=device)
             fake_data = netG(z_noise)
             #fake_data = reconstruction
             fake_output = discriminator(fake_data)
