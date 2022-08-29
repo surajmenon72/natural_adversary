@@ -267,7 +267,7 @@ start_time = time.time()
 iters = 0
 
 #Realness vs. Classification Hyperparams
-alpha = 5
+alpha = 10
 gamma = 1
 beta = 1
 clip_value_1 = 1
