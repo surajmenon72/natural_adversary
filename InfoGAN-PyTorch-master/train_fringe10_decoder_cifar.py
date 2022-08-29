@@ -228,7 +228,7 @@ optimG = optim.Adam([{'params': netG.parameters()}, {'params': netQ.parameters()
 #z = torch.randn(100, params['num_z'], 1, 1, device=device)
 z = torch.rand(100, params['num_z'], 1, 1, device=device)
 fixed_noise = z
-fixed_ref = None
+fixed_ref = torch.zeros((20, 3, 64, 64), device=device)
 # if(params['num_dis_c'] != 0):
 #     idx = np.arange(params['dis_c_dim']).repeat(10)
 #     dis_c = torch.zeros(100, params['num_dis_c'], params['dis_c_dim'], device=device)
@@ -404,8 +404,6 @@ for epoch in range(params['num_epochs']):
             total_dec_loss = 0
             total_gen_d_loss = 0
 
-            print (real_data.shape)
-            exit()
             embedding = classifier(real_data)
             ea = embedding.shape[0]
             eb = embedding.shape[1]
@@ -432,6 +430,13 @@ for epoch in range(params['num_epochs']):
                         fixed_noise[index+sp] = fixed_noise[index+sp-1] + diff
 
  
+            if (i == 5):
+                gen_data = netG(embedding)
+                for s in range(10):
+                    index = 2*s
+                    fixed_ref[index] = real_data[index]
+                    fixed_ref[index+1] = gen_data[index]
+
             #print (embedding[0])
 
             # isnan = torch.sum(torch.isnan(embedding))
@@ -603,7 +608,8 @@ for epoch in range(params['num_epochs']):
         #plt.imshow(np.transpose(vutils.make_grid(gen_data, nrow=10, padding=2, normalize=True), (1,2,0)))
         #plt.imshow(np.transpose(vutils.make_grid(gen_data[5:6], nrow=1, padding=2, normalize=True), (1,2,0)))
         #plt.savefig("Epoch_%d {}".format(params['dataset']) %(epoch+1))
-        vutils.save_image(gen_data,'Epoch_%03d.png' % (epoch),normalize=True)
+        vutils.save_image(gen_data,'Epoch_%03d.png' % (epoch), normalize=True)
+        vutils.save_image(fixed_ref, 'EpochRef_%03d.png' %(epoch), normalize=True)
         gen_test = (gen_data[0]+1)/2 #simple shifting
         plt.imshow(gen_test.permute(1, 2, 0))
         #plt.savefig("Test_%d" %(epoch+1))
