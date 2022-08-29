@@ -210,7 +210,8 @@ criterionQ_con = NormalNLLLoss()
 
 criterionDecode = nn.MSELoss()
 #criterionRecon = nn.BCELoss(reduction='mean')
-criterionRecon = nn.MSELoss()
+#criterionRecon = nn.MSELoss()
+criterionRecon = nn.L1Loss()
 #criterionRecon = nn.BCEWithLogitsLoss(reduction='mean')
 
 #which networks don't require grad
@@ -510,8 +511,11 @@ for epoch in range(params['num_epochs']):
             G_loss = alpha*reconstruction_loss + gamma*gen_d_loss
             totalG_loss += G_loss
             
-            total_dec_loss += alpha*reconstruction_loss
-            total_gen_d_loss += gamma*gen_d_loss
+            # total_dec_loss += alpha*reconstruction_loss
+            # total_gen_d_loss += gamma*gen_d_loss
+
+            total_dec_loss += reconstruction_loss
+            total_gen_d_loss += gen_d_loss
 
             G_loss.backward()
 
