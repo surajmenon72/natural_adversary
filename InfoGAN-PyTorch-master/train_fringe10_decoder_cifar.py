@@ -228,6 +228,7 @@ optimG = optim.Adam([{'params': netG.parameters()}, {'params': netQ.parameters()
 #z = torch.randn(100, params['num_z'], 1, 1, device=device)
 z = torch.rand(100, params['num_z'], 1, 1, device=device)
 fixed_noise = z
+fixed_ref = None
 # if(params['num_dis_c'] != 0):
 #     idx = np.arange(params['dis_c_dim']).repeat(10)
 #     dis_c = torch.zeros(100, params['num_dis_c'], params['dis_c_dim'], device=device)
@@ -403,6 +404,8 @@ for epoch in range(params['num_epochs']):
             total_dec_loss = 0
             total_gen_d_loss = 0
 
+            print (real_data.shape)
+            exit()
             embedding = classifier(real_data)
             ea = embedding.shape[0]
             eb = embedding.shape[1]
