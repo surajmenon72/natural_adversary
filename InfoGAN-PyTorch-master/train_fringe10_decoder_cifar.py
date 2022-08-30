@@ -17,7 +17,7 @@ from config import params
 from models.mnist_model_wtsmooth2 import Generator, Generator_Resnet, Generator_CIFAR, Discriminator, Discriminator_Resnet, Discriminator_CIFAR, DHead, DHead_KL, DHead_Resnet, QHead, Encoder, ResnetEncoder, ResNet18Dec, CHead, Stretcher, HHead
 
 # Set random seed for reproducibility.
-seed = 1124
+seed = 1125
 random.seed(seed)
 torch.manual_seed(seed)
 print("Random Seed: ", seed)
