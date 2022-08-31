@@ -506,7 +506,7 @@ for epoch in range(params['num_epochs']):
             totalG_loss += G_loss
             
             #total_dec_loss += dec_loss
-            #total_gen_d_loss += gen_d_loss
+            total_gen_d_loss += gen_d_loss
 
             G_loss.backward()
 
@@ -562,10 +562,10 @@ for epoch in range(params['num_epochs']):
         optimG.step()
 
         Q_loss = torch.zeros(1)
-        D_loss = torch.zeros(1)
+        #D_loss = torch.zeros(1)
         C_loss = torch.zeros(1)
         total_dec_loss = torch.zeros(1)
-        total_gen_d_loss = torch.zeros(1)
+        #total_gen_d_loss = torch.zeros(1)
 
         # Check progress of training.
         if i != 0 and i%100 == 0:
