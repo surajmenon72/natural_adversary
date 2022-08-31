@@ -15,7 +15,7 @@ from utils import *
 from config import params
 
 if(params['dataset'] == 'MNIST'):
-    from models.mnist_model_wtsmooth2 import Generator, Discriminator, DHead, DHead_KL, QHead, Encoder, ResnetEncoder, CHead, Stretcher, HHead
+    from models.mnist_model_wtsmooth2 import Generator, Discriminator, Discriminator_Identity, DHead, DHead_KL, QHead, Encoder, ResnetEncoder, CHead, Stretcher, HHead
 elif(params['dataset'] == 'SVHN'):
     from models.svhn_model import Generator, Discriminator, DHead, QHead
 elif(params['dataset'] == 'CelebA'):
@@ -37,7 +37,7 @@ load_model = False
 load_classifier = False
 
 use_base_resnet = 'base'
-use_thanos_vicreg = 'vicreg'
+use_thanos_vicreg = 'thanos'
 load_encoder = True
 
 train_classifier = False
@@ -102,7 +102,7 @@ netG = Generator().to(device)
 netG.apply(weights_init)
 print(netG)
 
-discriminator = Discriminator().to(device)
+discriminator = Discriminator_Identity().to(device)
 discriminator.apply(weights_init)
 print (discriminator)
 
@@ -365,40 +365,49 @@ for epoch in range(params['num_epochs']):
         #     total_c_loss += C_loss
         #     continue
 
-        # netD.train()
-        # optimD.zero_grad()
+        netD.train()
+        optimD.zero_grad()
 
-        # if (epoch % d_train_cadence == 0):
-        #     # Real data
-        #     label = torch.full((b_size, ), real_label, device=device)
-        #     real_output = discriminator(real_data)
-        #     probs_real = netD(real_output).view(-1)
-        #     label = label.to(torch.float32)
-        #     loss_real = criterionD(probs_real, label)
-        #     #calculate grad
-        #     loss_real.backward()
+        if (epoch % d_train_cadence == 0):
+            # Real data
+            label = torch.full((b_size, ), real_label, device=device)
+            real_data_double = torch.cat([real_data, real_data], dim=1)
+            real_output = discriminator(real_data_double)
+            probs_real = netD(real_output).view(-1)
+            label = label.to(torch.float32)
+            loss_real = criterionD(probs_real, label)
+            #calculate grad
+            loss_real.backward()
 
-        #     # Generate fake image batch with G
-        #     fake_data = netG(z_noise)
-        #     #fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1) 
+            # Generate fake image batch with G
+            fake_data = netG(z_noise)
+            #fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1) 
 
-        #     # Train with fake
-        #     label.fill_(fake_label)
-        #     fake_output = discriminator(fake_data.detach())
-        #     probs_fake = netD(fake_output).view(-1)
-        #     label = label.to(torch.float32)
-        #     loss_fake = criterionD(probs_fake, label)
-        #     #calculate grad
-        #     loss_fake.backward()
 
-        #     D_loss = loss_real + loss_fake
-        # else:
-        #     D_loss = torch.zeros(1)
+            embedding = classifier(real_data)
+            ea = embedding.shape[0]
+            eb = embedding.shape[1]
+            embedding = torch.reshape(embedding, (ea, eb, 1, 1))
+            fake_data = netG(embedding)
 
-        # if (clip_grads):
-        #     nn.utils.clip_grad_value_(discriminator.parameters(), clip_value_1)
-        #     nn.utils.clip_grad_value_(netD.parameters(), clip_value_1)
-        # optimD.step()
+            # Train with fake
+            label.fill_(fake_label)
+            fake_data_double = torch.cat([fake_data, real_data], dim=1)
+            fake_output = discriminator(fake_data_double.detach())
+            probs_fake = netD(fake_output).view(-1)
+            label = label.to(torch.float32)
+            loss_fake = criterionD(probs_fake, label)
+            #calculate grad
+            loss_fake.backward()
+
+            D_loss = loss_real + loss_fake
+        else:
+            D_loss = torch.zeros(1)
+
+        if (clip_grads):
+            nn.utils.clip_grad_value_(discriminator.parameters(), clip_value_1)
+            nn.utils.clip_grad_value_(netD.parameters(), clip_value_1)
+        optimD.step()
 
         netG.train()
         #netQ.train()
@@ -443,8 +452,8 @@ for epoch in range(params['num_epochs']):
 
             #split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
             #fake_data = netG(z_noise)
-            #reconstruction = netG(embedding)
-            reconstruction = netG.f_logits(embedding)
+            reconstruction = netG(embedding)
+            #reconstruction = netG.f_logits(embedding)
 
             #print (reconstruction[0])
 
@@ -455,7 +464,7 @@ for epoch in range(params['num_epochs']):
             #print (real_data.shape)
             #print (reconstruction.shape)
 
-            reconstruction_loss = criterionRecon(reconstruction, real_data)
+            #reconstruction_loss = criterionRecon(reconstruction, real_data)
             #print (reconstruction_loss)
 
             # if (use_3_channel):
@@ -480,18 +489,20 @@ for epoch in range(params['num_epochs']):
             # loss_split = criterionG(probs_split, split_labels)
 
 
-            # label = torch.full((b_size, ), real_label, device=device)
-            # fake_data = netG(z_noise)
-            # output_d = discriminator(fake_data)
-            # probs_fake = netD(output_d).view(-1)
-            # label = label.to(torch.float32)
-            # gen_d_loss = criterionD(probs_fake, label)
+            label = torch.full((b_size, ), real_label, device=device)
+            #fake_data = netG(z_noise)
+            fake_data = reconstruction
+            fake_data = torch.cat([real_data, fake_data], dim=1)
+            output_d = discriminator(fake_data)
+            probs_fake = netD(output_d).view(-1)
+            label = label.to(torch.float32)
+            gen_d_loss = criterionD(probs_fake, label)
 
             #Loss for Split, needs to be tuned
             #G_loss = alpha*loss_split + gamma*gen_d_loss
             #G_loss = alpha*dec_loss + gamma*gen_d_loss
-            #G_loss = gen_d_loss
-            G_loss = reconstruction_loss
+            G_loss = gen_d_loss
+            #G_loss = reconstruction_loss
             totalG_loss += G_loss
             
             #total_dec_loss += dec_loss

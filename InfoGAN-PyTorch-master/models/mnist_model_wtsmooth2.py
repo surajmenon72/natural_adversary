@@ -133,6 +133,32 @@ class Discriminator(nn.Module):
 
         return fm
 
+class Discriminator_Identity(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        #1 or 3 channels
+        #self.conv1 = nn.Conv2d(3, 64, 4, 2, 1)
+        self.conv1 = nn.Conv2d(2, 64, 4, 2, 1)
+
+        self.conv2 = nn.Conv2d(64, 128, 4, 2, 1, bias=False)
+        self.bn2 = nn.BatchNorm2d(128)
+
+        self.conv3 = nn.Conv2d(128, 1024, 7, bias=False)
+        self.bn3 = nn.BatchNorm2d(1024)
+
+    def forward(self, x):
+        x = F.leaky_relu(self.conv1(x), 0.1, inplace=True)
+        x = F.leaky_relu(self.bn2(self.conv2(x)), 0.1, inplace=True)
+        x = F.leaky_relu(self.bn3(self.conv3(x)), 0.1, inplace=True)
+
+        #Remove batch norm
+        # x = F.leaky_relu(self.conv1(x), 0.1, inplace=True)
+        # x = F.leaky_relu(self.conv2(x), 0.1, inplace=True)
+        # x = F.leaky_relu(self.conv3(x), 0.1, inplace=True)
+
+        return x
+
 class Discriminator_Resnet(nn.Module):
     def __init__(self):
         super().__init__()
