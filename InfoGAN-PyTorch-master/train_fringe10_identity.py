@@ -33,6 +33,20 @@ print("Random Seed: ", seed)
 device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
+extra_transforms =  transforms.Compose([
+                        transforms.RandomResizedCrop(
+                            28, scale = (0.9, 1.0), interpolation=InterpolationMode.BILINEAR
+                        ),
+                        transforms.RandomApply(
+                            [
+                                transforms.ColorJitter(
+                                    brightness=0.4, contrast=0.4, saturation=0.2, hue=0.1
+                                )
+                            ],
+                            p=0.5,
+                        ),
+                    ])
+
 load_model = False
 load_classifier = False
 
@@ -306,6 +320,7 @@ for epoch in range(params['num_epochs']):
         # b_size = data.size(0)
         # Transfer data tensor to GPU/CPU (device)
         real_data = data.to(device)
+        augment_data = extra_transforms(real_data)
         true_label_g = true_label.to(device)
 
         b_size, channels, d0, d1 = real_data.shape
@@ -376,7 +391,8 @@ for epoch in range(params['num_epochs']):
             label = torch.full((b_size, ), real_label, device=device)
             #real_data_double = torch.cat([real_data, real_data], dim=1)
             real_output = discriminator(real_data)
-            real_output_double = torch.cat([real_output, real_output], dim=1)
+            aug_output = discriminator(augment_data)
+            real_output_double = torch.cat([aug_output, real_output], dim=1)
             probs_real = netD(torch.squeeze(real_output_double)).view(-1)
             label = label.to(torch.float32)
             loss_real = criterionD(probs_real, label)
@@ -384,20 +400,20 @@ for epoch in range(params['num_epochs']):
             loss_real.backward()
 
             #Shuffled data
-            label.fill_(fake_label)
-            shuffled_data = torch.zeros((b_size, channels, d0, d1), device=device)
-            shuffled_data[0] = real_data[-1]
-            shuffled_data[1:] = real_data[:b_size-1]
+            # label.fill_(fake_label)
+            # shuffled_data = torch.zeros((b_size, channels, d0, d1), device=device)
+            # shuffled_data[0] = real_data[-1]
+            # shuffled_data[1:] = real_data[:b_size-1]
 
-            #shuffled_data_double = torch.cat([shuffled_data, real_data], dim=1)
-            real_output = discriminator(real_data)
-            shuffled_output = discriminator(shuffled_data)
-            shuffled_output_double = torch.cat([shuffled_output, real_output], dim=1)
-            probs_fake_s = netD(torch.squeeze(shuffled_output_double)).view(-1)
-            label = label.to(torch.float32)
-            loss_shuffle = criterionD(probs_fake_s, label)
-            #calculate grad
-            loss_shuffle.backward()
+            # #shuffled_data_double = torch.cat([shuffled_data, real_data], dim=1)
+            # real_output = discriminator(real_data)
+            # shuffled_output = discriminator(shuffled_data)
+            # shuffled_output_double = torch.cat([shuffled_output, real_output], dim=1)
+            # probs_fake_s = netD(torch.squeeze(shuffled_output_double)).view(-1)
+            # label = label.to(torch.float32)
+            # loss_shuffle = criterionD(probs_fake_s, label)
+            # #calculate grad
+            # loss_shuffle.backward()
 
             #Noise data
 
@@ -424,8 +440,8 @@ for epoch in range(params['num_epochs']):
             #calculate grad
             loss_fake.backward()
 
-            #D_loss = loss_real + loss_fake
-            D_loss = loss_real + loss_shuffle + loss_fake
+            D_loss = loss_real + loss_fake
+            #D_loss = loss_real + loss_shuffle + loss_fake
             #D_loss.backward()
         else:
             D_loss = torch.zeros(1)

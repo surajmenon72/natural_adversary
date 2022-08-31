@@ -36,16 +36,19 @@ def get_data(dataset, batch_size, train_test='train', use_3_channel=False):
         if (use_3_channel == False):
             transform = transforms.Compose([
                 transforms.Resize(28),
-                transforms.RandomApply(
-                    [
-                        transforms.ColorJitter(
-                            brightness=0.4, contrast=0.4, saturation=0.2, hue=0.1
-                        )
-                    ],
-                    p=0.5,
-                ),
+                # transforms.RandomApply(
+                #     [
+                #         transforms.ColorJitter(
+                #             brightness=0.4, contrast=0.4, saturation=0.2, hue=0.1
+                #         )
+                #     ],
+                #     p=0.5,
+                # ),
                 transforms.CenterCrop(28),
-                transforms.ToTensor()])
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.1307], std=[0.3081]
+                    )])
             # transform = transforms.Compose(
             # [ 
             #     transforms.RandomResizedCrop(
