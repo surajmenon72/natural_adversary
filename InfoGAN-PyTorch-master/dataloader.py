@@ -34,33 +34,40 @@ def get_data(dataset, batch_size, train_test='train', use_3_channel=False):
     # Get MNIST dataset.
     if dataset == 'MNIST':
         if (use_3_channel == False):
-            # transform = transforms.Compose([
-            #     transforms.Resize(28),
-            #     transforms.CenterCrop(28),
-            #     transforms.ToTensor()])
-            transform = transforms.Compose(
-            [ 
-                transforms.RandomResizedCrop(
-                    28, scale = (0.9, 1.0), interpolation=InterpolationMode.BILINEAR
-                ),
-                transforms.RandomHorizontalFlip(p=0.0),
+            transform = transforms.Compose([
+                transforms.Resize(28),
                 transforms.RandomApply(
                     [
                         transforms.ColorJitter(
                             brightness=0.4, contrast=0.4, saturation=0.2, hue=0.1
                         )
                     ],
-                    p=0.2,
+                    p=0.5,
                 ),
-                transforms.RandomGrayscale(p=0.0),
-                GaussianBlur(p=0.0),
-                Solarization(p=0.0),
-                transforms.ToTensor(),
-                transforms.Normalize(
-                    mean=[0.1307], std=[0.3081]
-                ),
-            ]
-        )
+                transforms.CenterCrop(28),
+                transforms.ToTensor()])
+            # transform = transforms.Compose(
+            # [ 
+            #     transforms.RandomResizedCrop(
+            #         28, scale = (0.9, 1.0), interpolation=InterpolationMode.BILINEAR
+            #     ),
+            #     transforms.RandomHorizontalFlip(p=0.0),
+            #     transforms.RandomApply(
+            #         [
+            #             transforms.ColorJitter(
+            #                 brightness=0.4, contrast=0.4, saturation=0.2, hue=0.1
+            #             )
+            #         ],
+            #         p=0.2,
+            #     ),
+            #     transforms.RandomGrayscale(p=0.0),
+            #     GaussianBlur(p=0.0),
+            #     Solarization(p=0.0),
+            #     transforms.ToTensor(),
+            #     transforms.Normalize(
+            #         mean=[0.1307], std=[0.3081]
+            #     ),
+            # ])
         else:
             transform = transforms.Compose([
                 transforms.Grayscale(num_output_channels=3),
