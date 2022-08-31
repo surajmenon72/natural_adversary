@@ -399,6 +399,7 @@ for epoch in range(params['num_epochs']):
 
             print (torch.sum(diff1))
             print (torch.sum(diff2))
+            print (torch.sum(shuffled_data[0] - real_data[-1]))
             exit()
             # Generate fake image batch with G
             fake_data = netG(z_noise)
