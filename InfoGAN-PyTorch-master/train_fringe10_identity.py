@@ -400,7 +400,7 @@ for epoch in range(params['num_epochs']):
 
             print (diff2.shape)
             print (torch.sum(diff2))
-            print (diff2)
+            print (torch.sum(diff2[0]))
             print (torch.sum(shuffled_data[0]))
             print (torch.sum(real_data[0]))
             print (torch.sum(shuffled_data[0] - real_data[0]))
