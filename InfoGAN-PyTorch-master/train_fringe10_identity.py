@@ -375,12 +375,12 @@ for epoch in range(params['num_epochs']):
             label = torch.full((b_size, ), real_label, device=device)
             #real_data_double = torch.cat([real_data, real_data], dim=1)
             real_output = discriminator(real_data)
-            real_output_double = torch.cat([real_output, real_output.detach()], dim=1)
+            real_output_double = torch.cat([real_output, real_output], dim=1)
             probs_real = netD(torch.squeeze(real_output_double)).view(-1)
             label = label.to(torch.float32)
             loss_real = criterionD(probs_real, label)
             #calculate grad
-            #loss_real.backward()
+            loss_real.backward()
 
             #Shuffled data
             label.fill_(fake_label)
@@ -389,19 +389,20 @@ for epoch in range(params['num_epochs']):
             shuffled_data[1:] = real_data[:b_size-1]
 
             #shuffled_data_double = torch.cat([shuffled_data, real_data], dim=1)
+            real_output = discriminator(real_data)
             shuffled_output = discriminator(shuffled_data)
-            shuffled_output_double = torch.cat([shuffled_output, real_output.detach()], dim=1)
+            shuffled_output_double = torch.cat([shuffled_output, real_output], dim=1)
             probs_fake_s = netD(torch.squeeze(shuffled_output_double)).view(-1)
             label = label.to(torch.float32)
             loss_shuffle = criterionD(probs_fake_s, label)
             #calculate grad
-            #loss_shuffle.backward()
+            loss_shuffle.backward()
 
             #Noise data
 
             # Generate fake image batch with G
-            fake_data = netG(z_noise)
-            #fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1) 
+            # fake_data = netG(z_noise)
+            # fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1) 
 
 
             embedding = classifier(real_data)
@@ -413,17 +414,18 @@ for epoch in range(params['num_epochs']):
             # Train with fake
             label.fill_(fake_label)
             #fake_data_double = torch.cat([fake_data, real_data], dim=1)
+            real_output = discriminator(real_data)
             fake_output = discriminator(fake_data.detach())
-            fake_output_double = torch.cat([fake_output, real_output.detach()], dim=1)
+            fake_output_double = torch.cat([fake_output, real_output], dim=1)
             probs_fake_f = netD(torch.squeeze(fake_output_double)).view(-1)
             label = label.to(torch.float32)
             loss_fake = criterionD(probs_fake_f, label)
             #calculate grad
-            #loss_fake.backward()
+            loss_fake.backward()
 
             #D_loss = loss_real + loss_fake
             D_loss = loss_real + loss_shuffle + loss_fake
-            D_loss.backward()
+            #D_loss.backward()
         else:
             D_loss = torch.zeros(1)
 
