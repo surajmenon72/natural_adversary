@@ -391,6 +391,8 @@ for epoch in range(params['num_epochs']):
             #shuffled_data_double = torch.cat([shuffled_data, real_data], dim=1)
             shuffled_output = discriminator(shuffled_data)
             shuffled_output = torch.cat([shuffled_output, real_output], dim=1)
+            print (shuffled_output.shape)
+            exit()
             probs_fake = netD(torch.squeeze(shuffled_output)).view(-1)
             label = label.to(torch.float32)
             loss_shuffle = criterionD(probs_fake, label)
