@@ -380,7 +380,7 @@ for epoch in range(params['num_epochs']):
             label = label.to(torch.float32)
             loss_real = criterionD(probs_real, label)
             #calculate grad
-            loss_real.backward()
+            #loss_real.backward()
 
             #Shuffled data
             label.fill_(fake_label)
@@ -395,7 +395,7 @@ for epoch in range(params['num_epochs']):
             label = label.to(torch.float32)
             loss_shuffle = criterionD(probs_fake, label)
             #calculate grad
-            loss_shuffle.backward()
+            #loss_shuffle.backward()
 
             #Noise data
 
@@ -419,10 +419,11 @@ for epoch in range(params['num_epochs']):
             label = label.to(torch.float32)
             loss_fake = criterionD(probs_fake, label)
             #calculate grad
-            loss_fake.backward()
+            #loss_fake.backward()
 
             #D_loss = loss_real + loss_fake
             D_loss = loss_real + loss_shuffle + loss_fake
+            D_loss.backward()
         else:
             D_loss = torch.zeros(1)
 
