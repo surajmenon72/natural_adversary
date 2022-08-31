@@ -398,10 +398,9 @@ for epoch in range(params['num_epochs']):
             diff1 = real_data_double[:, 0, :, :] - real_data_double[:, 1, :, :]
             diff2 = shuffled_data_double[:, 0, :, :] - shuffled_data_double[:, 1, :, :]
 
-            print (diff1.shape)
             print (diff2.shape)
-            print (torch.sum(diff1))
             print (torch.sum(diff2))
+            print (diff2)
             print (torch.sum(shuffled_data[0]))
             print (torch.sum(real_data[0]))
             print (torch.sum(shuffled_data[0] - real_data[0]))
