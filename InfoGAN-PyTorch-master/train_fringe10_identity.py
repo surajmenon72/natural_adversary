@@ -385,8 +385,8 @@ for epoch in range(params['num_epochs']):
             #Shuffled data
             label.fill_(fake_label)
             shuffled_data = torch.zeros((b_size, channels, d0, d1), device=device)
-            shuffled_data[0] = real_data[-1]
-            shuffled_data[1:] = real_data[:b_size-1]
+            shuffled_data[0] = real_data[-1].detach()
+            shuffled_data[1:] = real_data[:b_size-1].detach()
 
             #shuffled_data_double = torch.cat([shuffled_data, real_data], dim=1)
             shuffled_output = discriminator(shuffled_data)
