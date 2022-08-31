@@ -391,9 +391,9 @@ for epoch in range(params['num_epochs']):
             #shuffled_data_double = torch.cat([shuffled_data, real_data], dim=1)
             shuffled_output = discriminator(shuffled_data)
             shuffled_output_double = torch.cat([shuffled_output, real_output.detach()], dim=1)
-            probs_fake = netD(torch.squeeze(shuffled_output_double)).view(-1)
+            probs_fake_s = netD(torch.squeeze(shuffled_output_double)).view(-1)
             label = label.to(torch.float32)
-            loss_shuffle = criterionD(probs_fake, label)
+            loss_shuffle = criterionD(probs_fake_s, label)
             #calculate grad
             #loss_shuffle.backward()
 
@@ -415,9 +415,9 @@ for epoch in range(params['num_epochs']):
             #fake_data_double = torch.cat([fake_data, real_data], dim=1)
             fake_output = discriminator(fake_data.detach())
             fake_output_double = torch.cat([fake_output, real_output.detach()], dim=1)
-            probs_fake = netD(torch.squeeze(fake_output_double)).view(-1)
+            probs_fake_f = netD(torch.squeeze(fake_output_double)).view(-1)
             label = label.to(torch.float32)
-            loss_fake = criterionD(probs_fake, label)
+            loss_fake = criterionD(probs_fake_f, label)
             #calculate grad
             #loss_fake.backward()
 
