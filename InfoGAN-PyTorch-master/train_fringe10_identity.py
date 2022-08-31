@@ -33,7 +33,7 @@ print("Random Seed: ", seed)
 device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
-load_model = False
+load_model = True
 load_classifier = False
 
 use_base_resnet = 'base'
@@ -247,6 +247,7 @@ optimG = optim.Adam([{'params': netG.parameters()}, {'params': netQ.parameters()
 #z = torch.randn(100, params['num_z'], 1, 1, device=device)
 z = torch.rand(100, params['num_z'], 1, 1, device=device)
 fixed_noise = z
+fixed_ref = torch.zeros((20, 1, 28, 28), device=device)
 # if(params['num_dis_c'] != 0):
 #     idx = np.arange(params['dis_c_dim']).repeat(10)
 #     dis_c = torch.zeros(100, params['num_dis_c'], params['dis_c_dim'], device=device)
@@ -459,14 +460,22 @@ for epoch in range(params['num_epochs']):
             # fixed_noise = fake_embedding[:100]
 
             #trying a spectrum test
-            for s in range(10):
-                index = 10*s
-                fixed_noise[index] = embedding[index]
-                fixed_noise[index+9] = embedding[index+1]
-                diff = embedding[index+1] - embedding[index]
-                diff = diff/8
-                for sp in range(1, 9):
-                    fixed_noise[index+sp] = fixed_noise[index+sp-1] + diff
+            if (i == 5):
+                for s in range(10):
+                    index = 10*s
+                    fixed_noise[index] = embedding[index]
+                    fixed_noise[index+9] = embedding[index+1]
+                    diff = embedding[index+1] - embedding[index]
+                    diff = diff/8
+                    for sp in range(1, 9):
+                        fixed_noise[index+sp] = fixed_noise[index+sp-1] + diff
+
+            if (i == 5):
+                gen_data = netG(embedding)
+                for s in range(10):
+                    index = 2*s
+                    fixed_ref[index] = real_data[index]
+                    fixed_ref[index+1] = gen_data[index]
 
  
             #print (embedding[0])
@@ -659,8 +668,10 @@ with torch.no_grad():
     gen_data = netG(fixed_noise).detach().cpu()
 plt.figure(figsize=(10, 10))
 plt.axis("off")
-plt.imshow(np.transpose(vutils.make_grid(gen_data, nrow=10, padding=2, normalize=True), (1,2,0)))
-plt.savefig("Epoch_%d_{}".format(params['dataset']) %(params['num_epochs']))
+#plt.imshow(np.transpose(vutils.make_grid(gen_data, nrow=10, padding=2, normalize=True), (1,2,0)))
+#plt.savefig("Epoch_%d_{}".format(params['dataset']) %(params['num_epochs']))
+vutils.save_image(gen_data,'EpochMNIST_%03d.png' % (epoch), normalize=True)
+vutils.save_image(fixed_ref, 'EpochMNISTRef_%03d.png' %(epoch), normalize=True)
 
 # Save network weights.
 torch.save({
