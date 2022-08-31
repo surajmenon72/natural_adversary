@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import time
 import random
+import torchvision.transforms as transforms
+import torchvision.datasets as dsets
+from torchvision.transforms import InterpolationMode
 
 #from models.mnist_model_exp import Generator, Discriminator, DHead, Classifier, CHead, SHead, QHead
 from dataloader import get_data
