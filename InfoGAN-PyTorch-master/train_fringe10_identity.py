@@ -376,8 +376,6 @@ for epoch in range(params['num_epochs']):
             #real_data_double = torch.cat([real_data, real_data], dim=1)
             real_output = discriminator(real_data)
             real_output = torch.cat([real_output, real_output], dim=1)
-            print (real_output.shape)
-            exit()
             probs_real = netD(real_output).view(-1)
             label = label.to(torch.float32)
             loss_real = criterionD(probs_real, label)
@@ -390,8 +388,9 @@ for epoch in range(params['num_epochs']):
             shuffled_data[0] = real_data[-1]
             shuffled_data[1:] = real_data[:b_size-1]
 
-            shuffled_data_double = torch.cat([shuffled_data, real_data], dim=1)
-            shuffled_output = discriminator(shuffled_data_double)
+            #shuffled_data_double = torch.cat([shuffled_data, real_data], dim=1)
+            shuffled_output = discriminator(shuffled_data)
+            shuffled_output = torch.cat([shuffled_output, real_output], dim=1)
             probs_fake = netD(shuffled_output).view(-1)
             label = label.to(torch.float32)
             loss_shuffle = criterionD(probs_fake, label)
@@ -413,8 +412,9 @@ for epoch in range(params['num_epochs']):
 
             # Train with fake
             label.fill_(fake_label)
-            fake_data_double = torch.cat([fake_data, real_data], dim=1)
+            #fake_data_double = torch.cat([fake_data, real_data], dim=1)
             fake_output = discriminator(fake_data_double.detach())
+            fake_output = torch.cat([fake_output, real_output], dim=1)
             probs_fake = netD(fake_output).view(-1)
             label = label.to(torch.float32)
             loss_fake = criterionD(probs_fake, label)
@@ -513,9 +513,11 @@ for epoch in range(params['num_epochs']):
 
             label = torch.full((b_size, ), real_label, device=device)
             #fake_data = netG(z_noise)
+            real_output = discriminator(real_data)
             fake_data = reconstruction
-            fake_data = torch.cat([fake_data, real_data], dim=1)
+            #fake_data = torch.cat([fake_data, real_data], dim=1)
             output_d = discriminator(fake_data)
+            output_d = torch.cat([output_d, real_output], dim=1)
             probs_fake = netD(output_d).view(-1)
             label = label.to(torch.float32)
             gen_d_loss = criterionD(probs_fake, label)
