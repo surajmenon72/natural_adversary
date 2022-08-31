@@ -635,8 +635,10 @@ for epoch in range(params['num_epochs']):
             gen_data = netG(fixed_noise).detach().cpu()
         plt.figure(figsize=(10, 10))
         plt.axis("off")
-        plt.imshow(np.transpose(vutils.make_grid(gen_data, nrow=10, padding=2, normalize=True), (1,2,0)))
-        plt.savefig("Epoch_%d {}".format(params['dataset']) %(epoch+1))
+        #plt.imshow(np.transpose(vutils.make_grid(gen_data, nrow=10, padding=2, normalize=True), (1,2,0)))
+        #plt.savefig("Epoch_%d {}".format(params['dataset']) %(epoch+1))
+        vutils.save_image(gen_data,'EpochMNIST_%03d.png' % (epoch), normalize=True)
+        vutils.save_image(fixed_ref, 'EpochMNISTRef_%03d.png' %(epoch), normalize=True)
         plt.close('all')
 
     if (train_classifier_head):
