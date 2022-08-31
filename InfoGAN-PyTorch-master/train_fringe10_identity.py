@@ -394,6 +394,7 @@ for epoch in range(params['num_epochs']):
             #calculate grad
             loss_shuffle.backward()
 
+            print (shuffled_data_double.shape)
             diff1 = real_data_double[:, 0, :, :] - real_data_double[:, 1, :, :]
             diff2 = shuffled_data_double[:, 0, :, :] - shuffled_data_double[:, 1, :, :]
 
