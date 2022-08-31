@@ -1,6 +1,7 @@
 import torch
 import torchvision.transforms as transforms
 import torchvision.datasets as dsets
+from torchvision.transforms import InterpolationMode
 
 # Directory containing the data.
 root = 'data/'
