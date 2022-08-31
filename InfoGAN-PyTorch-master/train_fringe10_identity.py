@@ -394,17 +394,6 @@ for epoch in range(params['num_epochs']):
             #calculate grad
             loss_shuffle.backward()
 
-            print (shuffled_data_double.shape)
-            diff1 = real_data_double[:, 0, :, :] - real_data_double[:, 1, :, :]
-            diff2 = shuffled_data_double[:, 0, :, :] - shuffled_data_double[:, 1, :, :]
-
-            print (torch.sum(diff1[0]))
-            print (torch.sum(diff2[0]))
-            print (torch.sum(shuffled_data[0]))
-            print (torch.sum(real_data[0]))
-            print (torch.sum(shuffled_data[0] - real_data[0]))
-            print (torch.sum(shuffled_data_double[0, 0, :, :] - shuffled_data_double[0, 1, :, :]))
-            exit()
             # Generate fake image batch with G
             fake_data = netG(z_noise)
             #fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1) 
