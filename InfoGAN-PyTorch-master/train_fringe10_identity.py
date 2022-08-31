@@ -106,7 +106,7 @@ discriminator = Discriminator_Identity().to(device)
 discriminator.apply(weights_init)
 print (discriminator)
 
-netD = DHead_KL().to(device)
+netD = DHead_Identity().to(device)
 netD.apply(weights_init)
 print(netD)
 
@@ -373,14 +373,18 @@ for epoch in range(params['num_epochs']):
         if (epoch % d_train_cadence == 0):
             # Real data
             label = torch.full((b_size, ), real_label, device=device)
-            real_data_double = torch.cat([real_data, real_data], dim=1)
-            real_output = discriminator(real_data_double)
+            #real_data_double = torch.cat([real_data, real_data], dim=1)
+            real_output = discriminator(real_data)
+            real_output = torch.cat([real_output, real_output], dim=1)
+            print (real_output.shape)
+            exit()
             probs_real = netD(real_output).view(-1)
             label = label.to(torch.float32)
             loss_real = criterionD(probs_real, label)
             #calculate grad
             loss_real.backward()
 
+            #Shuffled data
             label.fill_(fake_label)
             shuffled_data = torch.zeros((b_size, channels, d0, d1), device=device)
             shuffled_data[0] = real_data[-1]
@@ -393,6 +397,8 @@ for epoch in range(params['num_epochs']):
             loss_shuffle = criterionD(probs_fake, label)
             #calculate grad
             loss_shuffle.backward()
+
+            #Noise data
 
             # Generate fake image batch with G
             fake_data = netG(z_noise)

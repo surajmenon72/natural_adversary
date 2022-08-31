@@ -139,7 +139,7 @@ class Discriminator_Identity(nn.Module):
 
         #1 or 3 channels
         #self.conv1 = nn.Conv2d(3, 64, 4, 2, 1)
-        self.conv1 = nn.Conv2d(2, 64, 4, 2, 1)
+        self.conv1 = nn.Conv2d(1, 64, 4, 2, 1)
 
         self.conv2 = nn.Conv2d(64, 128, 4, 2, 1, bias=False)
         self.bn2 = nn.BatchNorm2d(128)
@@ -205,6 +205,19 @@ class DHead_KL(nn.Module):
         output = torch.sigmoid(self.conv(x))
 
         return output
+
+class DHead_Identity(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        self.fc1 = nn.Linear(2048, 128)
+        self.fc2 = nn.Linear(128, 1)
+
+    def forward(self, x):
+        x = torch.relu(self.fc1(x))
+        x = torch.sigmoid(self.fc2(x))
+
+        return x
 
 class DHead_Resnet(nn.Module):
     def __init__(self):
