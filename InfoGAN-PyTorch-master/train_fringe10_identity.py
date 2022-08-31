@@ -376,7 +376,7 @@ for epoch in range(params['num_epochs']):
             #real_data_double = torch.cat([real_data, real_data], dim=1)
             real_output = discriminator(real_data)
             real_output = torch.cat([real_output, real_output], dim=1)
-            probs_real = netD(real_output).view(-1)
+            probs_real = netD(torch.squeeze(real_output)).view(-1)
             label = label.to(torch.float32)
             loss_real = criterionD(probs_real, label)
             #calculate grad
