@@ -569,7 +569,8 @@ class Discriminator_CIFAR_Identity(nn.Module):
         else:
             output = self.main(input)
 
-        return output.view(-1, 1).squeeze(1)
+        #return output.view(-1, 1).squeeze(1)
+        return output
 
 class DHead_CIFAR_Identity(nn.Module):
     def __init__(self):
