@@ -20,7 +20,7 @@ from config import params
 from models.mnist_model_wtsmooth2 import Generator, Generator_Resnet, Generator_CIFAR, Discriminator, Discriminator_Resnet, Discriminator_CIFAR, Discriminator_CIFAR_Identity, DHead, DHead_KL, DHead_Resnet, DHead_CIFAR_Identity, QHead, Encoder, ResnetEncoder, ResNet18Dec, CHead, Stretcher, HHead
 
 # Set random seed for reproducibility.
-seed = 1125
+seed = 1126
 random.seed(seed)
 torch.manual_seed(seed)
 print("Random Seed: ", seed)
@@ -43,7 +43,7 @@ extra_transforms =  transforms.Compose([
                         ),
                     ])
 
-load_model = False
+load_model = True
 load_classifier = False
 
 use_base_resnet = 'resnet'
