@@ -375,8 +375,6 @@ for epoch in range(params['num_epochs']):
             real_output = discriminator(real_data)
             aug_output = discriminator(augment_data)
             real_output_double = torch.cat([aug_output, real_output], dim=1)
-            print (real_output_double.shape)
-            exit()
             probs_real = netD(torch.squeeze(real_output_double)).view(-1)
             label = label.to(torch.float32)
             loss_real = criterionD(probs_real, label)
