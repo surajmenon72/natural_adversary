@@ -17,7 +17,7 @@ from dataloader import get_data
 from utils import *
 from config import params
 
-from models.mnist_model_wtsmooth2 import Generator, Generator_Resnet, Generator_CIFAR, Discriminator, Discriminator_Resnet, Discriminator_CIFAR, DHead, DHead_KL, DHead_Resnet, QHead, Encoder, ResnetEncoder, ResNet18Dec, CHead, Stretcher, HHead
+from models.mnist_model_wtsmooth2 import Generator, Generator_Resnet, Generator_CIFAR, Discriminator, Discriminator_Resnet, Discriminator_CIFAR, Discriminator_CIFAR_Identity, DHead, DHead_KL, DHead_Resnet, DHead_CIFAR_Identity, QHead, Encoder, ResnetEncoder, ResNet18Dec, CHead, Stretcher, HHead
 
 # Set random seed for reproducibility.
 seed = 1125
