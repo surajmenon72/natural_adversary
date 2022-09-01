@@ -323,7 +323,7 @@ for epoch in range(params['num_epochs']):
         # b_size = data.size(0)
         # Transfer data tensor to GPU/CPU (device)
         real_data = data.to(device)
-        augment_data = extra_transforms(real_data)
+        augment_data = extra_transforms(real_data).to(device)
         true_label_g = true_label.to(device)
 
         b_size, channels, d0, d1 = real_data.shape
