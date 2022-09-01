@@ -541,7 +541,7 @@ class Discriminator_CIFAR(nn.Module):
 
 class Discriminator_CIFAR_Identity(nn.Module):
     def __init__(self, ngpu=1):
-        super(Discriminator_CIFAR, self).__init__()
+        super(Discriminator_CIFAR_Identity, self).__init__()
         self.ngpu = ngpu
         self.main = nn.Sequential(
             # input is (nc) x 64 x 64
