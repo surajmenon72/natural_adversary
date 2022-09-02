@@ -18,6 +18,19 @@ class GaussianBlur(object):
         else:
             return img
 
+class GaussianNoise(object):
+    def __init__(self, p, mu=0, sigma=1):
+        self.p = p
+        self.mu = mu
+        self.sigma = sigma
+
+    def __call__(self, img):
+        if np.random.rand() < self.p:
+            img += torch.randn(img.size()) * self.sigma + self.mu
+            return img
+        else:
+            return img
+
 
 class Solarization(object):
     def __init__(self, p):

@@ -14,6 +14,7 @@ from torchvision.transforms import InterpolationMode
 
 #from models.mnist_model_exp import Generator, Discriminator, DHead, Classifier, CHead, SHead, QHead
 from dataloader import get_data
+from dataloader import GaussianNoise
 from utils import *
 from config import params
 
@@ -38,16 +39,17 @@ print(device, " will be used.\n")
 
 extra_transforms =  transforms.Compose([
                         transforms.RandomResizedCrop(
-                            28, scale = (0.9, 1.0), interpolation=InterpolationMode.BILINEAR
+                            28, scale = (0.8, 1.0), interpolation=InterpolationMode.BILINEAR
                         ),
-                        transforms.RandomApply(
-                            [
-                                transforms.ColorJitter(
-                                    brightness=0.4, contrast=0.4, saturation=0.2, hue=0.1
-                                )
-                            ],
-                            p=0.5,
-                        ),
+                        GaussianNoise(p=0.5),
+                        # transforms.RandomApply(
+                        #     [
+                        #         transforms.ColorJitter(
+                        #             brightness=0.4, contrast=0.4, saturation=0.2, hue=0.1
+                        #         )
+                        #     ],
+                        #     p=0.5,
+                        # ),
                     ])
 
 load_model = False
@@ -417,8 +419,6 @@ for epoch in range(params['num_epochs']):
             # loss_shuffle = criterionD(probs_fake_s, label)
             # #calculate grad
             # loss_shuffle.backward()
-
-            #Noise data
 
             # Generate fake image batch with G
             # fake_data = netG(z_noise)
