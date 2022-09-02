@@ -19,7 +19,7 @@ class GaussianBlur(object):
             return img
 
 class GaussianNoise(object):
-    def __init__(self, p, mu=0, sigma=1, device):
+    def __init__(self, p, device, mu=0, sigma=1):
         self.p = p
         self.mu = mu
         self.sigma = sigma
