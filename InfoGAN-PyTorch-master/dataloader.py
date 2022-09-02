@@ -19,14 +19,16 @@ class GaussianBlur(object):
             return img
 
 class GaussianNoise(object):
-    def __init__(self, p, mu=0, sigma=1):
+    def __init__(self, p, mu=0, sigma=1, device):
         self.p = p
         self.mu = mu
         self.sigma = sigma
+        self.device = device
 
     def __call__(self, img):
         if np.random.rand() < self.p:
-            img += torch.randn(img.size()) * self.sigma + self.mu
+            randn = torch.randn(img.size()).to(self.device)
+            img += randn * self.sigma + self.mu
             return img
         else:
             return img
