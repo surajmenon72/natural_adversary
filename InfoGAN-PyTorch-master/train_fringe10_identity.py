@@ -42,7 +42,7 @@ extra_transforms =  transforms.Compose([
                             28, scale = (0.8, 1.0), interpolation=InterpolationMode.BILINEAR
                         ),
                         GaussianNoise(p=0.5, device=device),
-                        GaussianBlur(p=0.5),
+                        #GaussianBlur(p=0.5),
                         Solarization(p=0.5),
                         transforms.RandomApply(
                             [
