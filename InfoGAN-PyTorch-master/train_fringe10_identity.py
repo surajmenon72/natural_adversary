@@ -43,7 +43,7 @@ extra_transforms =  transforms.Compose([
                         ),
                         GaussianNoise(p=0.5, device=device),
                         #GaussianBlur(p=0.5),
-                        Solarization(p=0.5),
+                        #Solarization(p=0.5),
                         transforms.RandomApply(
                             [
                                 transforms.ColorJitter(
