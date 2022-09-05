@@ -624,10 +624,10 @@ for epoch in range(params['num_epochs']):
                     total_dec_loss.item(), total_gen_d_loss.item()))
 
         # Save the losses for plotting.
-        G_losses.append(G_loss.item())
-        Q_losses.append(Q_loss.item())
-        D_losses.append(D_loss.item())
-        C_losses.append(C_loss.item())
+        # G_losses.append(G_loss.item())
+        # Q_losses.append(Q_loss.item())
+        # D_losses.append(D_loss.item())
+        # C_losses.append(C_loss.item())
 
         iters += 1
 
