@@ -14,6 +14,7 @@ from torchvision.transforms import InterpolationMode
 
 #from models.mnist_model_exp import Generator, Discriminator, DHead, Classifier, CHead, SHead, QHead
 from dataloader import get_data
+from dataloader import GaussianNoise, GaussianBlur, Solarization
 from utils import *
 from config import params
 
@@ -31,8 +32,9 @@ print(device, " will be used.\n")
 
 extra_transforms =  transforms.Compose([
                         transforms.RandomResizedCrop(
-                            64, scale = (0.9, 1.0), interpolation=InterpolationMode.BILINEAR
+                            64, scale = (0.7, 1.0), interpolation=InterpolationMode.BILINEAR
                         ),
+                        GaussianNoise(p=0.5, device=device),
                         transforms.RandomApply(
                             [
                                 transforms.ColorJitter(
@@ -43,7 +45,7 @@ extra_transforms =  transforms.Compose([
                         ),
                     ])
 
-load_model = True
+load_model = False
 load_classifier = False
 
 use_base_resnet = 'resnet'
