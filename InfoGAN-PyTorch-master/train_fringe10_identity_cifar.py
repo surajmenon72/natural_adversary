@@ -475,7 +475,8 @@ for epoch in range(params['num_epochs']):
                 gen_data = netG(embedding)
                 for s in range(10):
                     index = 2*s
-                    fixed_ref[index] = real_data[index]
+                    #fixed_ref[index] = real_data[index]
+                    fixed_ref[index] = augment_data[index]
                     fixed_ref[index+1] = gen_data[index]
 
             #print (embedding[0])
