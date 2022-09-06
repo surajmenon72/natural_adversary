@@ -399,7 +399,8 @@ for epoch in range(params['num_epochs']):
             #real_data_double = torch.cat([real_data, real_data], dim=1)
             real_output = discriminator(real_data)
             aug_output = discriminator(augment_data)
-            real_output_double = torch.cat([aug_output, real_output], dim=1)
+            #real_output_double = torch.cat([aug_output, real_output], dim=1)
+            real_output_double = torch.cat([real_output, real_output], dim=1)
             probs_real = netD(torch.squeeze(real_output_double)).view(-1)
             label = label.to(torch.float32)
             loss_real = criterionD(probs_real, label)
@@ -496,7 +497,8 @@ for epoch in range(params['num_epochs']):
                 gen_data = netG(embedding)
                 for s in range(10):
                     index = 2*s
-                    fixed_ref[index] = real_data[index]
+                    #fixed_ref[index] = real_data[index]
+                    fixed_ref[index] = augment_data[index]
                     fixed_ref[index+1] = gen_data[index]
 
  
