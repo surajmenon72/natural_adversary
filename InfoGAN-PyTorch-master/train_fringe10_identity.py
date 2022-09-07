@@ -391,6 +391,7 @@ for epoch in range(params['num_epochs']):
         #     total_c_loss += C_loss
         #     continue
 
+        discriminator.train()
         netD.train()
         optimD.zero_grad()
         optimDH.zero_grad()
@@ -426,7 +427,7 @@ for epoch in range(params['num_epochs']):
             loss_shuffle.backward()
 
             #update the head here
-            optimDH.step()
+            #optimDH.step()
 
             # Generate fake image batch with G
             # fake_data = netG(z_noise)
@@ -462,6 +463,7 @@ for epoch in range(params['num_epochs']):
             nn.utils.clip_grad_value_(discriminator.parameters(), clip_value_1)
             nn.utils.clip_grad_value_(netD.parameters(), clip_value_1)
         optimD.step()
+        optimDH.step()
 
         netG.train()
         #netQ.train()
