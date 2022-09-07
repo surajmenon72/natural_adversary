@@ -240,7 +240,8 @@ if (train_classifier == False):
 
 # Adam optimiser is used.
 optimE = optim.Adam([{'params': classifier.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
-optimD = optim.Adam([{'params': discriminator.parameters()}, {'params': netD.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimD = optim.Adam([{'params': discriminator.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimDH = optim.Adam([{'params': netD.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 optimC = optim.Adam([{'params': netC.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 optimG = optim.Adam([{'params': netG.parameters()}, {'params': netQ.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 
@@ -367,8 +368,10 @@ for epoch in range(params['num_epochs']):
         #     total_c_loss += C_loss
         #     continue
 
+        discriminator.train()
         netD.train()
         optimD.zero_grad()
+        optimDH.zero_grad()
 
         if (epoch % d_train_cadence == 0):
             # Real data
@@ -383,21 +386,24 @@ for epoch in range(params['num_epochs']):
             #calculate grad
             loss_real.backward()
 
-            #Shuffled data
-            # label.fill_(fake_label)
-            # shuffled_data = torch.zeros((b_size, channels, d0, d1), device=device)
-            # shuffled_data[0] = real_data[-1]
-            # shuffled_data[1:] = real_data[:b_size-1]
+            Shuffled data
+            label.fill_(fake_label)
+            shuffled_data = torch.zeros((b_size, channels, d0, d1), device=device)
+            shuffled_data[0] = real_data[-1]
+            shuffled_data[1:] = real_data[:b_size-1]
 
-            # #shuffled_data_double = torch.cat([shuffled_data, real_data], dim=1)
-            # real_output = discriminator(real_data)
-            # shuffled_output = discriminator(shuffled_data)
-            # shuffled_output_double = torch.cat([shuffled_output, real_output], dim=1)
-            # probs_fake_s = netD(torch.squeeze(shuffled_output_double)).view(-1)
-            # label = label.to(torch.float32)
-            # loss_shuffle = criterionD(probs_fake_s, label)
-            # #calculate grad
-            # loss_shuffle.backward()
+            #shuffled_data_double = torch.cat([shuffled_data, real_data], dim=1)
+            real_output = discriminator(real_data)
+            shuffled_output = discriminator(shuffled_data)
+            shuffled_output_double = torch.cat([shuffled_output, real_output], dim=1)
+            probs_fake_s = netD(torch.squeeze(shuffled_output_double)).view(-1)
+            label = label.to(torch.float32)
+            loss_shuffle = criterionD(probs_fake_s, label)
+            #calculate grad
+            loss_shuffle.backward()
+
+            #update head
+            #optimDH.step()
 
             #Noise data
 
@@ -434,6 +440,7 @@ for epoch in range(params['num_epochs']):
             nn.utils.clip_grad_value_(discriminator.parameters(), clip_value_1)
             nn.utils.clip_grad_value_(netD.parameters(), clip_value_1)
         optimD.step()
+        optimDH.step()
 
         netG.train()
         #netQ.train()
