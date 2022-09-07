@@ -45,6 +45,18 @@ class Generator(nn.Module):
 
         return logits
 
+class G_Stretcher(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        self.fc1 = nn.Linear(1024, 1024)
+        self.fc2 = nn.Linear(128, 128)
+        self.fc3 = nn.Linear(64, 64)
+
+    def forward(self, x):
+        pass
+
+
 class Generator_Resnet(nn.Module):
     def __init__(self):
         super().__init__()
