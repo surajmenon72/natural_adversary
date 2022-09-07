@@ -34,7 +34,7 @@ extra_transforms =  transforms.Compose([
                         transforms.RandomResizedCrop(
                             64, scale = (0.7, 1.0), interpolation=InterpolationMode.BILINEAR
                         ),
-                        GaussianNoise(p=0.5, device=device),
+                        GaussianNoise(p=0.5, device=device, mu=0, sigma=1e-3),
                         transforms.RandomApply(
                             [
                                 transforms.ColorJitter(
@@ -45,7 +45,7 @@ extra_transforms =  transforms.Compose([
                         ),
                     ])
 
-load_model = True
+load_model = False
 load_classifier = False
 
 use_base_resnet = 'resnet'

@@ -260,7 +260,8 @@ if (train_classifier == False):
 
 # Adam optimiser is used.
 optimE = optim.Adam([{'params': classifier.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
-optimD = optim.Adam([{'params': discriminator.parameters()}, {'params': netD.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimD = optim.Adam([{'params': discriminator.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimDH = optim.Adam([{'params': netD.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 optimC = optim.Adam([{'params': netC.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 optimG = optim.Adam([{'params': netG.parameters()}, {'params': netQ.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 
@@ -392,6 +393,7 @@ for epoch in range(params['num_epochs']):
 
         netD.train()
         optimD.zero_grad()
+        optimDH.zero_grad()
 
         if (epoch % d_train_cadence == 0):
             # Real data
@@ -422,6 +424,9 @@ for epoch in range(params['num_epochs']):
             loss_shuffle = criterionD(probs_fake_s, label)
             #calculate grad
             loss_shuffle.backward()
+
+            #update the head here
+            optimDH.step()
 
             # Generate fake image batch with G
             # fake_data = netG(z_noise)
