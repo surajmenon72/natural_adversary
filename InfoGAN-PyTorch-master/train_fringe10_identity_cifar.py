@@ -386,7 +386,7 @@ for epoch in range(params['num_epochs']):
             #calculate grad
             loss_real.backward()
 
-            Shuffled data
+            #Shuffled data
             label.fill_(fake_label)
             shuffled_data = torch.zeros((b_size, channels, d0, d1), device=device)
             shuffled_data[0] = real_data[-1]
