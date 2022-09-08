@@ -294,7 +294,7 @@ clip_value_1 = 1
 clip_grads = False
 
 c_train_cadence = 1
-d_train_cadence = 1
+d_train_cadence = 3
 g_train_cadence = 1
 
 for epoch in range(params['num_epochs']):
