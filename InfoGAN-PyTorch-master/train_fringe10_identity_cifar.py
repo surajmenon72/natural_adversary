@@ -294,7 +294,7 @@ clip_value_1 = 1
 clip_grads = False
 
 c_train_cadence = 1
-d_train_cadence = 3
+d_train_cadence = 1
 g_train_cadence = 1
 
 for epoch in range(params['num_epochs']):
@@ -518,7 +518,7 @@ for epoch in range(params['num_epochs']):
             #print (real_data.shape)
             #print (reconstruction.shape)
 
-            #reconstruction_loss = criterionRecon(reconstruction, real_data)
+            reconstruction_loss = criterionRecon(reconstruction, real_data)
             #print (reconstruction_loss)
 
             # if (use_3_channel):
@@ -557,11 +557,12 @@ for epoch in range(params['num_epochs']):
             #Loss for Split, needs to be tuned
             #G_loss = alpha*loss_split + gamma*gen_d_loss
             #G_loss = alpha*dec_loss + gamma*gen_d_loss
-            G_loss = gen_d_loss
+            #G_loss = gen_d_loss
             #G_loss = reconstruction_loss
+            G_loss = alpha*reconstruction_loss + gamma*gen_d_loss
             totalG_loss += G_loss
             
-            #total_dec_loss += dec_loss
+            total_dec_loss += reconstruction_loss
             total_gen_d_loss += gen_d_loss
 
             G_loss.backward()
