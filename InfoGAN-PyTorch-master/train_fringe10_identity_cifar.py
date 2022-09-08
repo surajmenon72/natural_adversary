@@ -621,7 +621,7 @@ for epoch in range(params['num_epochs']):
         Q_loss = torch.zeros(1)
         #D_loss = torch.zeros(1)
         C_loss = torch.zeros(1)
-        total_dec_loss = torch.zeros(1)
+        #total_dec_loss = torch.zeros(1)
         #total_gen_d_loss = torch.zeros(1)
 
         # Check progress of training.
