@@ -554,7 +554,7 @@ for epoch in range(params['num_epochs']):
             label = label.to(torch.float32)
             gen_d_loss = criterionD(probs_fake, label)
 
-            reconstruction_loss = criterionRecon(reconstruction, real_output)
+            reconstruction_loss = criterionRecon(output_d, real_output)
 
             #Loss for Split, needs to be tuned
             #G_loss = alpha*loss_split + gamma*gen_d_loss
