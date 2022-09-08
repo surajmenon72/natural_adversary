@@ -21,7 +21,7 @@ from config import params
 from models.mnist_model_wtsmooth2 import Generator, Generator_Resnet, Generator_CIFAR, Discriminator, Discriminator_Resnet, Discriminator_CIFAR, Discriminator_CIFAR_Identity, DHead, DHead_KL, DHead_Resnet, DHead_CIFAR_Identity, QHead, Encoder, ResnetEncoder, ResNet18Dec, CHead, Stretcher, HHead
 
 # Set random seed for reproducibility.
-seed = 1128
+seed = 1129
 random.seed(seed)
 torch.manual_seed(seed)
 print("Random Seed: ", seed)
@@ -518,7 +518,7 @@ for epoch in range(params['num_epochs']):
             #print (real_data.shape)
             #print (reconstruction.shape)
 
-            reconstruction_loss = criterionRecon(reconstruction, real_data)
+            #reconstruction_loss = criterionRecon(reconstruction, real_data)
             #print (reconstruction_loss)
 
             # if (use_3_channel):
@@ -553,6 +553,8 @@ for epoch in range(params['num_epochs']):
             probs_fake = netD(torch.squeeze(output_d_double)).view(-1)
             label = label.to(torch.float32)
             gen_d_loss = criterionD(probs_fake, label)
+
+            reconstruction_loss = criterionRecon(reconstruction, real_output)
 
             #Loss for Split, needs to be tuned
             #G_loss = alpha*loss_split + gamma*gen_d_loss
