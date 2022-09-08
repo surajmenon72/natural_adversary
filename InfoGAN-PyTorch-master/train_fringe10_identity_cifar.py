@@ -566,7 +566,7 @@ for epoch in range(params['num_epochs']):
             #G_loss = alpha*reconstruction_loss + gamma*gen_d_loss
             totalG_loss += G_loss
             
-            total_dec_loss += reconstruction_loss
+            #total_dec_loss += reconstruction_loss
             total_gen_d_loss += gen_d_loss
 
             G_loss.backward()
@@ -626,7 +626,7 @@ for epoch in range(params['num_epochs']):
         Q_loss = torch.zeros(1)
         #D_loss = torch.zeros(1)
         C_loss = torch.zeros(1)
-        #total_dec_loss = torch.zeros(1)
+        total_dec_loss = torch.zeros(1)
         #total_gen_d_loss = torch.zeros(1)
 
         # Check progress of training.
