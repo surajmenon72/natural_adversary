@@ -50,7 +50,7 @@ load_classifier = False
 
 use_base_resnet = 'resnet'
 use_thanos_vicreg = 'thanos'
-load_encoder = True
+load_encoder = False
 
 train_classifier = True
 train_classifier_head = False
