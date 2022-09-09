@@ -52,7 +52,7 @@ use_base_resnet = 'resnet'
 use_thanos_vicreg = 'thanos'
 load_encoder = True
 
-train_classifier = False
+train_classifier = True
 train_classifier_head = False
 train_using_knn = False
 
@@ -378,7 +378,7 @@ for epoch in range(params['num_epochs']):
         discriminator.train()
         discriminator_d.train()
         netD.train()
-        #classifier.train()
+        classifier.train()
         optimD.zero_grad()
         optimDH.zero_grad()
         optimDD.zero_grad()
@@ -472,10 +472,10 @@ for epoch in range(params['num_epochs']):
         optimD.step()
         optimDH.step()
         optimDD.step()
-        #optimE.step()
+        optimE.step()
 
         netG.train()
-        #classifier.train()
+        classifier.train()
         #netQ.train()
         optimG.zero_grad()
         optimE.zero_grad()
@@ -660,7 +660,7 @@ for epoch in range(params['num_epochs']):
 
         #nn.utils.clip_grad_value_(netG.parameters(), clip_value_1)
         optimG.step()
-        #optimE.step()
+        optimE.step()
 
         Q_loss = torch.zeros(1)
         #D_loss = torch.zeros(1)
