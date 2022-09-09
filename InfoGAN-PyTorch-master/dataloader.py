@@ -136,8 +136,8 @@ def get_data(dataset, batch_size, train_test='train', use_3_channel=False):
     # MUST ALREADY BE DOWNLOADED IN THE APPROPRIATE DIRECTOR DEFINED BY ROOT PATH!
     elif dataset == 'CelebA':
         transform = transforms.Compose([
-            transforms.Resize(32),
-            transforms.CenterCrop(32),
+            transforms.Resize(64),
+            transforms.CenterCrop(64),
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5),
                 (0.5, 0.5, 0.5))])
