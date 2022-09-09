@@ -45,14 +45,14 @@ extra_transforms =  transforms.Compose([
                         # ),
                     ])
 
-load_model = True
+load_model = False
 load_classifier = False
 
 use_base_resnet = 'resnet'
 use_thanos_vicreg = 'thanos'
 load_encoder = True
 
-train_classifier = True
+train_classifier = False
 train_classifier_head = False
 train_using_knn = False
 
@@ -105,6 +105,10 @@ print(netG)
 discriminator = Discriminator_CIFAR_Identity().to(device)
 discriminator.apply(weights_init)
 print (discriminator)
+
+discriminator_d = Discriminator_CIFAR().to(device)
+discriminator_d.apply(weights_init)
+print (discriminator_d)
 
 netD = DHead_CIFAR_Identity().to(device)
 netD.apply(weights_init)
@@ -241,6 +245,7 @@ if (train_classifier == False):
 # Adam optimiser is used.
 optimE = optim.Adam([{'params': classifier.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 optimD = optim.Adam([{'params': discriminator.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimDD = optim.Adam([{'params': discriminator_d.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 optimDH = optim.Adam([{'params': netD.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 optimC = optim.Adam([{'params': netC.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 optimG = optim.Adam([{'params': netG.parameters()}, {'params': netQ.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
@@ -371,10 +376,12 @@ for epoch in range(params['num_epochs']):
         #     continue
 
         discriminator.train()
+        discriminator_d.train()
         netD.train()
-        classifier.train()
+        #classifier.train()
         optimD.zero_grad()
         optimDH.zero_grad()
+        optimDD.zero_grad()
         optimE.zero_grad()
 
         if (epoch % d_train_cadence == 0):
@@ -389,6 +396,14 @@ for epoch in range(params['num_epochs']):
             loss_real = criterionD(probs_real, label)
             #calculate grad
             loss_real.backward()
+
+            label = torch.full((b_size, ), real_label, device=device)
+            #real_data_double = torch.cat([real_data, real_data], dim=1)
+            probs_real = discriminator_d(real_data)
+            label = label.to(torch.float32)
+            loss_real2 = criterionD(probs_real, label)
+            #calculate grad
+            loss_real2.backward()
 
             #Shuffled data
             # label.fill_(fake_label)
@@ -434,8 +449,19 @@ for epoch in range(params['num_epochs']):
             #calculate grad
             loss_fake.backward()
 
-            D_loss = loss_real + loss_fake
+            label = torch.full((b_size, ), fake_label, device=device)
+            #real_data_double = torch.cat([real_data, real_data], dim=1)
+            probs_fake = discriminator_d(fake_data.detach())
+            label = label.to(torch.float32)
+            loss_fake2 = criterionD(probs_fake, label)
+            #calculate grad
+            loss_fake2.backward()
+
+
+
+            #D_loss = loss_real + loss_fake
             #D_loss = loss_real + loss_shuffle + loss_fake
+            D_loss = loss_real + loss_fake + loss_real2 + loss_fake2
             #D_loss.backward()
         else:
             D_loss = torch.zeros(1)
@@ -445,10 +471,11 @@ for epoch in range(params['num_epochs']):
             nn.utils.clip_grad_value_(netD.parameters(), clip_value_1)
         optimD.step()
         optimDH.step()
-        optimE.step()
+        optimDD.step()
+        #optimE.step()
 
         netG.train()
-        classifier.train()
+        #classifier.train()
         #netQ.train()
         optimG.zero_grad()
         optimE.zero_grad()
@@ -559,12 +586,21 @@ for epoch in range(params['num_epochs']):
             label = label.to(torch.float32)
             gen_d_loss = criterionD(probs_fake, label)
 
+            label = torch.full((b_size, ), real_label, device=device)
+            #fake_data = netG(z_noise)
+            fake_data = reconstruction
+            #fake_data = torch.cat([fake_data, real_data], dim=1)
+            probs_fake = discriminator_d(fake_data)
+            label = label.to(torch.float32)
+            gen_dd_loss = criterionD(probs_fake, label)
+
             #reconstruction_loss = criterionRecon(output_d, real_output)
 
             #Loss for Split, needs to be tuned
             #G_loss = alpha*loss_split + gamma*gen_d_loss
             #G_loss = alpha*dec_loss + gamma*gen_d_loss
-            G_loss = gen_d_loss
+            #G_loss = gen_d_loss
+            G_loss = gen_d_loss + gen_dd_loss
             #G_loss = reconstruction_loss
             #G_loss = alpha*reconstruction_loss + gamma*gen_d_loss
             totalG_loss += G_loss
@@ -624,7 +660,7 @@ for epoch in range(params['num_epochs']):
 
         #nn.utils.clip_grad_value_(netG.parameters(), clip_value_1)
         optimG.step()
-        optimE.step()
+        #optimE.step()
 
         Q_loss = torch.zeros(1)
         #D_loss = torch.zeros(1)
