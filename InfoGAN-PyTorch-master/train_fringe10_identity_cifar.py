@@ -372,8 +372,10 @@ for epoch in range(params['num_epochs']):
 
         discriminator.train()
         netD.train()
+        classifier.train()
         optimD.zero_grad()
         optimDH.zero_grad()
+        optimE.zero_grad()
 
         if (epoch % d_train_cadence == 0):
             # Real data
@@ -443,6 +445,7 @@ for epoch in range(params['num_epochs']):
             nn.utils.clip_grad_value_(netD.parameters(), clip_value_1)
         optimD.step()
         optimDH.step()
+        optimE.step()
 
         netG.train()
         classifier.train()
