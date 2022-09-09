@@ -143,7 +143,7 @@ def get_data(dataset, batch_size, train_test='train', use_3_channel=False):
                 (0.5, 0.5, 0.5))])
 
         #dataset = dsets.ImageFolder(root=root+'celeba/', transform=transform)
-        dataset = dsets.CelebA(root=root+'celeba/', train=True, download=True, transform=transform)
+        dataset = dsets.CelebA(root=root+'celeba/', split='train', download=True, transform=transform)
 
     elif dataset == 'Cifar10':
         transform = transforms.Compose([
