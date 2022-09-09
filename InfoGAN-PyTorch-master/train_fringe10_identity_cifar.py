@@ -34,7 +34,7 @@ extra_transforms =  transforms.Compose([
                         transforms.RandomResizedCrop(
                             64, scale = (0.8, 1.0), interpolation=InterpolationMode.BILINEAR
                         ),
-                        GaussianNoise(p=0.5, device=device, mu=0, sigma=1e-3),
+                        GaussianNoise(p=0.5, device=device, mu=0, sigma=.1),
                         # transforms.RandomApply(
                         #     [
                         #         transforms.ColorJitter(
