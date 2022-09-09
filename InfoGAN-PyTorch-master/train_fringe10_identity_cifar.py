@@ -32,7 +32,7 @@ print(device, " will be used.\n")
 
 extra_transforms =  transforms.Compose([
                         transforms.RandomResizedCrop(
-                            64, scale = (0.5, 1.0), interpolation=InterpolationMode.BILINEAR
+                            64, scale = (0.8, 1.0), interpolation=InterpolationMode.BILINEAR
                         ),
                         GaussianNoise(p=0.5, device=device, mu=0, sigma=1e-3),
                         # transforms.RandomApply(
@@ -69,7 +69,8 @@ use_3_channel = False
 if (use_base_resnet == 'resnet'):
     use_3_channel = True
 
-dataloader = get_data('Cifar10', params['batch_size'], use_3_channel=use_3_channel)
+#dataloader = get_data('Cifar10', params['batch_size'], use_3_channel=use_3_channel)
+dataloader = get_data('CelebA', params['batch_size'], use_3_channel=use_3_channel)
 dataloader_knn = get_data(params['dataset'], params['knn_batch_size'], use_3_channel=use_3_channel)
 
 # Set appropriate hyperparameters depending on the dataset used.
@@ -397,13 +398,13 @@ for epoch in range(params['num_epochs']):
             #calculate grad
             loss_real.backward()
 
-            label = torch.full((b_size, ), real_label, device=device)
-            #real_data_double = torch.cat([real_data, real_data], dim=1)
-            probs_real = discriminator_d(real_data)
-            label = label.to(torch.float32)
-            loss_real2 = criterionD(probs_real, label)
-            #calculate grad
-            loss_real2.backward()
+            # label = torch.full((b_size, ), real_label, device=device)
+            # #real_data_double = torch.cat([real_data, real_data], dim=1)
+            # probs_real = discriminator_d(real_data)
+            # label = label.to(torch.float32)
+            # loss_real2 = criterionD(probs_real, label)
+            # #calculate grad
+            # loss_real2.backward()
 
             #Shuffled data
             # label.fill_(fake_label)
@@ -449,19 +450,19 @@ for epoch in range(params['num_epochs']):
             #calculate grad
             loss_fake.backward()
 
-            label = torch.full((b_size, ), fake_label, device=device)
-            #real_data_double = torch.cat([real_data, real_data], dim=1)
-            probs_fake = discriminator_d(fake_data.detach())
-            label = label.to(torch.float32)
-            loss_fake2 = criterionD(probs_fake, label)
-            #calculate grad
-            loss_fake2.backward()
+            # label = torch.full((b_size, ), fake_label, device=device)
+            # #real_data_double = torch.cat([real_data, real_data], dim=1)
+            # probs_fake = discriminator_d(fake_data.detach())
+            # label = label.to(torch.float32)
+            # loss_fake2 = criterionD(probs_fake, label)
+            # #calculate grad
+            # loss_fake2.backward()
 
 
 
-            #D_loss = loss_real + loss_fake
+            D_loss = loss_real + loss_fake
             #D_loss = loss_real + loss_shuffle + loss_fake
-            D_loss = loss_real + loss_fake + loss_real2 + loss_fake2
+            #D_loss = loss_real + loss_fake + loss_real2 + loss_fake2
             #D_loss.backward()
         else:
             D_loss = torch.zeros(1)
@@ -586,21 +587,21 @@ for epoch in range(params['num_epochs']):
             label = label.to(torch.float32)
             gen_d_loss = criterionD(probs_fake, label)
 
-            label = torch.full((b_size, ), real_label, device=device)
-            #fake_data = netG(z_noise)
-            fake_data = reconstruction
-            #fake_data = torch.cat([fake_data, real_data], dim=1)
-            probs_fake = discriminator_d(fake_data)
-            label = label.to(torch.float32)
-            gen_dd_loss = criterionD(probs_fake, label)
+            # label = torch.full((b_size, ), real_label, device=device)
+            # #fake_data = netG(z_noise)
+            # fake_data = reconstruction
+            # #fake_data = torch.cat([fake_data, real_data], dim=1)
+            # probs_fake = discriminator_d(fake_data)
+            # label = label.to(torch.float32)
+            # gen_dd_loss = criterionD(probs_fake, label)
 
             #reconstruction_loss = criterionRecon(output_d, real_output)
 
             #Loss for Split, needs to be tuned
             #G_loss = alpha*loss_split + gamma*gen_d_loss
             #G_loss = alpha*dec_loss + gamma*gen_d_loss
-            #G_loss = gen_d_loss
-            G_loss = gen_d_loss + gen_dd_loss
+            G_loss = gen_d_loss
+            #G_loss = gen_d_loss + gen_dd_loss
             #G_loss = reconstruction_loss
             #G_loss = alpha*reconstruction_loss + gamma*gen_d_loss
             totalG_loss += G_loss
