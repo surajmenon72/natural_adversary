@@ -27,7 +27,7 @@ transform = transforms.Compose([
         (0.5, 0.5, 0.5))])
 
 #loading the dataset
-dataset = dsets.ImageFolder(root='./data/celeba/img_align_celeba', transform=transform)
+dataset = dset.ImageFolder(root='./data/celeba/img_align_celeba', transform=transform)
 
 nc=3
 
