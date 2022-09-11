@@ -19,13 +19,16 @@ print("Random Seed: ", manualSeed)
 random.seed(manualSeed)
 torch.manual_seed(manualSeed)
 
+transform = transforms.Compose([
+    transforms.Resize(64),
+    transforms.CenterCrop(64),
+    transforms.ToTensor(),
+    transforms.Normalize((0.5, 0.5, 0.5),
+        (0.5, 0.5, 0.5))])
+
 #loading the dataset
-dataset = dset.CIFAR10(root="./data", download=True,
-                           transform=transforms.Compose([
-                               transforms.Resize(64),
-                               transforms.ToTensor(),
-                               transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-                           ]))
+dataset = dsets.ImageFolder(root='./data/celeba/img_align_celeba', transform=transform)
+
 nc=3
 
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=128,
