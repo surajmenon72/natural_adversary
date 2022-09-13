@@ -44,14 +44,14 @@ extra_transforms =  transforms.Compose([
                         GaussianNoise(p=0.5, device=device, mu=0, sigma=1e-3),
                         #GaussianBlur(p=0.5),
                         #Solarization(p=0.5),
-                        transforms.RandomApply(
-                            [
-                                transforms.ColorJitter(
-                                    brightness=0.4, contrast=0.4, saturation=0.2, hue=0.1
-                                )
-                            ],
-                            p=0.5,
-                        ),
+                        # transforms.RandomApply(
+                        #     [
+                        #         transforms.ColorJitter(
+                        #             brightness=0.4, contrast=0.4, saturation=0.2, hue=0.1
+                        #         )
+                        #     ],
+                        #     p=0.5,
+                        # ),
                     ])
 
 load_model = False
@@ -439,12 +439,14 @@ for epoch in range(params['num_epochs']):
             eb = embedding.shape[1]
             embedding = torch.reshape(embedding, (ea, eb, 1, 1))
             fake_data = netG(embedding)
+            fake_aug_data = extra_transforms(fake_data).to(device)
 
             # Train with fake
             label.fill_(fake_label)
             #fake_data_double = torch.cat([fake_data, real_data], dim=1)
             real_output = discriminator(real_data)
-            fake_output = discriminator(fake_data.detach())
+            #fake_output = discriminator(fake_data.detach())
+            fake_output = discriminator(fake_aug_data.detach())
             fake_output_double = torch.cat([fake_output, real_output], dim=1)
             probs_fake_f = netD(torch.squeeze(fake_output_double)).view(-1)
             label = label.to(torch.float32)
