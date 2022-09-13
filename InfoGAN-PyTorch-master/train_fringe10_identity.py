@@ -78,7 +78,7 @@ use_3_channel = False
 if (use_base_resnet == 'resnet'):
     use_3_channel = True
 
-dataloader = get_data(params['dataset'], params['batch_size'], use_3_channel=use_3_channel)
+dataloader = get_data('MNIST', params['batch_size'], train_test='train_index', use_3_channel=use_3_channel)
 dataloader_knn = get_data(params['dataset'], params['knn_batch_size'], use_3_channel=use_3_channel)
 
 # Set appropriate hyperparameters depending on the dataset used.
@@ -321,9 +321,10 @@ for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
 
     total_c_loss = torch.zeros(1).to(device)
-    for i, (data, true_label) in enumerate(dataloader, 0):
-        # print ('Batch')
-        # print (i)
+    for i, (data, true_label, idx) in enumerate(dataloader, 0):
+        print ('Batch')
+        print (i)
+        print (idx)
         # Get batch size
         # b_size = data.size(0)
         # Transfer data tensor to GPU/CPU (device)
@@ -439,14 +440,14 @@ for epoch in range(params['num_epochs']):
             eb = embedding.shape[1]
             embedding = torch.reshape(embedding, (ea, eb, 1, 1))
             fake_data = netG(embedding)
-            fake_aug_data = extra_transforms(fake_data).to(device)
+            #fake_aug_data = extra_transforms(fake_data).to(device)
 
             # Train with fake
             label.fill_(fake_label)
             #fake_data_double = torch.cat([fake_data, real_data], dim=1)
             real_output = discriminator(real_data)
-            #fake_output = discriminator(fake_data.detach())
-            fake_output = discriminator(fake_aug_data.detach())
+            fake_output = discriminator(fake_data.detach())
+            #fake_output = discriminator(fake_aug_data.detach())
             fake_output_double = torch.cat([fake_output, real_output], dim=1)
             probs_fake_f = netD(torch.squeeze(fake_output_double)).view(-1)
             label = label.to(torch.float32)

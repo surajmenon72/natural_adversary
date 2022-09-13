@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import torchvision.transforms as transforms
 import torchvision.datasets as dsets
+from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import InterpolationMode
 from PIL import ImageOps, ImageFilter
 
@@ -44,6 +45,23 @@ class Solarization(object):
             return ImageOps.solarize(img)
         else:
             return img
+
+class MyMNIST(Dataset):
+    def __init__(self, transform):
+        self.mnist = datasets.MNIST(root=root+'mnist/',
+                                        download=True,
+                                        train=True,
+                                        transform=transform)
+        
+    def __getitem__(self, index):
+        data, target = self.mnist[index]
+        
+        # Your transformations here (or set it in CIFAR10)
+        
+        return data, target, index
+
+    def __len__(self):
+        return len(self.mnist)
 
 def get_data(dataset, batch_size, train_test='train', use_3_channel=False):
 
@@ -105,7 +123,9 @@ def get_data(dataset, batch_size, train_test='train', use_3_channel=False):
         #     transforms.ToTensor()])
 
 
-        if (train_test == 'train'):
+        if (train_test == 'train_index'):
+            dataset = MyMNIST()
+        elif (train_test == 'train'):
             dataset = dsets.MNIST(root+'mnist/', train=True, 
                                 download=True, transform=transform)
         else:
