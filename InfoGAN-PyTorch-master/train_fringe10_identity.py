@@ -405,6 +405,12 @@ for epoch in range(params['num_epochs']):
             aug_output = discriminator(augment_data)
             real_output_double = torch.cat([aug_output, real_output], dim=1)
             #real_output_double = torch.cat([real_output, real_output], dim=1)
+            
+            #Add idx
+            idx_t = torch.tensor(idx).to(device)
+            idx_r = idx_t.view((b_size, 1, 1, 1))
+            real_output_double = torch.cat([real_output_double, idx_r], dim=1)
+
             probs_real = netD(torch.squeeze(real_output_double)).view(-1)
             label = label.to(torch.float32)
             loss_real = criterionD(probs_real, label)
