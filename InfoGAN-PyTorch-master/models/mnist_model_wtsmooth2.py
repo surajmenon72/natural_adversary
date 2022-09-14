@@ -231,6 +231,21 @@ class DHead_Identity(nn.Module):
 
         return x
 
+class DHead_Identity_IDX(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        self.fc1 = nn.Linear(2049, 1024)
+        self.fc2 = nn.Linear(1024, 128)
+        self.fc3 = nn.Linear(128, 1)
+
+    def forward(self, x):
+        x = torch.relu(self.fc1(x))
+        x = torch.relu(self.fc2(x))
+        x = torch.sigmoid(self.fc3(x))
+
+        return x
+
 class DHead_Resnet(nn.Module):
     def __init__(self):
         super().__init__()
@@ -594,6 +609,21 @@ class DHead_CIFAR_Identity(nn.Module):
     def forward(self, x):
         x = torch.relu(self.fc1(x))
         x = torch.sigmoid(self.fc2(x))
+
+        return x
+
+class DHead_CIFAR_Identity_IDX(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        self.fc1 = nn.Linear(2049, 1024)
+        self.fc2 = nn.Linear(1024, 128)
+        self.fc3 = nn.Linear(128, 1)
+
+    def forward(self, x):
+        x = torch.relu(self.fc1(x))
+        x = torch.relu(self.fc2(x))
+        x = torch.sigmoid(self.fc3(x))
 
         return x
 

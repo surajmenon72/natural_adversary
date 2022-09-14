@@ -127,7 +127,7 @@ discriminator = Discriminator_Identity().to(device)
 discriminator.apply(weights_init)
 print (discriminator)
 
-netD = DHead_Identity().to(device)
+netD = DHead_Identity_IDX().to(device)
 netD.apply(weights_init)
 print(netD)
 
@@ -449,13 +449,12 @@ for epoch in range(params['num_epochs']):
             fake_output = discriminator(fake_data.detach())
             #fake_output = discriminator(fake_aug_data.detach())
             fake_output_double = torch.cat([fake_output, real_output], dim=1)
-            print (idx.shape)
-            print (fake_output_double.shape)
+
+            #Add idx
             idx_t = torch.tensor(idx).to(device)
             idx_r = idx_t.view((b_size, 1, 1, 1))
             fake_output_double = torch.cat([fake_output_double, idx_r], dim=1)
-            print (fake_output_double.shape)
-            exit()
+
             probs_fake_f = netD(torch.squeeze(fake_output_double)).view(-1)
             label = label.to(torch.float32)
             loss_fake = criterionD(probs_fake_f, label)
@@ -571,6 +570,12 @@ for epoch in range(params['num_epochs']):
             #fake_data = torch.cat([fake_data, real_data], dim=1)
             output_d = discriminator(fake_data)
             output_d_double = torch.cat([output_d, real_output], dim=1)
+
+            #add idx
+            idx_t = torch.tensor(idx).to(device)
+            idx_r = idx_t.view((b_size, 1, 1, 1))
+            output_d_double = torch.cat([output_d_double, idx_r], dim=1)
+
             probs_fake = netD(torch.squeeze(output_d_double)).view(-1)
             label = label.to(torch.float32)
             gen_d_loss = criterionD(probs_fake, label)
