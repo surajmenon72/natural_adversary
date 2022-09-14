@@ -322,9 +322,9 @@ for epoch in range(params['num_epochs']):
 
     total_c_loss = torch.zeros(1).to(device)
     for i, (data, true_label, idx) in enumerate(dataloader, 0):
-        print ('Batch')
-        print (i)
-        print (idx)
+        # print ('Batch')
+        # print (i)
+        # print (idx)
         # Get batch size
         # b_size = data.size(0)
         # Transfer data tensor to GPU/CPU (device)
@@ -449,6 +449,9 @@ for epoch in range(params['num_epochs']):
             fake_output = discriminator(fake_data.detach())
             #fake_output = discriminator(fake_aug_data.detach())
             fake_output_double = torch.cat([fake_output, real_output], dim=1)
+            print (idx.shape)
+            print (fake_output_double.shape)
+            exit()
             probs_fake_f = netD(torch.squeeze(fake_output_double)).view(-1)
             label = label.to(torch.float32)
             loss_fake = criterionD(probs_fake_f, label)
