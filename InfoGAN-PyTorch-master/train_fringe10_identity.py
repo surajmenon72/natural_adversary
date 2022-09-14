@@ -50,7 +50,7 @@ extra_transforms =  transforms.Compose([
                                     brightness=0.4, contrast=0.4, saturation=0.2, hue=0.1
                                 )
                             ],
-                            p=0.5,
+                            p=0.9,
                         ),
                     ])
 
@@ -447,14 +447,14 @@ for epoch in range(params['num_epochs']):
             eb = embedding.shape[1]
             embedding = torch.reshape(embedding, (ea, eb, 1, 1))
             fake_data = netG(embedding)
-            fake_aug_data = extra_transforms(fake_data).to(device)
+            #fake_aug_data = extra_transforms(fake_data).to(device)
 
             # Train with fake
             label.fill_(fake_label)
             #fake_data_double = torch.cat([fake_data, real_data], dim=1)
             real_output = discriminator(real_data)
-            #fake_output = discriminator(fake_data.detach())
-            fake_output = discriminator(fake_aug_data.detach())
+            fake_output = discriminator(fake_data.detach())
+            #fake_output = discriminator(fake_aug_data.detach())
             fake_output_double = torch.cat([fake_output, real_output], dim=1)
 
             # #Add idx
