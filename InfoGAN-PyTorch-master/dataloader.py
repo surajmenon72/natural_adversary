@@ -124,7 +124,7 @@ def get_data(dataset, batch_size, train_test='train', use_3_channel=False):
 
 
         if (train_test == 'train_index'):
-            dataset = MyMNIST()
+            dataset = MyMNIST(transform=transform)
         elif (train_test == 'train'):
             dataset = dsets.MNIST(root+'mnist/', train=True, 
                                 download=True, transform=transform)
