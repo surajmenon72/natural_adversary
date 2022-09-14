@@ -48,7 +48,7 @@ class Solarization(object):
 
 class MyMNIST(Dataset):
     def __init__(self, transform):
-        self.mnist = datasets.MNIST(root=root+'mnist/',
+        self.mnist = dsets.MNIST(root=root+'mnist/',
                                         download=True,
                                         train=True,
                                         transform=transform)
