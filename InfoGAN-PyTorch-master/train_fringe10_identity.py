@@ -451,7 +451,7 @@ for epoch in range(params['num_epochs']):
             fake_output_double = torch.cat([fake_output, real_output], dim=1)
             print (idx.shape)
             print (fake_output_double.shape)
-            idx_t = torch.tensor(idx)
+            idx_t = torch.tensor(idx).to(device)
             idx_r = idx_t.view((b_size, 1))
             fake_output_double = torch.cat([fake_output_double, idx_r], dim=1)
             print (fake_output_double.shape)
