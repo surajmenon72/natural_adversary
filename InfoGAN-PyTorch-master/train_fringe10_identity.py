@@ -50,7 +50,7 @@ extra_transforms =  transforms.Compose([
                                     brightness=0.4, contrast=0.4, saturation=0.2, hue=0.1
                                 )
                             ],
-                            p=0.9,
+                            p=0.5,
                         ),
                     ])
 
@@ -127,8 +127,8 @@ discriminator = Discriminator_Identity().to(device)
 discriminator.apply(weights_init)
 print (discriminator)
 
-netD = DHead_Identity().to(device)
-#netD = DHead_Identity_IDX().to(device)
+#netD = DHead_Identity().to(device)
+netD = DHead_Identity_IDX().to(device)
 netD.apply(weights_init)
 print(netD)
 
@@ -408,9 +408,9 @@ for epoch in range(params['num_epochs']):
             #real_output_double = torch.cat([real_output, real_output], dim=1)
 
             #Add idx
-            # idx_t = torch.tensor(idx).to(device)
-            # idx_r = idx_t.view((b_size, 1, 1, 1)).to(torch.float32)
-            # real_output_double = torch.cat([real_output_double, idx_r], dim=1)
+            idx_t = torch.tensor(idx).to(device)
+            idx_r = idx_t.view((b_size, 1, 1, 1)).to(torch.float32)
+            real_output_double = torch.cat([real_output_double, idx_r], dim=1)
 
             probs_real = netD(torch.squeeze(real_output_double)).view(-1)
             label = label.to(torch.float32)
@@ -458,9 +458,9 @@ for epoch in range(params['num_epochs']):
             fake_output_double = torch.cat([fake_output, real_output], dim=1)
 
             # #Add idx
-            # idx_t = torch.tensor(idx).to(device)
-            # idx_r = idx_t.view((b_size, 1, 1, 1)).to(torch.float32)
-            # fake_output_double = torch.cat([fake_output_double, idx_r], dim=1)
+            idx_t = torch.tensor(idx).to(device)
+            idx_r = idx_t.view((b_size, 1, 1, 1)).to(torch.float32)
+            fake_output_double = torch.cat([fake_output_double, idx_r], dim=1)
 
             probs_fake_f = netD(torch.squeeze(fake_output_double)).view(-1)
             label = label.to(torch.float32)
@@ -579,9 +579,9 @@ for epoch in range(params['num_epochs']):
             output_d_double = torch.cat([output_d, real_output], dim=1)
 
             #add idx
-            # idx_t = torch.tensor(idx).to(device)
-            # idx_r = idx_t.view((b_size, 1, 1, 1)).to(torch.float32)
-            # output_d_double = torch.cat([output_d_double, idx_r], dim=1)
+            idx_t = torch.tensor(idx).to(device)
+            idx_r = idx_t.view((b_size, 1, 1, 1)).to(torch.float32)
+            output_d_double = torch.cat([output_d_double, idx_r], dim=1)
 
             probs_fake = netD(torch.squeeze(output_d_double)).view(-1)
             label = label.to(torch.float32)
