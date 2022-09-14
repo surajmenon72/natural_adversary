@@ -32,17 +32,17 @@ print(device, " will be used.\n")
 
 extra_transforms =  transforms.Compose([
                         transforms.RandomResizedCrop(
-                            64, scale = (0.8, 1.0), interpolation=InterpolationMode.BILINEAR
+                            64, scale = (0.99, 1.0), interpolation=InterpolationMode.BILINEAR
                         ),
-                        GaussianNoise(p=0.5, device=device, mu=0, sigma=1e-3),
-                        # transforms.RandomApply(
-                        #     [
-                        #         transforms.ColorJitter(
-                        #             brightness=0.4, contrast=0.4, saturation=0.2, hue=0.1
-                        #         )
-                        #     ],
-                        #     p=0.5,
-                        # ),
+                        #GaussianNoise(p=0.5, device=device, mu=0, sigma=1e-3),
+                        transforms.RandomApply(
+                            [
+                                transforms.ColorJitter(
+                                    brightness=0.4, contrast=0.4, saturation=0.2, hue=0.1
+                                )
+                            ],
+                            p=0.5,
+                        ),
                     ])
 
 load_model = False
