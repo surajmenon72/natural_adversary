@@ -405,10 +405,10 @@ for epoch in range(params['num_epochs']):
             aug_output = discriminator(augment_data)
             real_output_double = torch.cat([aug_output, real_output], dim=1)
             #real_output_double = torch.cat([real_output, real_output], dim=1)
-            
+
             #Add idx
             idx_t = torch.tensor(idx).to(device)
-            idx_r = idx_t.view((b_size, 1, 1, 1))
+            idx_r = idx_t.view((b_size, 1, 1, 1)).to(torch.float32)
             real_output_double = torch.cat([real_output_double, idx_r], dim=1)
 
             probs_real = netD(torch.squeeze(real_output_double)).view(-1)
@@ -458,7 +458,7 @@ for epoch in range(params['num_epochs']):
 
             #Add idx
             idx_t = torch.tensor(idx).to(device)
-            idx_r = idx_t.view((b_size, 1, 1, 1))
+            idx_r = idx_t.view((b_size, 1, 1, 1)).to(torch.float32)
             fake_output_double = torch.cat([fake_output_double, idx_r], dim=1)
 
             probs_fake_f = netD(torch.squeeze(fake_output_double)).view(-1)
@@ -579,7 +579,7 @@ for epoch in range(params['num_epochs']):
 
             #add idx
             idx_t = torch.tensor(idx).to(device)
-            idx_r = idx_t.view((b_size, 1, 1, 1))
+            idx_r = idx_t.view((b_size, 1, 1, 1)).to(torch.float32)
             output_d_double = torch.cat([output_d_double, idx_r], dim=1)
 
             probs_fake = netD(torch.squeeze(output_d_double)).view(-1)
