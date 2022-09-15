@@ -39,7 +39,7 @@ print(device, " will be used.\n")
 
 extra_transforms =  transforms.Compose([
                         transforms.RandomResizedCrop(
-                            28, scale = (.99, 1.0), interpolation=InterpolationMode.BILINEAR
+                            28, scale = (.8, 1.0), interpolation=InterpolationMode.BILINEAR
                         ),
                         #GaussianNoise(p=0.5, device=device, mu=0, sigma=1e-3),
                         #GaussianBlur(p=0.5),
@@ -50,7 +50,7 @@ extra_transforms =  transforms.Compose([
                                     brightness=0.4, contrast=0.4, saturation=0.2, hue=0.1
                                 )
                             ],
-                            p=0.5,
+                            p=0.9,
                         ),
                     ])
 
