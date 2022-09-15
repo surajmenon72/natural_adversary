@@ -407,9 +407,9 @@ for epoch in range(params['num_epochs']):
         if (epoch % d_train_cadence == 0):
 
             #load D_tilde
-            # temp_dict = torch.load('checkpoint/D_tilde', map_location=device)
-            # discriminator.load_state_dict(temp_dict['D_tilde_d'])
-            # netD.load_state_dict(temp_dict['D_tilde_h'])
+            temp_dict = torch.load('checkpoint/D_tilde', map_location=device)
+            discriminator.load_state_dict(temp_dict['D_tilde_d'])
+            netD.load_state_dict(temp_dict['D_tilde_h'])
 
             # Real data
             label = torch.full((b_size, ), real_label, device=device)
