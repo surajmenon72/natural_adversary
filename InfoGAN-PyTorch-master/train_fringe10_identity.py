@@ -452,11 +452,11 @@ for epoch in range(params['num_epochs']):
             optimD.zero_grad()
             optimDH.zero_grad()
 
-            #Save D~
-            # torch.save({
-            # 'D_tilde_d' : discriminator.state_dict(),
-            # 'D_tilde_h' : netD.state_dict()
-            # }, 'checkpoint/D_tilde')
+            #Save D~, remove for true one-shot
+            torch.save({
+            'D_tilde_d' : discriminator.state_dict(),
+            'D_tilde_h' : netD.state_dict()
+            }, 'checkpoint/D_tilde')
 
             # Generate fake image batch with G
             # fake_data = netG(z_noise)
