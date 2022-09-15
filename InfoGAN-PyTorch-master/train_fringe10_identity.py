@@ -44,14 +44,14 @@ extra_transforms =  transforms.Compose([
                         #GaussianNoise(p=0.5, device=device, mu=0, sigma=1e-3),
                         #GaussianBlur(p=0.5),
                         #Solarization(p=0.5),
-                        # transforms.RandomApply(
-                        #     [
-                        #         transforms.ColorJitter(
-                        #             brightness=0.4, contrast=0.4, saturation=0.2, hue=0.1
-                        #         )
-                        #     ],
-                        #     p=0.5,
-                        # ),
+                        transforms.RandomApply(
+                            [
+                                transforms.ColorJitter(
+                                    brightness=0.4, contrast=0.4, saturation=0.2, hue=0.1
+                                )
+                            ],
+                            p=0.5,
+                        ),
                     ])
 
 load_model = False
@@ -407,9 +407,9 @@ for epoch in range(params['num_epochs']):
         if (epoch % d_train_cadence == 0):
 
             #load D_tilde
-            temp_dict = torch.load('checkpoint/D_tilde', map_location=device)
-            discriminator.load_state_dict(temp_dict['D_tilde_d'])
-            netD.load_state_dict(temp_dict['D_tilde_h'])
+            # temp_dict = torch.load('checkpoint/D_tilde', map_location=device)
+            # discriminator.load_state_dict(temp_dict['D_tilde_d'])
+            # netD.load_state_dict(temp_dict['D_tilde_h'])
 
             # Real data
             label = torch.full((b_size, ), real_label, device=device)
