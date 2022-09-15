@@ -59,9 +59,9 @@ load_classifier = False
 
 use_base_resnet = 'base'
 use_thanos_vicreg = 'thanos'
-load_encoder = True
+load_encoder = False
 
-train_classifier = False
+train_classifier = True
 train_classifier_head = False
 train_using_knn = False
 
@@ -403,6 +403,10 @@ for epoch in range(params['num_epochs']):
         netD.train()
         optimD.zero_grad()
         optimDH.zero_grad()
+        
+        if (train_classifier):
+            classifier.train()
+            optimE.zero_grad()
 
         if (epoch % d_train_cadence == 0):
 
@@ -502,9 +506,16 @@ for epoch in range(params['num_epochs']):
         optimD.step()
         optimDH.step()
 
+        if (train_classifier):
+            optimE.step()
+
         netG.train()
         #netQ.train()
         optimG.zero_grad()
+
+        if (train_classifier):
+            classifier.train()
+            optimE.zero_grad()
 
         #Split loss 
         if (epoch % g_train_cadence == 0):
@@ -670,6 +681,9 @@ for epoch in range(params['num_epochs']):
 
         #nn.utils.clip_grad_value_(netG.parameters(), clip_value_1)
         optimG.step()
+
+        if (train_classifier):
+            optimE.step()
 
         Q_loss = torch.zeros(1)
         #D_loss = torch.zeros(1)
