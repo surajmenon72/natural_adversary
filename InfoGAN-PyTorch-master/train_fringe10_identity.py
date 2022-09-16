@@ -59,9 +59,9 @@ load_classifier = False
 
 use_base_resnet = 'base'
 use_thanos_vicreg = 'vicreg'
-load_encoder = True
+load_encoder = False
 
-train_classifier = False
+train_classifier = True
 train_classifier_head = False
 train_using_knn = False
 
@@ -253,6 +253,7 @@ criterionDecode = nn.MSELoss()
 #criterionRecon = nn.BCELoss(reduction='mean')
 #criterionRecon = nn.MSELoss()
 criterionRecon = nn.BCEWithLogitsLoss(reduction='mean')
+#criterionRecon = nn.L1Loss()
 
 #which networks don't require grad
 if (train_classifier == False):
@@ -577,7 +578,7 @@ for epoch in range(params['num_epochs']):
             #print (real_data.shape)
             #print (reconstruction.shape)
 
-            #reconstruction_loss = criterionRecon(reconstruction, real_data)
+            reconstruction_loss = criterionRecon(reconstruction, real_data)
             #print (reconstruction_loss)
 
             # if (use_3_channel):
@@ -622,8 +623,8 @@ for epoch in range(params['num_epochs']):
             #Loss for Split, needs to be tuned
             #G_loss = alpha*loss_split + gamma*gen_d_loss
             #G_loss = alpha*dec_loss + gamma*gen_d_loss
-            G_loss = gen_d_loss
-            #G_loss = reconstruction_loss
+            #G_loss = gen_d_loss
+            G_loss = reconstruction_loss
             totalG_loss += G_loss
             
             #total_dec_loss += dec_loss
