@@ -311,7 +311,7 @@ c_train_cadence = 1
 d_train_cadence = 1
 g_train_cadence = 1
 
-test_short = True
+test_short = False
 
 for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
@@ -691,7 +691,6 @@ for epoch in range(params['num_epochs']):
 
             if (i == 100):
                 if (test_short == True):
-                    print ('Made it here')
                     break
 
         # Save the losses for plotting.
