@@ -58,10 +58,10 @@ load_model = False
 load_classifier = False
 
 use_base_resnet = 'base'
-use_thanos_vicreg = 'vicreg'
-load_encoder = False
+use_thanos_vicreg = 'thanos'
+load_encoder = True
 
-train_classifier = True
+train_classifier = False
 train_classifier_head = False
 train_using_knn = False
 
@@ -578,7 +578,7 @@ for epoch in range(params['num_epochs']):
             #print (real_data.shape)
             #print (reconstruction.shape)
 
-            reconstruction_loss = criterionRecon(reconstruction, real_data)
+            #reconstruction_loss = criterionRecon(reconstruction, real_data)
             #print (reconstruction_loss)
 
             # if (use_3_channel):
@@ -623,8 +623,8 @@ for epoch in range(params['num_epochs']):
             #Loss for Split, needs to be tuned
             #G_loss = alpha*loss_split + gamma*gen_d_loss
             #G_loss = alpha*dec_loss + gamma*gen_d_loss
-            #G_loss = gen_d_loss
-            G_loss = reconstruction_loss
+            G_loss = gen_d_loss
+            #G_loss = reconstruction_loss
             totalG_loss += G_loss
             
             #total_dec_loss += dec_loss
