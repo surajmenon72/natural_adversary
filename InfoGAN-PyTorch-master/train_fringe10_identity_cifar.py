@@ -691,6 +691,7 @@ for epoch in range(params['num_epochs']):
 
             if (i == 300):
                 if (test_short == True):
+                    print ('Made it here')
                     continue
 
         # Save the losses for plotting.
