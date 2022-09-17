@@ -689,7 +689,7 @@ for epoch in range(params['num_epochs']):
                   % (epoch+1, params['num_epochs'], i, len(dataloader), 
                     total_dec_loss.item(), total_gen_d_loss.item()))
 
-            if (i == 300):
+            if (i == 100):
                 if (test_short == True):
                     print ('Made it here')
                     continue
