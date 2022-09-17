@@ -311,6 +311,8 @@ c_train_cadence = 1
 d_train_cadence = 1
 g_train_cadence = 1
 
+test_short = True
+
 for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
 
@@ -686,6 +688,10 @@ for epoch in range(params['num_epochs']):
             print('[%d/%d][%d/%d]\tLoss_Dec: %.4f\tLoss_Gen_D: %.4f'
                   % (epoch+1, params['num_epochs'], i, len(dataloader), 
                     total_dec_loss.item(), total_gen_d_loss.item()))
+
+            if (i == 300):
+                if (test_short == True):
+                    continue
 
         # Save the losses for plotting.
         # G_losses.append(G_loss.item())
