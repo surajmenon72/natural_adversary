@@ -692,7 +692,7 @@ for epoch in range(params['num_epochs']):
             if (i == 100):
                 if (test_short == True):
                     print ('Made it here')
-                    continue
+                    break
 
         # Save the losses for plotting.
         # G_losses.append(G_loss.item())
