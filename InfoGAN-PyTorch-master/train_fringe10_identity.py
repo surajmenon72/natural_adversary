@@ -52,6 +52,14 @@ extra_transforms =  transforms.Compose([
                         #     ],
                         #     p=0.9,
                         # ),
+                        transforms.RandomApply(
+                            [
+                                transforms.ColorJitter(
+                                    brightness=0.1, contrast=0.0, saturation=0.0, hue=0.0
+                                )
+                            ],
+                            p=0.9,
+                        ),
                     ])
 
 load_model = False
