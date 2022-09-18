@@ -483,7 +483,7 @@ for epoch in range(params['num_epochs']):
             optimQ.zero_grad()
 
             #For Q
-            label = torch.full((b_size, ), fake_label, device=device)
+            label = torch.full((b_size, ), real_label, device=device)
             #real_data_double = torch.cat([real_data, real_data], dim=1)
             real_output = discriminator(real_data)
             #aug_output = discriminator(augment_data)
