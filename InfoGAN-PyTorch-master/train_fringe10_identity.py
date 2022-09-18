@@ -352,7 +352,7 @@ for epoch in range(params['num_epochs']):
         # b_size = data.size(0)
         # Transfer data tensor to GPU/CPU (device)
         real_data = data.to(device)
-        augment_data = extra_transforms(real_data).to(device)
+        #augment_data = extra_transforms(real_data).to(device)
         true_label_g = true_label.to(device)
 
         b_size, channels, d0, d1 = real_data.shape
@@ -443,8 +443,8 @@ for epoch in range(params['num_epochs']):
             real_output = discriminator(real_data)
             #aug_output = discriminator(augment_data)
             noise_output = netQ(g_noise)
-            noise_image = torch.add(real_data, noise_output)
-            aug_output = discriminator(noise_image)
+            augment_data = torch.add(real_data, noise_output)
+            aug_output = discriminator(augment_data)
             real_output_double = torch.cat([aug_output, real_output], dim=1)
             #real_output_double = torch.cat([real_output, real_output], dim=1)
 
