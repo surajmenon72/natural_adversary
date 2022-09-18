@@ -365,7 +365,7 @@ for epoch in range(params['num_epochs']):
         noise, idx, c_nums = noise_sample_target(params['num_dis_c'], params['dis_c_dim'], params['num_con_c'], params['num_z'], b_size, device, targets, dist='Uniform')
         z_noise = noise[:, :params['num_z']]
 
-        g_noise = torch.randn(batch_size, g_noise_dim, 1, 1, device=device)
+        g_noise = torch.randn(b_size, g_noise_dim, 1, 1, device=device)
 
 
         # if (train_classifier):
