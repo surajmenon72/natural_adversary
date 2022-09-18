@@ -46,7 +46,7 @@ extra_transforms =  transforms.Compose([
                         transforms.RandomApply(
                             [
                                 transforms.ColorJitter(
-                                    brightness=0.0, contrast=0.0, saturation=0.0, hue=0.0
+                                    brightness=0.0, contrast=0.2, saturation=0.0, hue=0.0
                                 )
                             ],
                             p=0.9,
@@ -311,7 +311,7 @@ c_train_cadence = 1
 d_train_cadence = 1
 g_train_cadence = 1
 
-test_short = True
+test_short = False
 
 for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
@@ -480,10 +480,10 @@ for epoch in range(params['num_epochs']):
         if (clip_grads):
             nn.utils.clip_grad_value_(discriminator.parameters(), clip_value_1)
             nn.utils.clip_grad_value_(netD.parameters(), clip_value_1)
-        # optimD.step()
-        # optimDH.step()
-        # optimDD.step()
-        # optimE.step()
+        optimD.step()
+        optimDH.step()
+        optimDD.step()
+        optimE.step()
 
         netG.train()
         classifier.train()
@@ -670,8 +670,8 @@ for epoch in range(params['num_epochs']):
             totalG_loss = torch.zeros(1)
 
         #nn.utils.clip_grad_value_(netG.parameters(), clip_value_1)
-        # optimG.step()
-        # optimE.step()
+        optimG.step()
+        optimE.step()
 
         Q_loss = torch.zeros(1)
         #D_loss = torch.zeros(1)
