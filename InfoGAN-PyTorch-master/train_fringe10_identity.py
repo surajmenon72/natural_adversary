@@ -140,9 +140,12 @@ netD = DHead_Identity().to(device)
 netD.apply(weights_init)
 print(netD)
 
-netQ = QHead().to(device)
+#leverage netQ for noiseGen
+#netQ = QHead().to(device)
+netQ = Noise_Generator().to(device)
 netQ.apply(weights_init)
 print(netQ)
+clip_module_weights(netQ, min_v=-.01, max_v=.01)
 
 #classifier = ResnetEncoder().to(device)
 classifier = Encoder().to(device)
@@ -273,7 +276,8 @@ optimE = optim.Adam([{'params': classifier.parameters()}], lr=params['learning_r
 optimD = optim.Adam([{'params': discriminator.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 optimDH = optim.Adam([{'params': netD.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 optimC = optim.Adam([{'params': netC.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
-optimG = optim.Adam([{'params': netG.parameters()}, {'params': netQ.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimG = optim.Adam([{'params': netG.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimQ = optim.Adam([{'params': netQ.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 
 #Fixed Noise
 #z = torch.randn(100, params['num_z'], 1, 1, device=device)
@@ -327,6 +331,9 @@ c_train_cadence = 1
 d_train_cadence = 1
 g_train_cadence = 1
 
+D_one_shot = False
+g_noise_dim = 32
+
 #Initial save
 torch.save({
 'D_tilde_d' : discriminator.state_dict(),
@@ -357,6 +364,10 @@ for epoch in range(params['num_epochs']):
         #get noise sample
         noise, idx, c_nums = noise_sample_target(params['num_dis_c'], params['dis_c_dim'], params['num_con_c'], params['num_z'], b_size, device, targets, dist='Uniform')
         z_noise = noise[:, :params['num_z']]
+
+        g_noise = torch.randn(batch_size, g_noise_dim, 1, 1, device=device)
+
+
         # if (train_classifier):
         #     classifier.train()
         # Updating discriminator and DHead
@@ -410,25 +421,30 @@ for epoch in range(params['num_epochs']):
 
         discriminator.train()
         netD.train()
+        netQ.train()
         optimD.zero_grad()
         optimDH.zero_grad()
+        optimQ.zero_grad()
         
         if (train_classifier):
             classifier.train()
             optimE.zero_grad()
 
         if (epoch % d_train_cadence == 0):
-
             #load D_tilde
-            # temp_dict = torch.load('checkpoint/D_tilde', map_location=device)
-            # discriminator.load_state_dict(temp_dict['D_tilde_d'])
-            # netD.load_state_dict(temp_dict['D_tilde_h'])
+            if (D_one_shot == True):
+                temp_dict = torch.load('checkpoint/D_tilde', map_location=device)
+                discriminator.load_state_dict(temp_dict['D_tilde_d'])
+                netD.load_state_dict(temp_dict['D_tilde_h'])
 
             # Real data
             label = torch.full((b_size, ), real_label, device=device)
             #real_data_double = torch.cat([real_data, real_data], dim=1)
             real_output = discriminator(real_data)
-            aug_output = discriminator(augment_data)
+            #aug_output = discriminator(augment_data)
+            noise_output = netQ(g_noise)
+            noise_image = torch.add(real_data, noise_output)
+            aug_output = discriminator(noise_image)
             real_output_double = torch.cat([aug_output, real_output], dim=1)
             #real_output_double = torch.cat([real_output, real_output], dim=1)
 
@@ -464,17 +480,44 @@ for epoch in range(params['num_epochs']):
             optimDH.step()
             optimD.zero_grad()
             optimDH.zero_grad()
+            optimQ.zero_grad()
+
+            #For Q
+            label = torch.full((b_size, ), fake_label, device=device)
+            #real_data_double = torch.cat([real_data, real_data], dim=1)
+            real_output = discriminator(real_data)
+            #aug_output = discriminator(augment_data)
+            noise_output = netQ(g_noise)
+            noise_image = torch.add(real_data, noise_output)
+            aug_output = discriminator(noise_image)
+            real_output_double = torch.cat([aug_output, real_output], dim=1)
+            #real_output_double = torch.cat([real_output, real_output], dim=1)
+
+            #Add idx
+            # idx_t = torch.tensor(idx).to(device)
+            # idx_r = idx_t.view((b_size, 1, 1, 1)).to(torch.float32)
+            # real_output_double = torch.cat([real_output_double, idx_r], dim=1)
+
+            probs_real = netD(torch.squeeze(real_output_double)).view(-1)
+            label = label.to(torch.float32)
+            loss_real = criterionD(probs_real, label)
+            #calculate grad
+            loss_real.backward()
+            optimQ.step()
+            optimD.zero_grad()
+            optimDH.zero_grad()
+            optimQ.zero_grad()
 
             #Save D~, remove for true one-shot
-            # torch.save({
-            # 'D_tilde_d' : discriminator.state_dict(),
-            # 'D_tilde_h' : netD.state_dict()
-            # }, 'checkpoint/D_tilde')
+            if (D_one_shot == True):
+                torch.save({
+                'D_tilde_d' : discriminator.state_dict(),
+                'D_tilde_h' : netD.state_dict()
+                }, 'checkpoint/D_tilde')
 
             # Generate fake image batch with G
             # fake_data = netG(z_noise)
             # fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1) 
-
 
             embedding = classifier(real_data)
             ea = embedding.shape[0]
@@ -517,6 +560,9 @@ for epoch in range(params['num_epochs']):
 
         if (train_classifier):
             optimE.step()
+
+        #clip Q
+        clip_module_weights(netQ, min_v=-.01, max_v=.01)
 
         netG.train()
         #netQ.train()

@@ -56,6 +56,31 @@ class G_Stretcher(nn.Module):
     def forward(self, x):
         pass
 
+class Noise_Generator(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        self.tconv1 = nn.ConvTranspose2d(32, 1024, 1, 1, bias=False)
+        self.bn1 = nn.BatchNorm2d(1024)
+
+        self.tconv2 = nn.ConvTranspose2d(1024, 128, 7, 1, bias=False)
+        self.bn2 = nn.BatchNorm2d(128)
+
+        self.tconv3 = nn.ConvTranspose2d(128, 64, 4, 2, padding=1, bias=False)
+        self.bn3 = nn.BatchNorm2d(64)
+
+        #1 channel, for MNIST
+        self.tconv4 = nn.ConvTranspose2d(64, 1, 4, 2, padding=1, bias=False)
+
+    def forward(self, x):
+        x = F.relu(self.bn1(self.tconv1(x)))
+        x = F.relu(self.bn2(self.tconv2(x)))
+        x = F.relu(self.bn3(self.tconv3(x)))
+
+        #use tanh range
+        img = torch.tanh(self.tconv4(x))
+
+        return img
 
 class Generator_Resnet(nn.Module):
     def __init__(self):
