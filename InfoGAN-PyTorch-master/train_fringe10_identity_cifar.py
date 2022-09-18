@@ -32,7 +32,7 @@ print(device, " will be used.\n")
 
 extra_transforms =  transforms.Compose([
                         transforms.RandomResizedCrop(
-                            64, scale = (0.99, 1.0), interpolation=InterpolationMode.BILINEAR
+                            64, scale = (0.95, 1.0), interpolation=InterpolationMode.BILINEAR
                         ),
                         #GaussianNoise(p=0.5, device=device, mu=0, sigma=1e-3),
                         # transforms.RandomApply(
@@ -53,14 +53,14 @@ extra_transforms =  transforms.Compose([
                         ),
                     ])
 
-load_model = True
+load_model = False
 load_classifier = False
 
 use_base_resnet = 'resnet'
 use_thanos_vicreg = 'thanos'
-load_encoder = False
+load_encoder = True
 
-train_classifier = True
+train_classifier = False
 train_classifier_head = False
 train_using_knn = False
 
