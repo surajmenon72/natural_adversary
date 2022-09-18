@@ -145,7 +145,7 @@ print(netD)
 netQ = Noise_Generator().to(device)
 netQ.apply(weights_init)
 print(netQ)
-clip_module_weights(netQ, min_v=-.01, max_v=.01)
+clip_module_weights(netQ, min_v=-.001, max_v=.001)
 
 #classifier = ResnetEncoder().to(device)
 classifier = Encoder().to(device)
@@ -562,7 +562,7 @@ for epoch in range(params['num_epochs']):
             optimE.step()
 
         #clip Q
-        clip_module_weights(netQ, min_v=-.01, max_v=.01)
+        clip_module_weights(netQ, min_v=-.001, max_v=.001)
 
         netG.train()
         #netQ.train()
