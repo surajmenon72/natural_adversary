@@ -490,7 +490,7 @@ for epoch in range(params['num_epochs']):
             noise_output_q = netQ(real_output_q)
             augment_data_q = torch.add(real_data, noise_output_q)
             aug_output_q = discriminator(augment_data_q)
-            real_output_double_q = torch.cat([aug_output_q, real_output], dim=1)
+            real_output_double_q = torch.cat([aug_output_q, real_output_q], dim=1)
             #real_output_double = torch.cat([real_output, real_output], dim=1)
 
             #Add idx
