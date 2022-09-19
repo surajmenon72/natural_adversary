@@ -485,12 +485,12 @@ for epoch in range(params['num_epochs']):
             #For Q
             label = torch.full((b_size, ), fake_label, device=device)
             #real_data_double = torch.cat([real_data, real_data], dim=1)
-            real_output = discriminator(real_data)
+            real_output_q = discriminator(real_data)
             #aug_output = discriminator(augment_data)
-            noise_output = netQ(real_output)
-            augment_data = torch.add(real_data, noise_output)
-            aug_output = discriminator(augment_data)
-            real_output_double = torch.cat([aug_output, real_output], dim=1)
+            noise_output_q = netQ(real_output_q)
+            augment_data_q = torch.add(real_data_q, noise_output_q)
+            aug_output_q = discriminator(augment_data_q)
+            real_output_double_q = torch.cat([aug_output_q, real_output], dim=1)
             #real_output_double = torch.cat([real_output, real_output], dim=1)
 
             #Add idx
@@ -498,11 +498,11 @@ for epoch in range(params['num_epochs']):
             # idx_r = idx_t.view((b_size, 1, 1, 1)).to(torch.float32)
             # real_output_double = torch.cat([real_output_double, idx_r], dim=1)
 
-            probs_real = netD(torch.squeeze(real_output_double)).view(-1)
+            probs_real_q = netD(torch.squeeze(real_output_double_q)).view(-1)
             label = label.to(torch.float32)
-            loss_real = criterionD(probs_real, label)
+            loss_Q = criterionD(probs_real_q, label)
             #calculate grad
-            loss_real.backward()
+            loss_Q.backward()
             optimQ.step()
             optimD.zero_grad()
             optimDH.zero_grad()
