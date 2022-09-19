@@ -442,7 +442,7 @@ for epoch in range(params['num_epochs']):
             #real_data_double = torch.cat([real_data, real_data], dim=1)
             real_output = discriminator(real_data)
             #aug_output = discriminator(augment_data)
-            noise_output = netQ(g_noise)
+            noise_output = netQ(real_output)
             augment_data = torch.add(real_data, noise_output)
             aug_output = discriminator(augment_data)
             real_output_double = torch.cat([aug_output, real_output], dim=1)
@@ -483,11 +483,11 @@ for epoch in range(params['num_epochs']):
             optimQ.zero_grad()
 
             #For Q
-            label = torch.full((b_size, ), real_label, device=device)
+            label = torch.full((b_size, ), fake_label, device=device)
             #real_data_double = torch.cat([real_data, real_data], dim=1)
             real_output = discriminator(real_data)
             #aug_output = discriminator(augment_data)
-            noise_output = netQ(g_noise)
+            noise_output = netQ(real_output)
             augment_data = torch.add(real_data, noise_output)
             aug_output = discriminator(augment_data)
             real_output_double = torch.cat([aug_output, real_output], dim=1)
