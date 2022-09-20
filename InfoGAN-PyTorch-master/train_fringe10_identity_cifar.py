@@ -389,11 +389,13 @@ for epoch in range(params['num_epochs']):
         discriminator.train()
         discriminator_d.train()
         netD.train()
-        classifier.train()
         optimD.zero_grad()
         optimDH.zero_grad()
         optimDD.zero_grad()
-        optimE.zero_grad()
+
+        if (train_classifier):
+            classifier.train()
+            optimE.zero_grad()
 
         if (epoch % d_train_cadence == 0):
             # Real data
@@ -483,13 +485,17 @@ for epoch in range(params['num_epochs']):
         optimD.step()
         optimDH.step()
         optimDD.step()
-        optimE.step()
+
+        if (train_classifier):
+            optimE.step()
 
         netG.train()
-        classifier.train()
         #netQ.train()
         optimG.zero_grad()
-        optimE.zero_grad()
+
+        if (train_classifier):
+            classifier.train()
+            optimE.zero_grad()
 
         #Split loss 
         if (epoch % g_train_cadence == 0):
@@ -671,7 +677,9 @@ for epoch in range(params['num_epochs']):
 
         #nn.utils.clip_grad_value_(netG.parameters(), clip_value_1)
         optimG.step()
-        optimE.step()
+        
+        if (train_classifier):
+            optimE.step()
 
         Q_loss = torch.zeros(1)
         #D_loss = torch.zeros(1)
