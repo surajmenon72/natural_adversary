@@ -25,35 +25,43 @@ print("Random Seed: ", seed)
 device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
+train_eval = 'train'
+
 load_model = False
 load_classifier = False
+load_ensemble = False
 
 use_base_resnet = 'base'
 use_thanos_vicreg = 'thanos'
 load_encoder = True
 
 train_classifier = False
-train_classifier_head = False
-train_using_knn = False
+train_classifier_head = True
+train_using_knn = True
+train_ensemble = True
 
 load_path = ' '
 state_dict = {}
-if (load_model):
-    load_path = './checkpoint/model_load'
-    state_dict = torch.load(load_path, map_location=device)
-elif (load_classifier):
+if (load_classifier):
     load_path = './checkpoint/model_c_load'
     state_dict = torch.load(load_path, map_location=device)
+
+ensemble_path = ' '
+ensemble_dict = {}
+if (load_ensemble):
+    load_path = './checkpoint/model_e_load'
+    ensemble_dict = torch.load(load_path, map_location=device)
 
 use_3_channel = False
 if (use_base_resnet == 'resnet'):
     use_3_channel = True
 
-dataloader = get_data(params['dataset'], params['batch_size'], use_3_channel=use_3_channel)
-dataloader_knn = get_data(params['dataset'], params['knn_batch_size'], use_3_channel=use_3_channel)
+dataloader = get_data('MNIST', params['batch_size'], train_test='train_index', use_3_channel=use_3_channel)
+dataloader_eval = get_data('MNIST', params['batch_size'], train_test='eval_index', use_3_channel=use_3_channel)
+dataloader_knn = get_data('MNIST', params['knn_batch_size'], use_3_channel=use_3_channel)
 
 
-# Initialise the network.
+# Initialise the network, KNN network
 classifier = Encoder().to(device)
 classifier.apply(weights_init)
 print (classifier)
@@ -61,6 +69,31 @@ print (classifier)
 netC = CHead().to(device)
 netC.apply(weights_init)
 print (netC)
+
+#Ensemble of Cheap Cs
+num_ccs = 10
+cc0 = CheapClassifier().to(device)
+cc0.apply(weights_init)
+cc1 = CheapClassifier().to(device)
+cc1.apply(weights_init)
+cc2 = CheapClassifier().to(device)
+cc2.apply(weights_init)
+cc3 = CheapClassifier().to(device)
+cc3.apply(weights_init)
+cc4 = CheapClassifier().to(device)
+cc4.apply(weights_init)
+cc5 = CheapClassifier().to(device)
+cc5.apply(weights_init)
+cc6 = CheapClassifier().to(device)
+cc6.apply(weights_init)
+cc7 = CheapClassifier().to(device)
+cc7.apply(weights_init)
+cc8 = CheapClassifier().to(device)
+cc8.apply(weights_init)
+cc9 = CheapClassifier().to(device)
+cc9.apply(weights_init)
+ccm = CheapClassifier().to(device)
+ccm.apply(weights_init)
 
 if (load_model):
     classifier.load_state_dict(state_dict['classifier'])
@@ -127,6 +160,20 @@ else:
 
                 missing_keys, unexpected_keys = classifier.load_state_dict(state_dict, strict=False)
 
+if (load_ensemble == True):
+    cc0.load_state_dict(ensemble_dict['cc0'])
+    cc1.load_state_dict(ensemble_dict['cc1'])
+    cc2.load_state_dict(ensemble_dict['cc2'])
+    cc3.load_state_dict(ensemble_dict['cc3'])
+    cc4.load_state_dict(ensemble_dict['cc4'])
+    cc5.load_state_dict(ensemble_dict['cc5'])
+    cc6.load_state_dict(ensemble_dict['cc6'])
+    cc7.load_state_dict(ensemble_dict['cc7'])
+    cc8.load_state_dict(ensemble_dict['cc8'])
+    cc9.load_state_dict(ensemble_dict['cc9'])
+    ccm.load_state_dict(ensemble_dict['ccm'])
+
+
 knn_path = ' '
 if (train_using_knn):
     if (use_thanos_vicreg == 'thanos'):
@@ -162,10 +209,23 @@ if (train_classifier == False):
 # Adam optimiser is used.
 optimE = optim.Adam([{'params': classifier.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 optimC = optim.Adam([{'params': netC.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimcc = optim.Adam([{'params': cc0.parameters()}, 
+                      {'params': cc1.parameters()},
+                      {'params': cc2.parameters()},
+                      {'params': cc3.parameters()},
+                      {'params': cc4.parameters()},
+                      {'params': cc5.parameters()},
+                      {'params': cc6.parameters()},
+                      {'params': cc7.parameters()},
+                      {'params': cc8.parameters()},
+                      {'params': cc9.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
+optimccm = optim.Adam([{'params': ccm.parameters()}], lr=params['learning_rate'], betas=(params['beta1'], params['beta2']))
 
 # List variables to store results pf training.
 img_list = []
 C_losses = []
+E_losses = []
+M_losses = []
 
 print("-"*25)
 print("Starting Training Loop...\n")
@@ -174,30 +234,32 @@ print("-"*25)
 
 start_time = time.time()
 iters = 0
+num_batches = len(dataloader)
+cc_iter = int(num_batches/num_ccs)
 
-for epoch in range(params['num_epochs']):
-    epoch_start_time = time.time()
+if (train_eval == 'train'):
+    for epoch in range(params['num_epochs']):
+        epoch_start_time = time.time()
 
-    total_c_loss = torch.zeros(1).to(device)
-    for i, (data, true_label) in enumerate(dataloader, 0):
-        # print ('Batch')
-        # print (i)
-        # Get batch size
-        b_size = data.size(0)
-        # Transfer data tensor to GPU/CPU (device)
-        real_data = data.to(device)
-        true_label_g = true_label.to(device)
+        total_c_loss = torch.zeros(1).to(device)
+        for i, (data, true_label, idx) in enumerate(dataloader, 0):
+            # print ('Batch')
+            # print (i)
+            # Get batch size
+            b_size = data.size(0)
+            # Transfer data tensor to GPU/CPU (device)
+            real_data = data.to(device)
+            true_label_g = true_label.to(device)
 
-        if (train_classifier):
-            classifier.train()
-        Updating discriminator and DHead
-        netC.train()
-        optimC.zero_grad()
-
-        #Train classifier
-        #if we want to sample the knn embeddings
-        if (train_classifier_head):
-            if (epoch % c_train_cadence == 0):
+            #Train classifier
+            #if we want to sample the knn embeddings
+            if (train_classifier_head):
+                if (train_classifier):
+                    classifier.train()
+                
+                netC.train()
+                optimC.zero_grad()
+                
                 #print ('Training Classifier Head')
                 output_c = classifier(real_data)
                 probs_c = netC(output_c)
@@ -207,75 +269,193 @@ for epoch in range(params['num_epochs']):
                 if (train_using_knn):
                     soft_probs_c = calculate_fuzzy_knn_eff(output_c, knn_e, knn_t, device, k=100, num_classes=10)
 
-                # check for NaN
-                isnan1 = torch.sum(torch.isnan(probs_c))
-                if (train_using_knn):
-                    isnan2 = torch.sum(torch.isnan(soft_probs_c))
-                else:
-                    isnan2 = 0
-
-                if ((isnan1 > 0) or (isnan2 > 0)):
-                    print ('NAN VALUE in Classifier Loss')
-
                 if (train_using_knn):
                     loss_c = criterionC(probs_c, soft_probs_c)
                 else:
                     loss_c = criterionC(probs_c, true_label_g)
                 # Calculate gradients
                 loss_c.backward()
-        else:
-            loss_c = torch.zeros(1)
 
-        #Net loss for classifier
-        C_loss = loss_c
-        if (train_classifier):
-            optimE.step()
+                if (train_classifier):
+                    optimE.step()
 
-        optimC.step()
+                optimC.step()
+            else:
+                loss_c = torch.zeros(1)
+
+            C_loss = loss_C
+
+            if (train_ensemble):
+                cc0.train()
+                cc1.train()
+                cc2.train()
+                cc3.train()
+                cc4.train()
+                cc5.train()
+                cc6.train()
+                cc7.train()
+                cc8.train()
+                cc9.train()
+                ccm.train()
+                optimcc.zero_grad()
+                optimccm.zero_grad()
+
+                if (i < cc_iter):
+                    output_cc = cc0(real_data)
+                elif (i >= cc_iter and i < (cc_iter*2)):
+                    output_cc = cc1(real_data)
+                elif (i >= (cc_iter*2) and i < (cc_iter*3)):
+                    output_cc = cc2(real_data)
+                elif (i >= (cc_iter*3) and i < (cc_iter*4)):
+                    output_cc = cc3(real_data)
+                elif (i >= (cc_iter*4) and i < (cc_iter*5)):
+                    output_cc = cc4(real_data)
+                elif (i >= (cc_iter*5) and i < (cc_iter*6)):
+                    output_cc = cc5(real_data)
+                elif (i >= (cc_iter*6) and i < (cc_iter*7)):
+                    output_cc = cc6(real_data)
+                elif (i >= (cc_iter*7) and i < (cc_iter*8)):
+                    output_cc = cc7(real_data)
+                elif (i >= (cc_iter*8) and i < (cc_iter*9)):
+                    output_cc = cc8(real_data)
+                elif (i >= (cc_iter*9) and i < (cc_iter*10)):
+                    output_cc = cc9(real_data)
+
+                output_ccm = ccm(real_data)
+
+                probs_cc = torch.squeeze(output_cc)
+                probs_cc = F.log_softmax(probs_cc, dim=1)
+
+                loss_cc = criterionC(probs_cc, true_label_g)
+                loss_cc.backward()
+                optimcc.step()
+
+                probs_ccm = torch.squeeze(output_ccm)
+                probs_ccm = F.log_softmax(probs_ccm, dim=1)
+
+                loss_ccm = criterionC(probs_ccm, true_label_g)
+                loss_ccm.backward()
+                optimccm.step()
+            else:
+                loss_cc = torch.zeros(1)
+                loss_ccm = torch.zeros(1)
+
+            E_loss = loss_cc
+            M_loss = loss_ccm
+
+            # Check progress of training.
+            if i != 0 and i%100 == 0:
+            #if i != 0 and i%10 == 0:
+                print('[%d/%d][%d/%d]\tLoss_C: %.4f'
+                      % (epoch+1, params['num_epochs'], i, len(dataloader), 
+                        C_loss.item()))
+
+            # Save the losses for plotting.
+            C_losses.append(C_loss.item())
+            E_losses.append(E_loss.item())
+            M_losses.append(M_loss.item())
+
+            iters += 1
+
+        epoch_time = time.time() - epoch_start_time
+        print("Time taken for Epoch %d: %.2fs" %(epoch + 1, epoch_time))
 
         if (train_classifier_head):
-            print ('Training Classifier Head, continuing')
-            print ('C_Head Loss: %.4f\t' % (C_loss).item())
-            total_c_loss += C_loss
-            continue
+            print ('C_Head Avg Loss: %.4f\t' % (total_c_loss/len(dataloader)).item())
 
-        # Check progress of training.
-        if i != 0 and i%100 == 0:
-        #if i != 0 and i%10 == 0:
-            print('[%d/%d][%d/%d]\tLoss_C: %.4f'
-                  % (epoch+1, params['num_epochs'], i, len(dataloader), 
-                    C_loss.item()))
+        # Save network weights.
+        if (epoch+1) % params['save_epoch'] == 0:
+            torch.save({
+                'classifier' : classifier.state_dict(),
+                'netC' : netC.state_dict(),
+                'params' : params
+                }, 'checkpoint/model_calibration_epoch_%d_{}'.format(params['dataset']) %(epoch+1))
 
-        # Save the losses for plotting.
-        C_losses.append(C_loss.item())
+        if (epoch+1) % params['save_epoch'] == 0:
+            torch.save({
+                'cc0' : cc0.state_dict(),
+                'cc1' : cc1.state_dict(),
+                'cc2' : cc2.state_dict(),
+                'cc3' : cc3.state_dict(),
+                'cc4' : cc4.state_dict(),
+                'cc5' : cc5.state_dict(),
+                'cc6' : cc6.state_dict(),
+                'cc7' : cc7.state_dict(),
+                'cc8' : cc8.state_dict(),
+                'cc9' : cc9.state_dict(),
+                'ccm' : ccm.state_dict(),
+                'params' : params
+                }, 'checkpoint/model_ensemble_epoch_%d_{}'.format(params['dataset']) %(epoch+1))
 
-        iters += 1
-
-    epoch_time = time.time() - epoch_start_time
-    print("Time taken for Epoch %d: %.2fs" %(epoch + 1, epoch_time))
-
-    if (train_classifier_head):
-        print ('C_Head Avg Loss: %.4f\t' % (total_c_loss/len(dataloader)).item())
+    training_time = time.time() - start_time
+    print("-"*50)
+    print('Training finished!\nTotal Time for Training: %.2fm' %(training_time / 60))
+    print("-"*50)
 
     # Save network weights.
-    if (epoch+1) % params['save_epoch'] == 0:
-        torch.save({
-            'classifier' : classifier.state_dict(),
-            'netC' : netC.state_dict(),
-            'params' : params
-            }, 'checkpoint/model_calibration_epoch_%d_{}'.format(params['dataset']) %(epoch+1))
+    torch.save({
+        'classifier' : classifier.state_dict(),
+        'netC' : netC.state_dict(),
+        'params' : params
+        }, 'checkpoint/model_calibration_epoch_%d_{}'.format(params['dataset']) %(epoch+1))
 
-training_time = time.time() - start_time
-print("-"*50)
-print('Training finished!\nTotal Time for Training: %.2fm' %(training_time / 60))
-print("-"*50)
+    torch.save({
+        'cc0' : cc0.state_dict(),
+        'cc1' : cc1.state_dict(),
+        'cc2' : cc2.state_dict(),
+        'cc3' : cc3.state_dict(),
+        'cc4' : cc4.state_dict(),
+        'cc5' : cc5.state_dict(),
+        'cc6' : cc6.state_dict(),
+        'cc7' : cc7.state_dict(),
+        'cc8' : cc8.state_dict(),
+        'cc9' : cc9.state_dict(),
+        'ccm' : ccm.state_dict(),
+        'params' : params
+        }, 'checkpoint/model_ensemble_epoch_%d_{}'.format(params['dataset']) %(epoch+1))
+else:
+    classifier.eval()
+    netC.eval()
+    cc0.eval()
+    cc1.eval()
+    cc2.eval()
+    cc3.eval()
+    cc4.eval()
+    cc5.eval()
+    cc6.eval()
+    cc7.eval()
+    cc8.eval()
+    cc9.eval()
+    ccm.eval()
 
-# Save network weights.
-torch.save({
-    'classifier' : classifier.state_dict(),
-    'netC' : netC.state_dict(),
-    'params' : params
-    }, 'checkpoint/model_calibration_epoch_%d_{}'.format(params['dataset']) %(epoch+1))
+    for i, (data, true_label, idx) in enumerate(dataloader_eval, 0):
+        # print ('Batch')
+        # print (i)
+        # Get batch size
+        b_size = data.size(0)
+        # Transfer data tensor to GPU/CPU (device)
+        real_data = data.to(device)
+        true_label_g = true_label.to(device)
+
+        output_c = classifier(real_data)
+        probs_c = netC(output_c)
+        probs_c = F.softmax()
+
+        output_cc0 = cc0(real_data)
+        output_cc1 = cc1(real_data)
+        output_cc2 = cc2(real_data)
+        output_cc3 = cc3(real_data)
+        output_cc4 = cc4(real_data)
+        output_cc5 = cc5(real_data)
+        output_cc6 = cc6(real_data)
+        output_cc7 = cc7(real_data)
+        output_cc8 = cc8(real_data)
+        output_cc9 = cc9(real_data)
+
+        output_ccm = ccm(real_data)
+
+
+
 
 
 

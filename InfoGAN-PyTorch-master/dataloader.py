@@ -47,10 +47,10 @@ class Solarization(object):
             return img
 
 class MyMNIST(Dataset):
-    def __init__(self, transform):
+    def __init__(self, train_test, transform):
         self.mnist = dsets.MNIST(root=root+'mnist/',
                                         download=True,
-                                        train=True,
+                                        train=train_test,
                                         transform=transform)
         
     def __getitem__(self, index):
@@ -124,7 +124,9 @@ def get_data(dataset, batch_size, train_test='train', use_3_channel=False):
 
 
         if (train_test == 'train_index'):
-            dataset = MyMNIST(transform=transform)
+            dataset = MyMNIST(train_test=True, transform=transform)
+        elif (train_test == 'eval_index'):
+            dataset = MyMNIST(train_test=False, transform=transform)
         elif (train_test == 'train'):
             dataset = dsets.MNIST(root+'mnist/', train=True, 
                                 download=True, transform=transform)

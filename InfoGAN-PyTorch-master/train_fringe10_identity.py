@@ -52,14 +52,14 @@ extra_transforms =  transforms.Compose([
                         #     ],
                         #     p=0.9,
                         # ),
-                        # transforms.RandomApply(
-                        #     [
-                        #         transforms.ColorJitter(
-                        #             brightness=0.0, contrast=0.2, saturation=0.0, hue=0.0
-                        #         )
-                        #     ],
-                        #     p=0.9,
-                        # ),
+                        transforms.RandomApply(
+                            [
+                                transforms.ColorJitter(
+                                    brightness=0.0, contrast=0.2, saturation=0.0, hue=0.0
+                                )
+                            ],
+                            p=0.9,
+                        ),
                     ])
 
 load_model = False
@@ -352,7 +352,7 @@ for epoch in range(params['num_epochs']):
         # b_size = data.size(0)
         # Transfer data tensor to GPU/CPU (device)
         real_data = data.to(device)
-        #augment_data = extra_transforms(real_data).to(device)
+        augment_data = extra_transforms(real_data).to(device)
         true_label_g = true_label.to(device)
 
         b_size, channels, d0, d1 = real_data.shape
@@ -441,10 +441,10 @@ for epoch in range(params['num_epochs']):
             label = torch.full((b_size, ), real_label, device=device)
             #real_data_double = torch.cat([real_data, real_data], dim=1)
             real_output = discriminator(real_data)
-            #aug_output = discriminator(augment_data)
-            noise_output = netQ(real_output)
-            augment_data = torch.add(real_data, noise_output)
             aug_output = discriminator(augment_data)
+            #noise_output = netQ(real_output)
+            #augment_data = torch.add(real_data, noise_output)
+            #aug_output = discriminator(augment_data)
             real_output_double = torch.cat([aug_output, real_output], dim=1)
             #real_output_double = torch.cat([real_output, real_output], dim=1)
 
@@ -483,30 +483,30 @@ for epoch in range(params['num_epochs']):
             optimQ.zero_grad()
 
             #For Q
-            label = torch.full((b_size, ), fake_label, device=device)
-            #real_data_double = torch.cat([real_data, real_data], dim=1)
-            real_output_q = discriminator(real_data)
-            #aug_output = discriminator(augment_data)
-            noise_output_q = netQ(real_output_q)
-            augment_data_q = torch.add(real_data, noise_output_q)
-            aug_output_q = discriminator(augment_data_q)
-            real_output_double_q = torch.cat([aug_output_q, real_output_q], dim=1)
-            #real_output_double = torch.cat([real_output, real_output], dim=1)
+            # label = torch.full((b_size, ), fake_label, device=device)
+            # #real_data_double = torch.cat([real_data, real_data], dim=1)
+            # real_output_q = discriminator(real_data)
+            # #aug_output = discriminator(augment_data)
+            # noise_output_q = netQ(real_output_q)
+            # augment_data_q = torch.add(real_data, noise_output_q)
+            # aug_output_q = discriminator(augment_data_q)
+            # real_output_double_q = torch.cat([aug_output_q, real_output_q], dim=1)
+            # #real_output_double = torch.cat([real_output, real_output], dim=1)
 
-            #Add idx
-            # idx_t = torch.tensor(idx).to(device)
-            # idx_r = idx_t.view((b_size, 1, 1, 1)).to(torch.float32)
-            # real_output_double = torch.cat([real_output_double, idx_r], dim=1)
+            # #Add idx
+            # # idx_t = torch.tensor(idx).to(device)
+            # # idx_r = idx_t.view((b_size, 1, 1, 1)).to(torch.float32)
+            # # real_output_double = torch.cat([real_output_double, idx_r], dim=1)
 
-            probs_real_q = netD(torch.squeeze(real_output_double_q)).view(-1)
-            label = label.to(torch.float32)
-            loss_Q = criterionD(probs_real_q, label)
-            #calculate grad
-            loss_Q.backward()
-            optimQ.step()
-            optimD.zero_grad()
-            optimDH.zero_grad()
-            optimQ.zero_grad()
+            # probs_real_q = netD(torch.squeeze(real_output_double_q)).view(-1)
+            # label = label.to(torch.float32)
+            # loss_Q = criterionD(probs_real_q, label)
+            # #calculate grad
+            # loss_Q.backward()
+            # optimQ.step()
+            # optimD.zero_grad()
+            # optimDH.zero_grad()
+            # optimQ.zero_grad()
 
             #Save D~, remove for true one-shot
             if (D_one_shot == True):
