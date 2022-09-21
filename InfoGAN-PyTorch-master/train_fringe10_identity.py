@@ -52,10 +52,18 @@ extra_transforms =  transforms.Compose([
                         #     ],
                         #     p=0.9,
                         # ),
+                        # transforms.RandomApply(
+                        #     [
+                        #         transforms.ColorJitter(
+                        #             brightness=0.0, contrast=0.2, saturation=0.0, hue=0.0
+                        #         )
+                        #     ],
+                        #     p=0.9,
+                        # ),
                         transforms.RandomApply(
                             [
                                 transforms.ColorJitter(
-                                    brightness=0.0, contrast=0.2, saturation=0.0, hue=0.0
+                                    brightness=0.4, contrast=0.0, saturation=0.0, hue=0.0
                                 )
                             ],
                             p=0.9,
