@@ -63,7 +63,7 @@ class MyMNIST(Dataset):
     def __len__(self):
         return len(self.mnist)
 
-def get_data(dataset, batch_size, train_test='train', use_3_channel=False):
+def get_data(dataset, batch_size, train_test='train', use_3_channel=False, do_shuffle=True):
 
     # Get MNIST dataset.
     if dataset == 'MNIST':
@@ -191,6 +191,6 @@ def get_data(dataset, batch_size, train_test='train', use_3_channel=False):
     # Create dataloader.
     dataloader = torch.utils.data.DataLoader(dataset, 
                                             batch_size=batch_size, 
-                                            shuffle=True)
+                                            shuffle=do_shuffle)
 
     return dataloader

@@ -56,9 +56,9 @@ use_3_channel = False
 if (use_base_resnet == 'resnet'):
     use_3_channel = True
 
-dataloader = get_data('MNIST', params['batch_size'], train_test='train_index', use_3_channel=use_3_channel)
-dataloader_eval = get_data('MNIST', params['batch_size'], train_test='eval_index', use_3_channel=use_3_channel)
-dataloader_knn = get_data('MNIST', params['knn_batch_size'], use_3_channel=use_3_channel)
+dataloader = get_data('MNIST', params['batch_size'], train_test='train_index', use_3_channel=use_3_channel, do_shuffle=False)
+dataloader_eval = get_data('MNIST', params['batch_size'], train_test='eval_index', use_3_channel=use_3_channel, do_shuffle=False)
+dataloader_knn = get_data('MNIST', params['knn_batch_size'], use_3_channel=use_3_channel, do_shuffle=False)
 
 
 # Initialise the network, KNN network
@@ -428,6 +428,13 @@ else:
     cc9.eval()
     ccm.eval()
 
+    total_correct_c = 0
+    total_correct_avg = 0
+    total_correct_ccm = 0
+    total_entropy_c = 0
+    total_entropy_avg = 0
+    total_entropy_ccm = 0
+    total_samples = 0
     for i, (data, true_label, idx) in enumerate(dataloader_eval, 0):
         # print ('Batch')
         # print (i)
@@ -439,7 +446,7 @@ else:
 
         output_c = classifier(real_data)
         probs_c = netC(output_c)
-        probs_c = F.softmax()
+        probs_c = F.softmax(torch.squeeze(probs_c), dim=1)
 
         output_cc0 = cc0(real_data)
         output_cc1 = cc1(real_data)
@@ -451,8 +458,66 @@ else:
         output_cc7 = cc7(real_data)
         output_cc8 = cc8(real_data)
         output_cc9 = cc9(real_data)
-
         output_ccm = ccm(real_data)
+
+        probs_cc0 = F.softmax(torch.squeeze(output_cc0), dim=1)
+        probs_cc1 = F.softmax(torch.squeeze(output_cc1), dim=1)
+        probs_cc2 = F.softmax(torch.squeeze(output_cc2), dim=1)
+        probs_cc3 = F.softmax(torch.squeeze(output_cc3), dim=1)
+        probs_cc4 = F.softmax(torch.squeeze(output_cc4), dim=1)
+        probs_cc5 = F.softmax(torch.squeeze(output_cc5), dim=1)
+        probs_cc6 = F.softmax(torch.squeeze(output_cc6), dim=1)
+        probs_cc7 = F.softmax(torch.squeeze(output_cc7), dim=1)
+        probs_cc8 = F.softmax(torch.squeeze(output_cc8), dim=1)
+        probs_cc9 = F.softmax(torch.squeeze(output_cc9), dim=1)
+
+        probs_sum = (probs_cc0 + probs_cc1 + probs_cc2 + probs_cc3 + probs_cc4 +
+                     probs_cc5 + probs_cc6 + probs_cc7 + probs_cc8 + probs_cc9)
+
+        probs_avg = probs_sum/10
+        probs_avg = F.softmax(probs_avg, dim=1)
+
+        probs_ccm = F.softmax(torch.squeeze(output_ccm), dim=1)
+
+        guess_c = torch.argmax(probs_c, dim=1)
+        guess_avg = torch.argmax(probs_avg, dim=1)
+        guess_ccm = torch.argmax(probs_ccm, dim=1)
+     
+        equal_c = (true_label == guess_c)
+        equal_avg = (true_label == guess_avg)
+        equal_ccm = (true_label == guess_ccm)
+
+        total_correct_c += torch.sum(equal_c)
+        total_correct_avg += torch.sum(equal_avg)
+        total_correct_ccm += torch.sum(equal_ccm)
+        total_samples += b_size
+
+        c_entropy = calc_entropy(probs_c)
+        avg_entropy = calc_entropy(probs_avg)
+        ccm_entropy = calc_entropy(probs_ccm)
+
+        total_entropy_c += torch.sum(c_entropy)
+        total_entropy_avg += torch.sum(avg_entropy)
+        total_entropy_ccm += torch.sum(ccm_entropy)
+
+
+    #Accuracies
+    accuracy_c = (total_correct_c/total_samples)
+    accuracy_avg = (total_correct_avg/total_samples)
+    accuracy_ccm = (total_correct_ccm/total_samples)
+
+    #Entropies
+    e_c = (total_entropy_c/total_samples)
+    e_avg = (total_entropy_avg/total_samples)
+    e_ccm = (total_entropy_ccm/total_samples)
+
+    print ('Accuracy KNN C: %.4f' % (accuracy_c))
+    print ('Accuracy AVG C: %.4f' % (accuracy_avg))
+    print ('Accuracy CCM C: %.4f' % (accuracy_ccm))
+
+    print ('Entropy KNN C: %.4f' % (e_c))
+    print ('Entropy AVG C: %.4f' % (e_avg))
+    print ('Entropy CCM C: %.4f' % (e_ccm))
 
 
 
