@@ -157,12 +157,12 @@ if (load_model):
     classifier.load_state_dict(state_dict['classifier'])
     discriminator.load_state_dict(state_dict['discriminator'])
     netD.load_state_dict(state_dict['netD'])
-    netC.load_state_dict(state_dict['netC'])
-    netQ.load_state_dict(state_dict['netQ'])
+    #netC.load_state_dict(state_dict['netC'])
+    #netQ.load_state_dict(state_dict['netQ'])
     print ('Model successfully loaded')
 elif (load_classifier):
     classifier.load_state_dict(state_dict['classifier'])
-    netC.load_state_dict(state_dict['netC'])
+    #netC.load_state_dict(state_dict['netC'])
     print ('Loaded Classifer and CHead')
 else:
     #need to load classifier regardless
