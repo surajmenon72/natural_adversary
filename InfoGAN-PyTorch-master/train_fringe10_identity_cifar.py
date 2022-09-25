@@ -46,19 +46,27 @@ extra_transforms =  transforms.Compose([
                         transforms.RandomApply(
                             [
                                 transforms.ColorJitter(
-                                    brightness=0.0, contrast=0.2, saturation=0.0, hue=0.0
+                                    brightness=0.2, contrast=0.2, saturation=0.0, hue=0.0
                                 )
                             ],
                             p=0.9,
                         ),
-                        transforms.RandomApply(
-                            [
-                                transforms.ColorJitter(
-                                    brightness=0.2, contrast=0.0, saturation=0.0, hue=0.0
-                                )
-                            ],
-                            p=0.9,
-                        ),
+                        # transforms.RandomApply(
+                        #     [
+                        #         transforms.ColorJitter(
+                        #             brightness=0.0, contrast=0.2, saturation=0.0, hue=0.0
+                        #         )
+                        #     ],
+                        #     p=0.9,
+                        # ),
+                        # transforms.RandomApply(
+                        #     [
+                        #         transforms.ColorJitter(
+                        #             brightness=0.2, contrast=0.0, saturation=0.0, hue=0.0
+                        #         )
+                        #     ],
+                        #     p=0.9,
+                        # ),
                     ])
 
 load_model = True
@@ -441,20 +449,21 @@ for epoch in range(params['num_epochs']):
             # loss_real2.backward()
 
             #Shuffled data
-            label.fill_(fake_label)
-            shuffled_data = torch.zeros((b_size, channels, d0, d1), device=device)
-            shuffled_data[0] = real_data[-1]
-            shuffled_data[1:] = real_data[:b_size-1]
+            if (D_one_shot == True):
+                label.fill_(fake_label)
+                shuffled_data = torch.zeros((b_size, channels, d0, d1), device=device)
+                shuffled_data[0] = real_data[-1]
+                shuffled_data[1:] = real_data[:b_size-1]
 
-            #shuffled_data_double = torch.cat([shuffled_data, real_data], dim=1)
-            real_output = discriminator(real_data)
-            shuffled_output = discriminator(shuffled_data)
-            shuffled_output_double = torch.cat([shuffled_output, real_output], dim=1)
-            probs_fake_s = netD(torch.squeeze(shuffled_output_double)).view(-1)
-            label = label.to(torch.float32)
-            loss_shuffle = criterionD(probs_fake_s, label)
-            #calculate grad
-            loss_shuffle.backward()
+                #shuffled_data_double = torch.cat([shuffled_data, real_data], dim=1)
+                real_output = discriminator(real_data)
+                shuffled_output = discriminator(shuffled_data)
+                shuffled_output_double = torch.cat([shuffled_output, real_output], dim=1)
+                probs_fake_s = netD(torch.squeeze(shuffled_output_double)).view(-1)
+                label = label.to(torch.float32)
+                loss_shuffle = criterionD(probs_fake_s, label)
+                #calculate grad
+                loss_shuffle.backward()
 
             #update head
             optimD.step()
