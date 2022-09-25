@@ -329,7 +329,7 @@ g_train_cadence = 1
 
 test_short = False
 
-D_one_shot = False
+D_one_shot = True
 
 #Initial save
 torch.save({
