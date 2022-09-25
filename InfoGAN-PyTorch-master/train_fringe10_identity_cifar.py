@@ -511,7 +511,10 @@ for epoch in range(params['num_epochs']):
 
 
             #D_loss = loss_real + loss_fake
-            D_loss = loss_real + loss_shuffle + loss_fake
+            if (D_one_shot == True):
+                D_loss = loss_real + loss_shuffle + loss_fake
+            else;
+                D_loss = loss_real + loss_fake
             #D_loss = loss_real + loss_fake + loss_real2 + loss_fake2
             #D_loss.backward()
         else:
