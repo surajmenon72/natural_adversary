@@ -320,7 +320,7 @@ if (train_eval == 'train'):
                     output_cc = cc7(real_data)
                 elif (i >= (cc_iter*8) and i < (cc_iter*9)):
                     output_cc = cc8(real_data)
-                elif (i >= (cc_iter*9) and i < (cc_iter*10)):
+                else:
                     output_cc = cc9(real_data)
 
                 output_ccm = ccm(real_data)
