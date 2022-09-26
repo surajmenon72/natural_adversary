@@ -145,10 +145,10 @@ def get_data(dataset, batch_size, train_test='train', use_3_channel=False, do_sh
         elif (train_test == 'eval_index'):
             dataset = MyMNIST(train_test=False, transform=transform)
         elif (train_test == 'train'):
-            dataset = dsets.FashionMNIST(root+'fashionmnist/', train=True, 
+            dataset = dsets.MNIST(root+'mnist/', train=True, 
                                 download=True, transform=transform)
         else:
-            dataset = dsets.FashionMNIST(root+'fashionmnist/', train=False, 
+            dataset = dsets.MNIST(root+'mnist/', train=False, 
                                 download=True, transform=transform)
 
     # Get SVHN dataset.
@@ -173,10 +173,10 @@ def get_data(dataset, batch_size, train_test='train', use_3_channel=False, do_sh
         elif (train_test == 'eval_index'):
             dataset = MyFashionMNIST(train_test=False, transform=transform)
         elif (train_test == 'train'):
-            dataset = dsets.MNIST(root+'mnist/', train=True, 
+            dataset = dsets.FashionMNIST(root+'fashionmnist/', train=True, 
                                 download=True, transform=transform)
         else:
-            dataset = dsets.MNIST(root+'mnist/', train=False, 
+            dataset = dsets.FashionMNIST(root+'fashionmnist/', train=False, 
                                 download=True, transform=transform)
 
     # Get CelebA dataset.
