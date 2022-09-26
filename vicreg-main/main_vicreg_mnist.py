@@ -172,7 +172,10 @@ def main(args):
     #     transforms.ToTensor()])
 
     root = 'data/'
-    dataset = datasets.MNIST(root+'mnist/', train='train', 
+    # dataset = datasets.MNIST(root+'mnist/', train='train', 
+    #                         download=True, transform=transforms)
+
+    dataset = datasets.FashionMNIST(root+'fashionmnist/', train='train', 
                             download=True, transform=transforms)
 
     #sampler = torch.utils.data.distributed.DistributedSampler(dataset, shuffle=True)
