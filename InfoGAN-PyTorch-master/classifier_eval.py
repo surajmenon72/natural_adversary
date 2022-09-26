@@ -385,7 +385,7 @@ def main_worker(args):
                 missing_keys, unexpected_keys = backbone.load_state_dict(loaded, strict=False)
             else:
                 #ckpt = './checkpoints/vicreg_backbone_base_60.pth'
-                ckpt = './checkpoints/adv_pths_vicreg_backbone_base_fashion_60.pth'
+                ckpt = './checkpoints/vicreg_backbone_base_fashion_60.pth'
                 loaded = torch.load(ckpt, map_location=torch.device('cpu'))
                 missing_keys, unexpected_keys = backbone.load_state_dict(loaded, strict=False)
 
