@@ -98,10 +98,6 @@ if (load_model):
     classifier.load_state_dict(state_dict['classifier'])
     netC.load_state_dict(state_dict['netC'])
     print ('Model successfully loaded')
-elif (load_classifier):
-    classifier.load_state_dict(state_dict['classifier'])
-    netC.load_state_dict(state_dict['netC'])
-    print ('Loaded Classifer and CHead')
 else:
     #need to load classifier regardless
     if (load_encoder == True):
@@ -481,9 +477,9 @@ else:
         guess_avg = torch.argmax(probs_avg, dim=1)
         guess_ccm = torch.argmax(probs_ccm, dim=1)
      
-        equal_c = (true_label == guess_c)
-        equal_avg = (true_label == guess_avg)
-        equal_ccm = (true_label == guess_ccm)
+        equal_c = (true_label_g == guess_c)
+        equal_avg = (true_label_g == guess_avg)
+        equal_ccm = (true_label_g == guess_ccm)
 
         total_correct_c += torch.sum(equal_c)
         total_correct_avg += torch.sum(equal_avg)
