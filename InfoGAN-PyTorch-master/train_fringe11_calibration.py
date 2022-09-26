@@ -469,7 +469,8 @@ else:
                      probs_cc5 + probs_cc6 + probs_cc7 + probs_cc8 + probs_cc9)
 
         probs_avg = probs_sum/10
-        probs_avg = F.softmax(probs_avg, dim=1)
+        probs_avg = probs_avg/(torch.sum(probs_avg, dim=1).view((probs_avg.shape[0], 1)))
+        #probs_avg = F.softmax(probs_avg, dim=1)
 
         probs_ccm = F.softmax(torch.squeeze(output_ccm), dim=1)
 
