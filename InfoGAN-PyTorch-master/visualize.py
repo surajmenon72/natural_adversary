@@ -9,8 +9,8 @@ import copy
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
 
-exp_dir = './checkpoints/adv_pths_knn_vicreg_base_fashion.pth'
-save_dir = './checkpoints/adv_pths_knn_l_vicreg_base_fashion.pth'
+exp_dir = './checkpoints/knn_vicreg_base_fashion.pth'
+save_dir = './checkpoints/knn_l_vicreg_base_fashion.pth'
 
 knn_dict = torch.load(exp_dir)
 knn_e = copy.deepcopy(knn_dict["knn_e"])
