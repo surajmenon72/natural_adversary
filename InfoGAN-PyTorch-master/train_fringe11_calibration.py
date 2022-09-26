@@ -28,7 +28,7 @@ print(device, " will be used.\n")
 train_eval = 'eval'
 
 load_model = True
-load_ensemble = False
+load_ensemble = True
 
 use_base_resnet = 'base'
 use_thanos_vicreg = 'thanos'
@@ -167,6 +167,7 @@ if (load_ensemble == True):
     cc8.load_state_dict(ensemble_dict['cc8'])
     cc9.load_state_dict(ensemble_dict['cc9'])
     ccm.load_state_dict(ensemble_dict['ccm'])
+    print ('Loaded Ensemble')
 
 
 knn_path = ' '
