@@ -348,9 +348,9 @@ if (train_eval == 'train'):
             # Check progress of training.
             if i != 0 and i%100 == 0:
             #if i != 0 and i%10 == 0:
-                print('[%d/%d][%d/%d]\tLoss_C: %.4f'
+                print('[%d/%d][%d/%d]\tLoss_C: %.4f\t Loss E: %.4f\t Loss_M: %.4f'
                       % (epoch+1, params['num_epochs'], i, len(dataloader), 
-                        C_loss.item()))
+                        C_loss.item(), E_loss.item(), M_loss.item()))
 
             # Save the losses for plotting.
             C_losses.append(C_loss.item())
