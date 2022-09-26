@@ -28,7 +28,6 @@ print(device, " will be used.\n")
 train_eval = 'eval'
 
 load_model = True
-load_classifier = False
 load_ensemble = False
 
 use_base_resnet = 'base'
@@ -42,7 +41,7 @@ train_ensemble = True
 
 load_path = ' '
 state_dict = {}
-if (load_classifier):
+if (load_model):
     load_path = './checkpoint/model_c_load'
     state_dict = torch.load(load_path, map_location=device)
 
