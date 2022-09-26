@@ -384,7 +384,8 @@ def main_worker(args):
                 loaded = torch.load(ckpt, map_location=torch.device('cpu'))
                 missing_keys, unexpected_keys = backbone.load_state_dict(loaded, strict=False)
             else:
-                ckpt = './checkpoints/vicreg_backbone_base_60.pth'
+                #ckpt = './checkpoints/vicreg_backbone_base_60.pth'
+                ckpt = './checkpoints/adv_pths_vicreg_backbone_base_fashion_60.pth'
                 loaded = torch.load(ckpt, map_location=torch.device('cpu'))
                 missing_keys, unexpected_keys = backbone.load_state_dict(loaded, strict=False)
 
@@ -439,9 +440,13 @@ def main_worker(args):
         )
 
     root = 'data/'
-    train_dataset = datasets.MNIST(root+'mnist/', train='train', 
+    # train_dataset = datasets.MNIST(root+'mnist/', train=True, 
+    #                         download=True, transform=transform)
+    # val_dataset = datasets.MNIST(root+'mnist/', train=False, 
+    #                         download=True, transform=transform)
+    train_dataset = datasets.FashionMNIST(root+'fashionmnist/', train=True, 
                             download=True, transform=transform)
-    val_dataset = datasets.MNIST(root+'mnist/', train=False, 
+    val_dataset = datasets.FashionMNIST(root+'fashionmnist/', train=False, 
                             download=True, transform=transform)
 
     train_loader = torch.utils.data.DataLoader(train_dataset, 
