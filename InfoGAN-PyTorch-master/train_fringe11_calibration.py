@@ -473,6 +473,11 @@ else:
 
         probs_ccm = F.softmax(torch.squeeze(output_ccm), dim=1)
 
+        if (i % 100 == 0):
+            print (probs_c[0])
+            print (probs_avg[0])
+            print (probs_ccm[0])
+
         guess_c = torch.argmax(probs_c, dim=1)
         guess_avg = torch.argmax(probs_avg, dim=1)
         guess_ccm = torch.argmax(probs_ccm, dim=1)
