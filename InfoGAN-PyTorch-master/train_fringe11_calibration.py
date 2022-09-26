@@ -201,6 +201,8 @@ if (train_using_knn):
 else:
     criterionC = nn.CrossEntropyLoss()
 
+criterionCC = nn.CrossEntropyLoss()
+
 #which networks don't require grad
 if (train_classifier == False):
     classifier.requires_grad_(False)
@@ -326,14 +328,14 @@ if (train_eval == 'train'):
                 probs_cc = torch.squeeze(output_cc)
                 probs_cc = F.log_softmax(probs_cc, dim=1)
 
-                loss_cc = criterionC(probs_cc, true_label_g)
+                loss_cc = criterionCC(probs_cc, true_label_g)
                 loss_cc.backward()
                 optimcc.step()
 
                 probs_ccm = torch.squeeze(output_ccm)
                 probs_ccm = F.log_softmax(probs_ccm, dim=1)
 
-                loss_ccm = criterionC(probs_ccm, true_label_g)
+                loss_ccm = criterionCC(probs_ccm, true_label_g)
                 loss_ccm.backward()
                 optimccm.step()
             else:
