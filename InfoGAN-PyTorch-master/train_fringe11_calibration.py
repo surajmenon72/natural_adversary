@@ -362,9 +362,6 @@ if (train_eval == 'train'):
         epoch_time = time.time() - epoch_start_time
         print("Time taken for Epoch %d: %.2fs" %(epoch + 1, epoch_time))
 
-        if (train_classifier_head):
-            print ('C_Head Avg Loss: %.4f\t' % (total_c_loss/len(dataloader)).item())
-
         # Save network weights.
         if (epoch+1) % params['save_epoch'] == 0:
             torch.save({
