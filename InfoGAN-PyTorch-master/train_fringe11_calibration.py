@@ -283,7 +283,7 @@ if (train_eval == 'train'):
             else:
                 loss_c = torch.zeros(1)
 
-            C_loss = loss_C
+            C_loss = loss_c
 
             if (train_ensemble):
                 cc0.train()
