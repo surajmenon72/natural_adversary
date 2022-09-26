@@ -63,6 +63,23 @@ class MyMNIST(Dataset):
     def __len__(self):
         return len(self.mnist)
 
+class MyFashionMNIST(Dataset):
+    def __init__(self, train_test, transform):
+        self.fashionmnist = dsets.FashionMNIST(root=root+'fashionmnist/',
+                                        download=True,
+                                        train=train_test,
+                                        transform=transform)
+        
+    def __getitem__(self, index):
+        data, target = self.fashionmnist[index]
+        
+        # Your transformations here (or set it in CIFAR10)
+        
+        return data, target, index
+
+    def __len__(self):
+        return len(self.fashionmnist)
+
 def get_data(dataset, batch_size, train_test='train', use_3_channel=False, do_shuffle=True):
 
     # Get MNIST dataset.
@@ -128,10 +145,10 @@ def get_data(dataset, batch_size, train_test='train', use_3_channel=False, do_sh
         elif (train_test == 'eval_index'):
             dataset = MyMNIST(train_test=False, transform=transform)
         elif (train_test == 'train'):
-            dataset = dsets.MNIST(root+'mnist/', train=True, 
+            dataset = dsets.FashionMNIST(root+'fashionmnist/', train=True, 
                                 download=True, transform=transform)
         else:
-            dataset = dsets.MNIST(root+'mnist/', train=False, 
+            dataset = dsets.FashionMNIST(root+'fashionmnist/', train=False, 
                                 download=True, transform=transform)
 
     # Get SVHN dataset.
@@ -151,7 +168,15 @@ def get_data(dataset, batch_size, train_test='train', use_3_channel=False, do_sh
             transforms.CenterCrop(28),
             transforms.ToTensor()])
 
-        dataset = dsets.FashionMNIST(root+'fashionmnist/', train='train', 
+        if (train_test == 'train_index'):
+            dataset = MyFashionMNIST(train_test=True, transform=transform)
+        elif (train_test == 'eval_index'):
+            dataset = MyFashionMNIST(train_test=False, transform=transform)
+        elif (train_test == 'train'):
+            dataset = dsets.MNIST(root+'mnist/', train=True, 
+                                download=True, transform=transform)
+        else:
+            dataset = dsets.MNIST(root+'mnist/', train=False, 
                                 download=True, transform=transform)
 
     # Get CelebA dataset.
