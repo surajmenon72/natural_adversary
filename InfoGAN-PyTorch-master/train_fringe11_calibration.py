@@ -25,9 +25,9 @@ print("Random Seed: ", seed)
 device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
-train_eval = 'train'
+train_eval = 'eval'
 
-load_model = False
+load_model = True
 load_classifier = False
 load_ensemble = False
 
