@@ -31,7 +31,7 @@ load_model = False
 load_ensemble = False
 
 use_base_resnet = 'base'
-use_thanos_vicreg = 'vicreg'
+use_thanos_vicreg = 'thanos'
 load_encoder = True
 
 train_classifier = False
@@ -121,7 +121,7 @@ else:
                 )
                 print ('Loaded classifier')
             else:
-                path = './checkpoints/thanos_base_20.ckpt'
+                path = './checkpoints/thanos_base_fashion_30.ckpt'
                 state_dict = torch.load(path, map_location=device)
 
                 classifier.load_state_dict(
