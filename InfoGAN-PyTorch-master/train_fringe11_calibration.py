@@ -143,13 +143,11 @@ else:
             #using Vicreg
             if (use_base_resnet == 'resnet'):
                 path = './checkpoints/vicreg_backbone_resnet_60.pth'
-                knn_path = './checkpoints/knn_vicreg_resnet.pth'
                 state_dict = torch.load(path, map_location=device)
 
                 missing_keys, unexpected_keys = classifier.load_state_dict(state_dict, strict=False)
             else:
                 path = './checkpoints/vicreg_backbone_base_fashion_60.pth'
-                knn_path = './checkpoints/knn_vicreg_base_fashion.pth'
                 state_dict = torch.load(path, map_location=device)
 
                 missing_keys, unexpected_keys = classifier.load_state_dict(state_dict, strict=False)
@@ -175,7 +173,7 @@ if (train_using_knn):
         if (use_base_resnet == 'resnet'):
             knn_path = './checkpoints/knn_thanos_resnet.pth'
         else:
-            knn_path = './checkpoints/knn_thanos_base.pth'
+            knn_path = './checkpoints/knn_thanos_base_fashion.pth'
     else:
         if (use_base_resnet == 'resnet'):
             knn_path = './checkpoints/knn_vicreg_resnet.pth'
