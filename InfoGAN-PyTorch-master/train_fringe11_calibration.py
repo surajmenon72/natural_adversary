@@ -261,7 +261,8 @@ if (train_eval == 'train'):
                 output_c = classifier(real_data)
                 probs_c = netC(output_c)
                 probs_c = torch.squeeze(probs_c)
-                probs_c = F.log_softmax(probs_c, dim=1)
+                if (train_using_knn):
+                    probs_c = F.log_softmax(probs_c, dim=1)
 
                 if (train_using_knn):
                     soft_probs_c = calculate_fuzzy_knn_eff(output_c, knn_e, knn_t, device, k=10, num_classes=10)
