@@ -321,14 +321,14 @@ if (train_eval == 'train'):
                 output_ccm = ccm(real_data)
 
                 probs_cc = torch.squeeze(output_cc)
-                probs_cc = F.log_softmax(probs_cc, dim=1)
+                #probs_cc = F.log_softmax(probs_cc, dim=1)
 
                 loss_cc = criterionCC(probs_cc, true_label_g)
                 loss_cc.backward()
                 optimcc.step()
 
                 probs_ccm = torch.squeeze(output_ccm)
-                probs_ccm = F.log_softmax(probs_ccm, dim=1)
+                #probs_ccm = F.log_softmax(probs_ccm, dim=1)
 
                 loss_ccm = criterionCC(probs_ccm, true_label_g)
                 loss_ccm.backward()
