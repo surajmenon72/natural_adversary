@@ -362,7 +362,7 @@ def main_worker(args):
                     strict=True,
                 )
             else:
-                ckpt = './checkpoints/thanos_base_20.ckpt'
+                ckpt = './checkpoints/thanos_base_fashion_30.ckpt'
                 loaded = torch.load(ckpt, map_location=torch.device('cpu'))
                 backbone.load_state_dict(
                     {
