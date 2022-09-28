@@ -325,6 +325,7 @@ def main(args):
 
             x = x.to(device)
             y = y.to(device)
+            labels = labels.to(device)
             bsz = labels.shape[0]
 
             xy = torch.cat([x, y], dim=0)
@@ -343,14 +344,15 @@ def main(args):
             xy = model.forward_only(xy)
             x, y = torch.split(xy, [bsz, bsz], dim=0)
 
-            vicreg_loss = model.loss_only(x, y)
+            #vicreg_loss = model.loss_only(x, y)
 
             xy_features = torch.cat([x.unsqueeze(1), y.unsqueeze(1)], dim=1)
             print (xy_features.shape)
             print (labels.shape)
-            exit()
+    
             supcon_loss = sup_criterion(xy_features, labels)
-
+            print (supcon_loss)
+            exit()
 
             if ((step % 50) == 0):
                 print ('Current Vicreg Loss')
