@@ -354,7 +354,7 @@ def main(args):
     
             supcon_loss = sup_criterion(xy_features, labels)
 
-            if ((step % 5) == 0):
+            if ((step % 1) == 0):
                 print ('Current Vicreg Loss')
                 print (vicreg_loss)
                 print ('Current Supcon Loss')
