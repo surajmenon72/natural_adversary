@@ -363,12 +363,15 @@ def main(args):
             mask_1 = (mask_1 < p)
             mask_2 = torch.randint(low=0, high=bsz-1, size=(bsz,)).to(device)
             mask = mask_1 * mask_2
-            onehot_mask = F.one_hot(mask)
+            onehot_mask = F.one_hot(mask, num_classes=bsz)
 
             print (mask_1)
             print (mask_2)
             print (mask)
             print (onehot_mask)
+            print (mask_1.shape)
+            print (mask_2.shape)
+            print (mask.shape)
             print (onehot_mask.shape)
             exit()
 
