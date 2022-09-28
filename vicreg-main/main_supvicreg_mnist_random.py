@@ -287,6 +287,8 @@ def main(args):
                 print (vicreg_loss)
                 print ('Current Supcon Loss')
                 print (supcon_loss)
+                print ('Current Random Loss')
+                print (random_loss)
 
             loss = alpha*vicreg_loss + (1-alpha)*supcon_loss + r*random_loss
             
