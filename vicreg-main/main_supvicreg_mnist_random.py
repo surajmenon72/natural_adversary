@@ -119,6 +119,10 @@ class SupConLoss(nn.Module):
         print ('log prob')
         print (torch.sum(log_prob))
 
+        print ('mask sum')
+        print (mask.sum(1))
+        print (mask.sum(1).shape)
+
         # compute mean of log-likelihood over positive
         mean_log_prob_pos = (mask * log_prob).sum(1) / mask.sum(1)
 
