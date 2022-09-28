@@ -112,6 +112,8 @@ class SupConLoss(nn.Module):
 
         print ('Exp Logits')
         print (exp_logits)
+        print (exp_logits.shape)
+        print (torch.sum(exp_logits))
 
         print ('Log prob')
         print (log_prob)
