@@ -282,7 +282,7 @@ def main(args):
 
             random_loss = sup_criterion(xy_features_s, labels=None, mask=onehot_mask)
 
-            if ((step % 50) == 0):
+            if ((step % 1) == 0):
                 print ('Current Vicreg Loss')
                 print (vicreg_loss)
                 print ('Current Supcon Loss')
