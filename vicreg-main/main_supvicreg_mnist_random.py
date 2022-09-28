@@ -361,8 +361,9 @@ def main(args):
             p = 0.2
             mask_1 = torch.rand(bsz, dtype=torch.float32).to(device)
             mask_1 = (mask_1 < p)
-            mask_2 = torch.randint(low=0, high=bsz-1, size=(bsz,)).to(device)
+            mask_2 = torch.randint(low=1, high=bsz, size=(bsz,)).to(device)
             mask = mask_1 * mask_2
+            mask -= 1
             onehot_mask = F.one_hot(mask)
 
             print (mask_1)
