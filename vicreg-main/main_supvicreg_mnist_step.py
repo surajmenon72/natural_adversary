@@ -340,25 +340,31 @@ def main(args):
             # scaler.update()
 
             #loss = model.forward(x, y)
-            xy = model.forward_only(xy)
-            x, y = torch.split(xy, [bsz, bsz], dim=0)
+
+            #do VICREG
+            xy_v = model.forward_only(xy)
+            x, y = torch.split(xy_v, [bsz, bsz], dim=0)
 
             vicreg_loss = model.loss_only(x, y)
+            loss = alpha*vicreg_loss
+            loss.backward()
+            optimizer.step()
+
+            #do Supcon
+            xy_s = model.forward_only(xy)
+            x, y = torch.split(xy_s, [bsz, bsz], dim=0)
 
             xy_features = torch.cat([x.unsqueeze(1), y.unsqueeze(1)], dim=1)
             supcon_loss = sup_criterion(xy_features, labels)
-
+            loss = (1-alpha)*supcon_loss
+            loss.backward()
+            optimizer.step()
 
             if ((step % 50) == 0):
                 print ('Current Vicreg Loss')
                 print (vicreg_loss)
                 print ('Current Supcon Loss')
                 print (supcon_loss)
-
-            loss = alpha*vicreg_loss + (1-alpha)*supcon_loss
-            
-            loss.backward()
-            optimizer.step()
 
             # if args.rank == 0 and current_time - last_logging > args.log_freq_time:
             #     stats = dict(
