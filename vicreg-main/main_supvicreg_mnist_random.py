@@ -363,10 +363,12 @@ def main(args):
             mask_1 = (mask_1 < p)
             mask_2 = torch.randint(low=0, high=bsz-1, size=(bsz,)).to(device)
             mask = mask_1 * mask_2
+            onehot_mask = F.one_hot(mask)
 
             print (mask_1)
             print (mask_2)
             print (mask)
+            print (onehot_mask)
             exit()
 
             random_loss = sup_criterion(xy_features_s, labels=None, mask=mask)
