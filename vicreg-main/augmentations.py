@@ -10,6 +10,8 @@ import numpy as np
 import torchvision.transforms as transforms
 from torchvision.transforms import InterpolationMode
 
+import torch
+import torch.nn as nn
 
 class GaussianBlur(object):
     def __init__(self, p):
