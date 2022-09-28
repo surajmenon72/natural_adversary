@@ -352,6 +352,7 @@ def main(args):
 
             #do Supcon
             xy_s = model.forward_only(xy)
+            xy_s = F.normalize(xy_s, dim=1)
             x, y = torch.split(xy_s, [bsz, bsz], dim=0)
 
             xy_features = torch.cat([x.unsqueeze(1), y.unsqueeze(1)], dim=1)

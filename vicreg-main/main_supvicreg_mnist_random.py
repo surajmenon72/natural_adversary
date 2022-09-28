@@ -345,7 +345,10 @@ def main(args):
 
             vicreg_loss = model.loss_only(x, y)
 
+            xy_s = F.normalize(xy, dim=1)
+            x, y = torch.split(xy_s, [bsz, bsz], dim=0)
             xy_features = torch.cat([x.unsqueeze(1), y.unsqueeze(1)], dim=1)
+    
             supcon_loss = sup_criterion(xy_features, labels)
 
 
