@@ -343,9 +343,9 @@ def main(args):
 
             #do VICREG
             xy_v = model.forward_only(xy)
-            x, y = torch.split(xy_v, [bsz, bsz], dim=0)
+            f1, f2 = torch.split(xy_v, [bsz, bsz], dim=0)
 
-            vicreg_loss = model.loss_only(x, y)
+            vicreg_loss = model.loss_only(f1, f2)
             loss = alpha*vicreg_loss
             loss.backward()
             optimizer.step()
@@ -353,15 +353,15 @@ def main(args):
             #do Supcon
             xy_s = model.forward_only(xy)
             xy_s = F.normalize(xy_s, dim=1)
-            x, y = torch.split(xy_s, [bsz, bsz], dim=0)
+            f1, f2 = torch.split(xy_s, [bsz, bsz], dim=0)
 
-            xy_features = torch.cat([x.unsqueeze(1), y.unsqueeze(1)], dim=1)
+            xy_features = torch.cat([f1.unsqueeze(1), f2.unsqueeze(1)], dim=1)
             supcon_loss = sup_criterion(xy_features, labels)
             loss = (1-alpha)*supcon_loss
             loss.backward()
             optimizer.step()
 
-            if ((step % 50) == 0):
+            if ((step % 5) == 0):
                 print ('Current Vicreg Loss')
                 print (vicreg_loss)
                 print ('Current Supcon Loss')
