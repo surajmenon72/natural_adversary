@@ -346,7 +346,7 @@ def main(args):
             vicreg_loss = model.loss_only(x, y)
 
             xy_features = torch.cat([x.unsqueeze(1), y.unsqueeze(1)], dim=1)
-            supcon_loss = sup_criterion(features, labels)
+            supcon_loss = sup_criterion(xy_features, labels)
 
 
             if ((step % 50) == 0):
