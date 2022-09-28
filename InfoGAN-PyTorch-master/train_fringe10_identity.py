@@ -102,7 +102,8 @@ use_3_channel = False
 if (use_base_resnet == 'resnet'):
     use_3_channel = True
 
-dataloader = get_data('MNIST', params['batch_size'], train_test='train_index', use_3_channel=use_3_channel)
+#dataloader = get_data('MNIST', params['batch_size'], train_test='train_index', use_3_channel=use_3_channel)
+dataloader = get_data('FashionMNIST', params['batch_size'], train_test='train_index', use_3_channel=use_3_channel)
 dataloader_knn = get_data(params['dataset'], params['knn_batch_size'], use_3_channel=use_3_channel)
 
 # Set appropriate hyperparameters depending on the dataset used.
@@ -208,7 +209,8 @@ else:
                 )
                 print ('Loaded classifier')
             else:
-                path = './checkpoints/thanos_base_20.ckpt'
+                #path = './checkpoints/thanos_base_20.ckpt'
+                path = './checkpoints/thanos_base_fashion_30.ckpt'
                 state_dict = torch.load(path, map_location=device)
 
                 classifier.load_state_dict(
@@ -230,13 +232,12 @@ else:
             #using Vicreg
             if (use_base_resnet == 'resnet'):
                 path = './checkpoints/vicreg_backbone_resnet_60.pth'
-                knn_path = './checkpoints/knn_vicreg_resnet.pth'
                 state_dict = torch.load(path, map_location=device)
 
                 missing_keys, unexpected_keys = classifier.load_state_dict(state_dict, strict=False)
             else:
-                path = './checkpoints/vicreg_backbone_base_60.pth'
-                knn_path = './checkpoints/knn_vicreg_base.pth'
+                #path = './checkpoints/vicreg_backbone_base_60.pth'
+                path = './checkpoints/vicreg_backbone_base_fashion_60.pth'
                 state_dict = torch.load(path, map_location=device)
 
                 missing_keys, unexpected_keys = classifier.load_state_dict(state_dict, strict=False)
