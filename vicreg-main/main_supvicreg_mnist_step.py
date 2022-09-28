@@ -312,7 +312,7 @@ def main(args):
     #start_time = last_logging = time.time()
     start_time = time.time()
     #scaler = torch.cuda.amp.GradScaler()
-    alpha = 0.99
+    alpha = 1
     for epoch in range(start_epoch, args.epochs):
         #sampler.set_epoch(epoch)
         print ('Epoch')
