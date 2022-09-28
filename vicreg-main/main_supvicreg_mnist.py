@@ -471,6 +471,12 @@ class SupVICReg(nn.Module):
 
         return x
 
+    def forward_dual(self, x, y):
+        x = self.projector(self.backbone(x))
+        y = self.projector(self.backbone(y))
+
+        return x, y
+
     def loss_only(self, x, y):
         repr_loss = F.mse_loss(x, y)
 
