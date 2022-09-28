@@ -343,16 +343,22 @@ def main(args):
             # scaler.update()
 
             #loss = model.forward(x, y)
-            xy_v = model.forward_only(xy)
-            f1, f2 = torch.split(xy_v, [bsz, bsz], dim=0)
 
-            vicreg_loss = model.loss_only(f1, f2)
 
-            xy_s = F.normalize(xy_v, dim=1)
-            f1, f2 = torch.split(xy_s, [bsz, bsz], dim=0)
-            xy_features = torch.cat([f1.unsqueeze(1), f2.unsqueeze(1)], dim=1)
-    
-            supcon_loss = sup_criterion(xy_features, labels)
+           #do VICREG
+            x_v, y_v = model.forward_dual(x, y)
+
+            vicreg_loss = model.loss_only(x_v, y_v)
+            #vicreg_loss = torch.zeros(1)
+
+            #do Supcon
+            xy_s = torch.cat([x_v, y_v], dim=0)
+            xy_s = F.normalize(xy_s, dim=1)
+            x_s, y_s = torch.split(xy_s, [bsz, bsz], dim=0)
+
+            xy_features_s = torch.cat([x_s.unsqueeze(1), y_s.unsqueeze(1)], dim=1)
+            supcon_loss = sup_criterion(xy_features_s, labels)
+            #supcon_loss = torch.zeros(1)
 
             if ((step % 1) == 0):
                 print ('Current Vicreg Loss')

@@ -362,7 +362,7 @@ def main(args):
             optimizer.step()
             #supcon_loss = torch.zeros(1)
 
-            if ((step % 1) == 0):
+            if ((step % 50) == 0):
                 print ('Current Vicreg Loss')
                 print (vicreg_loss)
                 print ('Current Supcon Loss')
