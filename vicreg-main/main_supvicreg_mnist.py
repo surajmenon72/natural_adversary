@@ -346,6 +346,9 @@ def main(args):
             vicreg_loss = model.loss_only(x, y)
 
             xy_features = torch.cat([x.unsqueeze(1), y.unsqueeze(1)], dim=1)
+            print (xy_features.shape)
+            print (labels.shape)
+            exit()
             supcon_loss = sup_criterion(xy_features, labels)
 
 
@@ -356,7 +359,7 @@ def main(args):
                 print (supcon_loss)
 
             loss = alpha*vicreg_loss + (1-alpha)*supcon_loss
-            
+
             loss.backward()
             optimizer.step()
 

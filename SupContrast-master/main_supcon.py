@@ -220,9 +220,11 @@ def train(train_loader, model, criterion, optimizer, epoch, opt):
         features = model(images)
         f1, f2 = torch.split(features, [bsz, bsz], dim=0)
         features = torch.cat([f1.unsqueeze(1), f2.unsqueeze(1)], dim=1)
-
+        print (features.shape)
+        print (labels.shape)
+        exit()
         if opt.method == 'SupCon':
-            print ('Doing SupCon Loss')
+            #print ('Doing SupCon Loss')
             loss = criterion(features, labels)
         elif opt.method == 'SimCLR':
             loss = criterion(features)
@@ -230,7 +232,7 @@ def train(train_loader, model, criterion, optimizer, epoch, opt):
             raise ValueError('contrastive method not supported: {}'.
                              format(opt.method))
 
-        print (loss)
+        #print (loss)
         # update metric
         losses.update(loss.item(), bsz)
 
