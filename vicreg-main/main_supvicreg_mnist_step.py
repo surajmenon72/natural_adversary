@@ -360,6 +360,7 @@ def main(args):
             # loss = (1-alpha)*supcon_loss
             # loss.backward()
             # optimizer.step()
+            supcon_loss = torch.zeros(1)
 
             if ((step % 1) == 0):
                 print ('Current Vicreg Loss')
