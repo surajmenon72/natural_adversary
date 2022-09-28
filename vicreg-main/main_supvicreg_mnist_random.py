@@ -366,18 +366,7 @@ def main(args):
             onehot_mask = F.one_hot(mask, num_classes=bsz)
             onehot_mask[:, 0] *= 0 #no one is attracting to 0, shouldnt matter
 
-            print (mask_1)
-            print (mask_2)
-            print (mask)
-            print (onehot_mask)
-            print (mask_1.shape)
-            print (mask_2.shape)
-            print (mask.shape)
-            print (onehot_mask.shape)
-            print (torch.sum(onehot_mask))
-            exit()
-
-            random_loss = sup_criterion(xy_features_s, labels=None, mask=mask)
+            random_loss = sup_criterion(xy_features_s, labels=None, mask=onehot_mask)
             print (random_loss)
             exit()
 
