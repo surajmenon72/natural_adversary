@@ -342,10 +342,11 @@ def main(args):
             #loss = model.forward(x, y)
 
             #do VICREG
-            xy_v = model.forward_only(xy)
-            f1, f2 = torch.split(xy_v, [bsz, bsz], dim=0)
+            #xy_v = model.forward_only(xy)
+            x_v, y_v = model.forward_dual(x, y)
+            #f1, f2 = torch.split(xy_v, [bsz, bsz], dim=0)
 
-            vicreg_loss = model.loss_only(f1, f2)
+            vicreg_loss = model.loss_only(x_v, y_v)
             loss = alpha*vicreg_loss
             loss.backward()
             optimizer.step()
@@ -467,6 +468,12 @@ class SupVICReg(nn.Module):
         x = self.projector(self.backbone(x))
 
         return x
+
+    def forward_dual(self, x, y):
+        x = self.projector(self.backbone(x))
+        y = self.projector(self.backbone(y))
+
+        return x, y
 
     def loss_only(self, x, y):
         repr_loss = F.mse_loss(x, y)
