@@ -110,15 +110,6 @@ class SupConLoss(nn.Module):
         exp_logits = torch.exp(logits) * logits_mask
         log_prob = logits - torch.log(exp_logits.sum(1, keepdim=True))
 
-        print ('Exp Logits')
-        print (exp_logits)
-        print (exp_logits.shape)
-        print (torch.sum(exp_logits))
-
-        print ('Log prob')
-        print (log_prob)
-        exit()
-
         # compute mean of log-likelihood over positive
         mean_log_prob_pos = (mask * log_prob).sum(1) / mask.sum(1)
 
@@ -362,8 +353,6 @@ def main(args):
             xy_features = torch.cat([x.unsqueeze(1), y.unsqueeze(1)], dim=1)
     
             supcon_loss = sup_criterion(xy_features, labels)
-            print (supcon_loss)
-            exit()
 
             if ((step % 50) == 0):
                 print ('Current Vicreg Loss')
