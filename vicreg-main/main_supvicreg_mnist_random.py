@@ -340,16 +340,22 @@ def main(args):
             # scaler.update()
 
             #loss = model.forward(x, y)
-            xy = model.forward_only(xy)
-            x, y = torch.split(xy, [bsz, bsz], dim=0)
 
-            vicreg_loss = model.loss_only(x, y)
+            
+            #do VICREG
+            x_v, y_v = model.forward_dual(x, y)
 
-            xy_s = F.normalize(xy, dim=1)
-            x, y = torch.split(xy_s, [bsz, bsz], dim=0)
-            xy_features = torch.cat([x.unsqueeze(1), y.unsqueeze(1)], dim=1)
-    
-            supcon_loss = sup_criterion(xy_features, labels)
+            vicreg_loss = model.loss_only(x_v, y_v)
+            #vicreg_loss = torch.zeros(1)
+
+            #do Supcon
+            xy_s = torch.cat([x_v, y_v], dim=0)
+            xy_s = F.normalize(xy_s, dim=1)
+            x_s, y_s = torch.split(xy_s, [bsz, bsz], dim=0)
+
+            xy_features_s = torch.cat([x_s.unsqueeze(1), y_s.unsqueeze(1)], dim=1)
+            supcon_loss = sup_criterion(xy_features_s, labels)
+            #supcon_loss = torch.zeros(1)
 
 
             if ((step % 50) == 0):
@@ -462,6 +468,12 @@ class SupVICReg(nn.Module):
         x = self.projector(self.backbone(x))
 
         return x
+
+    def forward_dual(self, x, y):
+        x = self.projector(self.backbone(x))
+        y = self.projector(self.backbone(y))
+
+        return x, y
 
     def loss_only(self, x, y):
         repr_loss = F.mse_loss(x, y)
