@@ -246,7 +246,7 @@ def main(args):
 
             loss = model.forward(x, y)
 
-            if ((step % 50) == 0):
+            if ((step % 1) == 0):
                 print ('Current Loss')
                 print (loss)
             loss.backward()
