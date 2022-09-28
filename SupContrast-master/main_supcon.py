@@ -205,11 +205,9 @@ def train(train_loader, model, criterion, optimizer, epoch, opt):
     end = time.time()
     for idx, (images, labels) in enumerate(train_loader):
         data_time.update(time.time() - end)
-        print (images[0].shape)
-        print (images[1].shape)
 
         images = torch.cat([images[0], images[1]], dim=0)
-        print (images.shape)
+
         if torch.cuda.is_available():
             images = images.cuda(non_blocking=True)
             labels = labels.cuda(non_blocking=True)
@@ -220,14 +218,11 @@ def train(train_loader, model, criterion, optimizer, epoch, opt):
 
         # compute loss
         features = model(images)
-        print ('Pre shape:')
-        print (features.shape)
         f1, f2 = torch.split(features, [bsz, bsz], dim=0)
         features = torch.cat([f1.unsqueeze(1), f2.unsqueeze(1)], dim=1)
-        print ('Post shape:')
-        print (features.shape)
-        exit()
+
         if opt.method == 'SupCon':
+            print ('Doing SupCon Loss')
             loss = criterion(features, labels)
         elif opt.method == 'SimCLR':
             loss = criterion(features)
@@ -235,6 +230,7 @@ def train(train_loader, model, criterion, optimizer, epoch, opt):
             raise ValueError('contrastive method not supported: {}'.
                              format(opt.method))
 
+        print (loss)
         # update metric
         losses.update(loss.item(), bsz)
 
