@@ -312,7 +312,7 @@ def main(args):
     #start_time = last_logging = time.time()
     start_time = time.time()
     #scaler = torch.cuda.amp.GradScaler()
-    alpha = 1
+    alpha = 0.5
     for epoch in range(start_epoch, args.epochs):
         #sampler.set_epoch(epoch)
         print ('Epoch')
@@ -342,26 +342,25 @@ def main(args):
             #loss = model.forward(x, y)
 
             #do VICREG
-            #xy_v = model.forward_only(xy)
             x_v, y_v = model.forward_dual(x, y)
-            #f1, f2 = torch.split(xy_v, [bsz, bsz], dim=0)
 
             vicreg_loss = model.loss_only(x_v, y_v)
             loss = alpha*vicreg_loss
             loss.backward()
             optimizer.step()
+            #vicreg_loss = torch.zeros(1)
 
             #do Supcon
-            # xy_s = model.forward_only(xy)
-            # xy_s = F.normalize(xy_s, dim=1)
-            # f1, f2 = torch.split(xy_s, [bsz, bsz], dim=0)
+            xy_s = model.forward_only(xy)
+            xy_s = F.normalize(xy_s, dim=1)
+            x_s, y_s = torch.split(xy_s, [bsz, bsz], dim=0)
 
-            # xy_features = torch.cat([f1.unsqueeze(1), f2.unsqueeze(1)], dim=1)
-            # supcon_loss = sup_criterion(xy_features, labels)
-            # loss = (1-alpha)*supcon_loss
-            # loss.backward()
-            # optimizer.step()
-            supcon_loss = torch.zeros(1)
+            xy_features_s = torch.cat([x_s.unsqueeze(1), y_s.unsqueeze(1)], dim=1)
+            supcon_loss = sup_criterion(xy_features_s, labels)
+            loss = (1-alpha)*supcon_loss
+            loss.backward()
+            optimizer.step()
+            #supcon_loss = torch.zeros(1)
 
             if ((step % 1) == 0):
                 print ('Current Vicreg Loss')
