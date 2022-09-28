@@ -82,7 +82,7 @@ load_model = False
 load_classifier = False
 
 use_base_resnet = 'base'
-use_thanos_vicreg = 'thanos'
+use_thanos_vicreg = 'vicreg'
 load_encoder = True
 
 train_classifier = False
