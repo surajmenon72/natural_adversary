@@ -357,7 +357,8 @@ def main(args):
             supcon_loss = sup_criterion(xy_features_s, labels)
             #supcon_loss = torch.zeros(1)
 
-            mask = torch.zeros((bsz, bsz))
+            #mask = torch.zeros((bsz, bsz))
+            mask = torch.eye(bsz, dtype=torch.float32).to(device)
             random_loss = sup_criterion(xy_features_s, labels=None, mask=mask)
             print (random_loss)
             exit()
