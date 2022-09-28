@@ -358,7 +358,7 @@ def main(args):
             #supcon_loss = torch.zeros(1)
 
             #mask = torch.zeros((bsz, bsz))
-            p = 2
+            p = .2
             mask_1 = torch.rand(bsz, dtype=torch.float32).to(device)
             mask_1 = (mask_1 < p)
             mask_2 = torch.randint(low=0, high=bsz-1, size=(bsz,)).to(device)
@@ -369,7 +369,6 @@ def main(args):
             random_loss = sup_criterion(xy_features_s, labels=None, mask=onehot_mask)
             print (random_loss)
             exit()
-
 
             if ((step % 50) == 0):
                 print ('Current Vicreg Loss')
