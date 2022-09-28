@@ -361,7 +361,7 @@ def main(args):
             loss.backward()
             optimizer.step()
 
-            if ((step % 5) == 0):
+            if ((step % 1) == 0):
                 print ('Current Vicreg Loss')
                 print (vicreg_loss)
                 print ('Current Supcon Loss')
