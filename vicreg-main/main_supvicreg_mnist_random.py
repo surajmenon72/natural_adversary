@@ -341,7 +341,7 @@ def main(args):
 
             #loss = model.forward(x, y)
 
-            
+
             #do VICREG
             x_v, y_v = model.forward_dual(x, y)
 
@@ -356,6 +356,11 @@ def main(args):
             xy_features_s = torch.cat([x_s.unsqueeze(1), y_s.unsqueeze(1)], dim=1)
             supcon_loss = sup_criterion(xy_features_s, labels)
             #supcon_loss = torch.zeros(1)
+
+            mask = torch.zeros((bsz, bsz))
+            random_loss = sup_criterion(xy_features_s, labels=None, mask=mask)
+            print (random_loss)
+            exit()
 
 
             if ((step % 50) == 0):
