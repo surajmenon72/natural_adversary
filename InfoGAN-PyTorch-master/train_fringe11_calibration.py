@@ -25,19 +25,19 @@ print("Random Seed: ", seed)
 device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
-train_eval = 'eval'
+train_eval = 'train'
 
-load_model = True
-load_ensemble = True
+load_model = False
+load_ensemble = False
 
 use_base_resnet = 'base'
-use_thanos_vicreg = 'thanos'
+use_thanos_vicreg = 'vicreg'
 load_encoder = True
 
 train_classifier = False
 train_classifier_head = True
 train_using_knn = True
-train_ensemble = True
+train_ensemble = False
 
 load_path = ' '
 state_dict = {}
@@ -147,7 +147,8 @@ else:
 
                 missing_keys, unexpected_keys = classifier.load_state_dict(state_dict, strict=False)
             else:
-                path = './checkpoints/vicreg_backbone_base_fashion_60.pth'
+                #path = './checkpoints/vicreg_backbone_base_fashion_60.pth'
+                path = './checkpoints/supvic_backbone_base_fashion_60.pth'
                 state_dict = torch.load(path, map_location=device)
 
                 missing_keys, unexpected_keys = classifier.load_state_dict(state_dict, strict=False)
@@ -178,7 +179,8 @@ if (train_using_knn):
         if (use_base_resnet == 'resnet'):
             knn_path = './checkpoints/knn_vicreg_resnet.pth'
         else:
-            knn_path = './checkpoints/knn_vicreg_base_fashion.pth'
+            #knn_path = './checkpoints/knn_vicreg_base_fashion.pth'
+            knn_path = './checkpoints/knn_supvic_base_fashion.pth'
 
 #load knn dict regardless, assume that it matches the encoder we are using.
 if (knn_path != ' '):
