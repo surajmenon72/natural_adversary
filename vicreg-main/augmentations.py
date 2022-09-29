@@ -280,20 +280,20 @@ class SupConLoss(nn.Module):
         exp_logits = torch.exp(logits) * logits_mask
         log_prob = logits - torch.log(exp_logits.sum(1, keepdim=True))
 
-        print ('exp logits')
-        print (torch.sum(exp_logits))
-        print ('log prob')
-        print (torch.sum(log_prob))
+        # print ('exp logits')
+        # print (torch.sum(exp_logits))
+        # print ('log prob')
+        # print (torch.sum(log_prob))
 
-        print ('mask sum')
-        print (torch.sum(mask.sum(1) == 0))
+        # print ('mask sum')
+        # print (torch.sum(mask.sum(1) == 0))
 
         # compute mean of log-likelihood over positive
         #potential div 0 issue here
         mean_log_prob_pos = (mask * log_prob).sum(1) / mask.sum(1)
 
-        print ('mean prob')
-        print (torch.sum(mean_log_prob_pos))
+        # print ('mean prob')
+        # print (torch.sum(mean_log_prob_pos))
 
         # loss
         loss = - (self.temperature / self.base_temperature) * mean_log_prob_pos
