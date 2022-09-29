@@ -281,6 +281,8 @@ def main(args):
             onehot_mask[:, 0] *= 0 #no one is attracting to 0, shouldnt matter
 
             random_loss = sup_criterion(xy_features_s, labels=None, mask=onehot_mask)
+            print (random_loss)
+            exit()
 
             if ((step % 1) == 0):
                 print ('Current Vicreg Loss')
