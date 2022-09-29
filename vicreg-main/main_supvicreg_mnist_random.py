@@ -285,8 +285,6 @@ def main(args):
             onehot_mask = F.one_hot(mask, num_classes=bsz)
 
             random_loss = sup_criterion(xy_features_s, labels=None, mask=onehot_mask)
-            print (random_loss)
-            exit()
 
             if ((step % 1) == 0):
                 print ('Current Vicreg Loss')

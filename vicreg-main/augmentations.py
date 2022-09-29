@@ -285,8 +285,8 @@ class SupConLoss(nn.Module):
         # print ('log prob')
         # print (torch.sum(log_prob))
 
-        print ('mask sum')
-        print (torch.sum(mask.sum(1) == 0))
+        # print ('mask sum')
+        # print (torch.sum(mask.sum(1) == 0))
 
         # compute mean of log-likelihood over positive
         #potential div 0 issue here
