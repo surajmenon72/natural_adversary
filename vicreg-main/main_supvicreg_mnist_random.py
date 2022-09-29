@@ -276,7 +276,8 @@ def main(args):
             mask_1 = torch.rand(bsz, dtype=torch.float32).to(device)
             mask_1 = (mask_1 < p)
             mask_2 = torch.randint(low=0, high=bsz-1, size=(bsz,)).to(device)
-            mask = mask_1 * mask_2
+            #mask = mask_1 * mask_2
+            mask = mask_2
             onehot_mask = F.one_hot(mask, num_classes=bsz)
             onehot_mask[:, 0] *= 0 #no one is attracting to 0, shouldnt matter
 
