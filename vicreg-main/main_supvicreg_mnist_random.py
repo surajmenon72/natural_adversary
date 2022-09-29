@@ -272,14 +272,17 @@ def main(args):
             #supcon_loss = torch.zeros(1)
 
             #mask = torch.zeros((bsz, bsz))
-            p = 2 #for now not dealing w/ div by 0s, forcing every example to pick someone random to be attracted to
-            mask_1 = torch.rand(bsz, dtype=torch.float32).to(device)
-            mask_1 = (mask_1 < p)
-            mask_2 = torch.randint(low=0, high=bsz-1, size=(bsz,)).to(device)
-            #mask = mask_1 * mask_2
-            mask = mask_2
+            # p = 2 #for now not dealing w/ div by 0s, forcing every example to pick someone random to be attracted to
+            # mask_1 = torch.rand(bsz, dtype=torch.float32).to(device)
+            # mask_1 = (mask_1 < p)
+            # mask_2 = torch.randint(low=0, high=bsz-1, size=(bsz,)).to(device)
+            # mask = mask_1 * mask_2
+            # mask = mask_2
+            # onehot_mask = F.one_hot(mask, num_classes=bsz)
+            # onehot_mask[:, 0] *= 0 #no one is attracting to 0, shouldnt matter
+
+            mask = torch.randint(low=0, high=bsz-1, size=(bsz,)).to(device)
             onehot_mask = F.one_hot(mask, num_classes=bsz)
-            onehot_mask[:, 0] *= 0 #no one is attracting to 0, shouldnt matter
 
             random_loss = sup_criterion(xy_features_s, labels=None, mask=onehot_mask)
             print (random_loss)
