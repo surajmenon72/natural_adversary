@@ -43,22 +43,22 @@ extra_transforms =  transforms.Compose([
                         #     ],
                         #     p=0.5,
                         # ),
-                        transforms.RandomApply(
-                            [
-                                transforms.ColorJitter(
-                                    brightness=0.2, contrast=0.2, saturation=0.0, hue=0.0
-                                )
-                            ],
-                            p=0.9,
-                        ),
                         # transforms.RandomApply(
                         #     [
                         #         transforms.ColorJitter(
-                        #             brightness=0.0, contrast=0.2, saturation=0.0, hue=0.0
+                        #             brightness=0.2, contrast=0.2, saturation=0.0, hue=0.0
                         #         )
                         #     ],
                         #     p=0.9,
                         # ),
+                        transforms.RandomApply(
+                            [
+                                transforms.ColorJitter(
+                                    brightness=0.0, contrast=0.2, saturation=0.0, hue=0.0
+                                )
+                            ],
+                            p=0.9,
+                        ),
                         # transforms.RandomApply(
                         #     [
                         #         transforms.ColorJitter(
@@ -69,7 +69,21 @@ extra_transforms =  transforms.Compose([
                         # ),
                     ])
 
-load_model = True
+extra_transforms_2 = transforms.Compose([
+                        transforms.RandomResizedCrop(
+                            64, scale = (0.95, 1.0), interpolation=InterpolationMode.BILINEAR
+                        ),
+                        transforms.RandomApply(
+                            [
+                                transforms.ColorJitter(
+                                    brightness=0.2, contrast=0.0, saturation=0.0, hue=0.0
+                                )
+                            ],
+                            p=0.9,
+                        ),
+                    ])
+
+load_model = False
 load_classifier = False
 
 use_base_resnet = 'resnet'
@@ -330,6 +344,7 @@ g_train_cadence = 1
 test_short = False
 
 D_one_shot = True
+aug_secondary = 0
 
 #Initial save
 torch.save({
@@ -348,7 +363,13 @@ for epoch in range(params['num_epochs']):
         b_size = data.size(0)
         # Transfer data tensor to GPU/CPU (device)
         real_data = data.to(device)
-        augment_data = extra_transforms(real_data).to(device)
+        if (aug_secondary == 0):
+            augment_data = extra_transforms(real_data).to(device)
+            aug_secondary = 1
+        else:
+            augment_data = extra_transforms_2(real_data).to(device)
+            aug_secondary = 0
+        
         true_label_g = true_label.to(device)
 
         b_size, channels, d0, d1 = real_data.shape
