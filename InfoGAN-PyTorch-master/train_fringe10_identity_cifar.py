@@ -83,7 +83,7 @@ extra_transforms_2 = transforms.Compose([
                         ),
                     ])
 
-load_model = False
+load_model = True
 load_classifier = False
 
 use_base_resnet = 'resnet'
@@ -343,7 +343,7 @@ g_train_cadence = 1
 
 test_short = False
 
-D_one_shot = True
+D_one_shot = False
 aug_secondary = 0
 
 #Initial save
@@ -369,7 +369,7 @@ for epoch in range(params['num_epochs']):
         else:
             augment_data = extra_transforms_2(real_data).to(device)
             aug_secondary = 0
-        
+
         true_label_g = true_label.to(device)
 
         b_size, channels, d0, d1 = real_data.shape
