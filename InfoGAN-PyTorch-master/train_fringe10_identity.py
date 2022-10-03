@@ -794,8 +794,6 @@ for epoch in range(params['num_epochs']):
     if (epoch+1) % params['save_epoch'] == 0:
         with torch.no_grad():
             gen_data = netG(fixed_noise).detach().cpu()
-        print (gen_data.shape)
-        exit()
         plt.figure(figsize=(10, 10))
         plt.axis("off")
         #plt.imshow(np.transpose(vutils.make_grid(gen_data, nrow=10, padding=2, normalize=True), (1,2,0)))
