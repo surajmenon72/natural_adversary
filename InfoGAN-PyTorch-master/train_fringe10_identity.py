@@ -78,11 +78,11 @@ extra_transforms =  transforms.Compose([
                         # ),
                     ])
 
-load_model = False
+load_model = True
 load_classifier = False
 
 use_base_resnet = 'base'
-use_thanos_vicreg = 'vicreg'
+use_thanos_vicreg = 'thanos'
 load_encoder = True
 
 train_classifier = False
