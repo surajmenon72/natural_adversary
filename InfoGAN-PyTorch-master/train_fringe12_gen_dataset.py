@@ -120,9 +120,9 @@ for p in range(num_passes):
         full_labels = torch.cat((full_labels, gen_labels), dim=0)
 
 torch.save({
-    'images': full_images,
-    'labels' : full_labels
-    } 'checkpoint/gen_mnist_%d' % seed)
+    'images': full_images[1:],
+    'labels' : full_labels[1:]
+    } 'checkpoint/gen_fmnist_%d' % seed)
 
 
 
