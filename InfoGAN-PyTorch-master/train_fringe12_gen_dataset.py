@@ -81,6 +81,9 @@ b_size = params['batch_size']
 gen_images = torch.zeros((b_size, 1, 28, 28))
 gen_labels = torch.zeros((b_size, 10))
 
+full_images = torch.zeros((1, 1, 28, 28))
+full_labels = torch.zeros((1, 10))
+
 num_passes = 1
 for p in range(num_passes):
     epoch_start_time = time.time()
@@ -107,15 +110,19 @@ for p in range(num_passes):
             diff /= 2
             noise = embedding[i0] + diff
 
-            new_image = netG(noise).detach().cpu()
-            gen_images[i0] = deepcopy(new_image)
+            gen_images[i0] = netG(noise).detach().cpu()
             l0 = true_label_g[i0]
             l1 = true_label_g[i1]
             gen_labels[i0, l0] = 0.5
             gen_labels[i0, l1] = 0.5
 
+        full_images = torch.cat((full_images, gen_images), dim=0)
+        full_labels = torch.cat((full_labels, gen_labels), dim=0)
 
-
+torch.save({
+    'images': full_images,
+    'labels' : full_labels
+    } 'checkpoint/gen_mnist_%d' % seed)
 
 
 
