@@ -28,7 +28,7 @@ elif(params['dataset'] == 'FashionMNIST'):
     from models.mnist_model import Generator, Discriminator, DHead, QHead
 
 # Set random seed for reproducibility.
-seed = 1124
+seed = 1125
 random.seed(seed)
 torch.manual_seed(seed)
 print("Random Seed: ", seed)
