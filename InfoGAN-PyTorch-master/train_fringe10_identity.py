@@ -78,7 +78,7 @@ extra_transforms =  transforms.Compose([
                         # ),
                     ])
 
-load_model = True
+load_model = False
 load_classifier = False
 
 use_base_resnet = 'base'
