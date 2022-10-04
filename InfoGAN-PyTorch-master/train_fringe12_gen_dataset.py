@@ -137,7 +137,7 @@ if (train_eval == 'train'):
 
     state = dict(
             images = full_images[1:],
-            knn_t = full_labels[1:],
+            labels = full_labels[1:],
         )
 
     exp_dir = './checkpoints/gen_fmnist_' + str(seed)
@@ -148,7 +148,8 @@ else:
     gen_dset = torch.load(load_path, map_location=device)
 
     images = gen_dset['images'].to(device)
-    labels = gen_dset['labels'].to(device)
+    #labels = gen_dset['labels'].to(device)
+    labels = gen_dset['knn_t'].to(device) #hack for first wrong one
 
     print (images.shape)
     print (labels.shape)
