@@ -115,10 +115,7 @@ if (train_eval == 'train'):
                 diff /= 2
                 noise = embedding[i0] + diff
 
-                noise = noise.unsqueeze(0)
-                print (noise.shape)
-                exit()
-                gen_images[i0] = netG(noise).detach().cpu()
+                gen_images[i0] = netG(noise.unsqueeze(0)).detach().cpu()[0]
                 l0 = true_label_g[i0]
                 l1 = true_label_g[i1]
                 gen_labels[i0, l0] = 0.5
@@ -147,13 +144,13 @@ else:
     for i, image in enumerate(images):
         label = labels[i]
 
-        embedding = classifier(image)
+        embedding = classifier(image.unsqueeze(0))
         pred = netC(embedding)
         pred = F.log_softmax(pred, dim=1)
 
         kl = split_measure(pred, label)
 
-        total_kl += kl
+        total_kl += torch.sum(kl)
         total_samples += 1
 
 
