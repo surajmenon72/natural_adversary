@@ -146,7 +146,7 @@ if (train_eval == 'train'):
 else:
     classifier.eval()
     netC.eval()
-    
+
     load_path = './checkpoints/gen_fmnist_1130'
     gen_dset = torch.load(load_path, map_location=device)
 
@@ -160,9 +160,6 @@ else:
         print ('Image')
         print (i)
         label = labels[i]
-
-        print (image.shape)
-        print (label.shape)
 
         embedding = classifier(image.unsqueeze(0))
         pred = netC(embedding)
