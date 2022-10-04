@@ -151,8 +151,13 @@ else:
     #labels = gen_dset['labels'].to(device)
     labels = gen_dset['knn_t'].to(device) #hack for first wrong one
 
-    print (images.shape)
-    print (labels.shape)
+    state = dict(
+            images = images[:],
+            labels = labels[:],
+        )
+
+    exp_dir = './checkpoints/gen_fmnist_' + str(seed)
+    torch.save(state, exp_dir)
     exit()
 
     total_kl = 0
