@@ -150,14 +150,12 @@ else:
     images = gen_dset['images'].to(device)
     labels = gen_dset['labels'].to(device)
 
-    print (images.shape)
-    print (labels.shape)
-    exit()
-
     total_kl = 0
     total_samples = 0
 
     for i, image in enumerate(images):
+        print ('Image')
+        print (i)
         label = labels[i]
 
         embedding = classifier(image.unsqueeze(0))
