@@ -67,7 +67,8 @@ split_measure = nn.KLDivLoss()
 if (load_model):
     classifier.load_state_dict(state_dict['classifier'])
     netC.load_state_dict(state_dict['netC'])
-    netG.load_state_dict(state_dict['netG'])
+    if (train_eval == 'train'):
+        netG.load_state_dict(state_dict['netG'])
     print ('Model successfully loaded')
 
 

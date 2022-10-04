@@ -267,7 +267,7 @@ if (train_eval == 'train'):
                     probs_c = F.log_softmax(probs_c, dim=1)
 
                 if (train_using_knn):
-                    soft_probs_c = calculate_fuzzy_knn_eff(output_c, knn_e, knn_t, device, k=10, num_classes=10)
+                    soft_probs_c = calculate_fuzzy_knn_eff(output_c, knn_e, knn_t, device, k=25, num_classes=10)
 
                 if (train_using_knn):
                     loss_c = criterionC(probs_c, soft_probs_c)
