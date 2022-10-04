@@ -533,6 +533,8 @@ def main_worker(args):
             total_correct += num_correct
             total_samples += batch_size
 
+            print (fuzzy_guesses.shape)
+            exit()
             entropy = calc_entropy(fuzzy_guesses)
             total_entropy += entropy
 
