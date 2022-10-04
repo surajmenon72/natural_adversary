@@ -124,11 +124,6 @@ if (train_eval == 'train'):
             full_images = torch.cat((full_images, gen_images), dim=0)
             full_labels = torch.cat((full_labels, gen_labels), dim=0)
 
-    torch.save({
-        'images': full_images[1:],
-        'labels' : full_labels[1:]
-        } 'checkpoint/gen_fmnist_%d' % seed)
-
     state = dict(
             images = full_images[1:],
             knn_t = full_labels[1:],
