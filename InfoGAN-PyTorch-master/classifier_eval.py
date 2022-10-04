@@ -265,7 +265,8 @@ def calculate_fuzzy_knn_eff(model_output, knn_e, knn_t, k=100, num_classes=10):
     return sm_knn
 
 def calc_entropy(dist):
-    log_dist = torch.log(dist)
+    safe_dist = F.normalize(dist+1e-6)
+    log_dist = torch.log(safe_dist)
     mult = dist*log_dist
     entropy = -torch.sum(mult, dim=1)
     return entropy
