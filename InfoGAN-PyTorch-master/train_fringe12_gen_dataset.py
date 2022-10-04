@@ -128,6 +128,14 @@ if (train_eval == 'train'):
         'images': full_images[1:],
         'labels' : full_labels[1:]
         } 'checkpoint/gen_fmnist_%d' % seed)
+
+    state = dict(
+            images = full_images[1:],
+            knn_t = full_labels[1:],
+        )
+
+    exp_dir = 'gen_fmnist_' + str(seed)
+    torch.save(state, exp_dir)
 else:
     load_path = './checkpoint/gen_fmnist_1130'
     gen_dset = torch.load(load_path, map_location=device)
