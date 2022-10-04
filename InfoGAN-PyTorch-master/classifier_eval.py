@@ -264,6 +264,12 @@ def calculate_fuzzy_knn_eff(model_output, knn_e, knn_t, k=100, num_classes=10):
 
     return sm_knn
 
+def calc_entropy(dist):
+    log_dist = torch.log(dist)
+    mult = dist*log_dist
+    entropy = -torch.sum(mult, dim=1)
+    return entropy
+
 
 def main():
     parser = get_arguments()
@@ -501,6 +507,7 @@ def main_worker(args):
         batches_to_test = 10
         total_correct = 0
         total_samples = 0
+        total_entropy = 0
         print ('Validating w/ KNN')
         targets = torch.zeros((10))
         for i, (images, target) in enumerate(val_loader):
@@ -526,6 +533,10 @@ def main_worker(args):
             total_correct += num_correct
             total_samples += batch_size
 
+            entropy = calc_entropy(fuzzy_guesses)
+            total_entropy += entropy
+
+
             for b in range(batch_size):
                 index = int(target[b])
                 targets[index] += 1
@@ -534,12 +545,16 @@ def main_worker(args):
                 break
 
         accuracy = total_correct/total_samples
+        avg_entropy = total_entropy/total_samples
 
         print ('Validation Accuracy w/ KNN')
         print (accuracy)
 
         print ('Target Distribution')
         print (targets)
+
+        print ('Avg Entropy')
+        print (avg_entropy)
 
 
 if __name__ == "__main__":
