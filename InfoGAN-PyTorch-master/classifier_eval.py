@@ -537,7 +537,6 @@ def main_worker(args):
             total_samples += batch_size
 
             print (fuzzy_guesses.shape)
-            print (fuzzy_guesses[0])
             entropy = calc_entropy(fuzzy_guesses)
             print (entropy[0])
             print (torch.sum(entropy))
