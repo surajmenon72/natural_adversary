@@ -155,6 +155,7 @@ else:
 
     total_kl = 0
     total_samples = 0
+    test_samples = 10000
 
     for i, image in enumerate(images):
         label = labels[i]
@@ -171,6 +172,9 @@ else:
         if (i % 1000 == 0):
             print ('Image')
             print (i)
+
+        if (i == test_samples):
+            break
 
 
     avg_kl = total_kl/total_samples
