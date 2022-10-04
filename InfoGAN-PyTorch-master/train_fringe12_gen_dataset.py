@@ -118,7 +118,7 @@ if (train_eval == 'train'):
                 diff /= 2
                 noise = embedding[i0] + diff
 
-                gen_images[i0] = netG(noise).detach().cpu()
+                gen_images[i0] = netG(noise.unsqueeze(0)).detach().cpu()[0]
                 l0 = true_label_g[i0]
                 l1 = true_label_g[i1]
                 gen_labels[i0, l0] = 0.5
