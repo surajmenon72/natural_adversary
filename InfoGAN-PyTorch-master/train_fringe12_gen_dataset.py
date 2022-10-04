@@ -83,8 +83,6 @@ num_batches = len(dataloader)
 
 if (train_eval == 'train'):
     b_size = params['batch_size']
-    gen_images = torch.zeros((b_size, 1, 28, 28))
-    gen_labels = torch.zeros((b_size, 10))
 
     full_images = torch.zeros((1, 1, 28, 28)).detach().cpu()
     full_labels = torch.zeros((1, 10)).detach().cpu()
@@ -102,14 +100,18 @@ if (train_eval == 'train'):
             print (i)
             real_data = data.to(device)
             true_label_g = true_label.to(device)
+            bsz = real_data.shape[0]
+
+            gen_images = torch.zeros((bsz, 1, 28, 28))
+            gen_labels = torch.zeros((bsz, 10))
 
             embedding = classifier(real_data)
             ea = embedding.shape[0]
             eb = embedding.shape[1]
             embedding = torch.reshape(embedding, (ea, eb, 1, 1))
 
-            for j in range(b_size):
-                if (j < (b_size-1)):
+            for j in range(bsz):
+                if (j < (bsz-1)):
                     i0 = j
                     i1 = j+1
                 else:
