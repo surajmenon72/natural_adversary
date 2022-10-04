@@ -157,8 +157,6 @@ else:
     total_samples = 0
 
     for i, image in enumerate(images):
-        print ('Image')
-        print (i)
         label = labels[i]
 
         embedding = classifier(image.unsqueeze(0))
@@ -169,6 +167,10 @@ else:
 
         total_kl += torch.sum(kl)
         total_samples += 1
+
+        if (i % 1000 == 0):
+            print ('Image')
+            print (i)
 
 
     avg_kl = total_kl/total_samples
