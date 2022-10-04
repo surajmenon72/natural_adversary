@@ -144,6 +144,9 @@ if (train_eval == 'train'):
     torch.save(state, exp_dir)
     print ('Done!')
 else:
+    classifier.eval()
+    netC.eval()
+    
     load_path = './checkpoints/gen_fmnist_1130'
     gen_dset = torch.load(load_path, map_location=device)
 
