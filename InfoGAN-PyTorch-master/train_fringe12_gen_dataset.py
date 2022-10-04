@@ -160,7 +160,6 @@ else:
 
         print (image.shape)
         print (label.shape)
-        exit()
 
         embedding = classifier(image.unsqueeze(0))
         pred = netC(embedding)
