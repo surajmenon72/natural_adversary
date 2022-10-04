@@ -115,6 +115,7 @@ if (train_eval == 'train'):
                 diff /= 2
                 noise = embedding[i0] + diff
 
+                noise = noise.unsqueeze(0)
                 print (noise.shape)
                 exit()
                 gen_images[i0] = netG(noise).detach().cpu()
