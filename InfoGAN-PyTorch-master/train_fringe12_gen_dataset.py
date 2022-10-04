@@ -23,8 +23,8 @@ torch.manual_seed(seed)
 print("Random Seed: ", seed)
 
 # Use GPU if available.
-#device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
-device = torch.device('cpu')
+device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
+#device = torch.device('cpu')
 print(device, " will be used.\n")
 
 train_eval = 'train'
@@ -86,8 +86,8 @@ if (train_eval == 'train'):
     gen_images = torch.zeros((b_size, 1, 28, 28))
     gen_labels = torch.zeros((b_size, 10))
 
-    full_images = torch.zeros((1, 1, 28, 28))
-    full_labels = torch.zeros((1, 10))
+    full_images = torch.zeros((1, 1, 28, 28)).detach().cpu()
+    full_labels = torch.zeros((1, 10)).detach().cpu()
 
     num_passes = 1
     for p in range(num_passes):
