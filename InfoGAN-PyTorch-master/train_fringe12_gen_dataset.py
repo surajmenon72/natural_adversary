@@ -158,6 +158,10 @@ else:
         print (i)
         label = labels[i]
 
+        print (image.shape)
+        print (label.shape)
+        exit()
+
         embedding = classifier(image.unsqueeze(0))
         pred = netC(embedding)
         pred = F.log_softmax(pred, dim=1)
