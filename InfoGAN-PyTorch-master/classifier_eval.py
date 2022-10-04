@@ -520,7 +520,7 @@ def main_worker(args):
             # img_test = img_tensor
             # output = model(img_test.to(device))
             #fuzzy_guesses = calculate_fuzzy_knn(output, knn_e, knn_t, k=100)
-            fuzzy_guesses = calculate_fuzzy_knn_eff(output, knn_e, knn_t, k=10)
+            fuzzy_guesses = calculate_fuzzy_knn_eff(output, knn_e, knn_t, k=25)
 
             # print (fuzzy_guesses.shape)
             # print (fuzzy_guesses[0])
