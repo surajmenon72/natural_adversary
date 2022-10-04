@@ -266,8 +266,6 @@ def calculate_fuzzy_knn_eff(model_output, knn_e, knn_t, k=100, num_classes=10):
 
 def calc_entropy(dist):
     safe_dist = F.normalize(dist+1e-9)
-    print (dist[0])
-    print (safe_dist[0])
     log_dist = torch.log(safe_dist)
     mult = dist*log_dist
     entropy = -torch.sum(mult, dim=1)
@@ -536,12 +534,8 @@ def main_worker(args):
             total_correct += num_correct
             total_samples += batch_size
 
-            print (fuzzy_guesses.shape)
             entropy = calc_entropy(fuzzy_guesses)
-            print (entropy[0])
-            print (torch.sum(entropy))
-            exit()
-            total_entropy += entropy
+            total_entropy += torch.sum(entropy)
 
 
             for b in range(batch_size):
