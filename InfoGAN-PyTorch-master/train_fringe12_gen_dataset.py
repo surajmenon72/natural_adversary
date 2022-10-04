@@ -27,13 +27,11 @@ device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 #device = torch.device('cpu')
 print(device, " will be used.\n")
 
-train_eval = 'train'
+train_eval = 'eval'
 
 load_model = True
 
 use_base_resnet = 'base'
-use_thanos_vicreg = 'thanos'
-load_encoder = True
 
 load_path = ' '
 state_dict = {}
@@ -136,21 +134,25 @@ if (train_eval == 'train'):
 
     print ('Labels Size')
     print (full_labels.shape)
-    
+
     state = dict(
             images = full_images[1:],
             knn_t = full_labels[1:],
         )
 
-    exp_dir = 'gen_fmnist_' + str(seed)
+    exp_dir = './checkpoints/gen_fmnist_' + str(seed)
     torch.save(state, exp_dir)
     print ('Done!')
 else:
-    load_path = './checkpoint/gen_fmnist_1130'
+    load_path = './checkpoints/gen_fmnist_1130'
     gen_dset = torch.load(load_path, map_location=device)
 
     images = gen_dset['images'].to(device)
     labels = gen_dset['labels'].to(device)
+
+    print (images.shape)
+    print (labels.shape)
+    exit()
 
     total_kl = 0
     total_samples = 0
