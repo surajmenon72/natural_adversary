@@ -131,6 +131,12 @@ if (train_eval == 'train'):
             full_images = torch.cat((full_images, gen_images), dim=0)
             full_labels = torch.cat((full_labels, gen_labels), dim=0)
 
+    print ('Image Size')
+    print (full_images.shape)
+
+    print ('Labels Size')
+    print (full_labels.shape)
+    
     state = dict(
             images = full_images[1:],
             knn_t = full_labels[1:],
