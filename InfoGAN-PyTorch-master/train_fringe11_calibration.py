@@ -25,10 +25,10 @@ print("Random Seed: ", seed)
 device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
-train_eval = 'eval'
+train_eval = 'train'
 
-load_model = True
-load_ensemble = True
+load_model = False
+load_ensemble = False
 
 use_base_resnet = 'base'
 use_thanos_vicreg = 'vicreg'
@@ -37,7 +37,7 @@ load_encoder = True
 train_classifier = False
 train_classifier_head = True
 train_using_knn = True
-train_ensemble = True
+train_ensemble = False
 
 load_path = ' '
 state_dict = {}
@@ -181,7 +181,8 @@ if (train_using_knn):
             knn_path = './checkpoints/knn_vicreg_resnet.pth'
         else:
             #knn_path = './checkpoints/knn_vicreg_base_fashion.pth'
-            knn_path = './checkpoints/knn_supvic_base_fashion.pth'
+            #knn_path = './checkpoints/knn_supvic_base_fashion.pth'
+            knn_path = './checkpoints/knn_supvic_base_fashion_.85.pth'
 
 #load knn dict regardless, assume that it matches the encoder we are using.
 if (knn_path != ' '):
