@@ -25,10 +25,10 @@ print("Random Seed: ", seed)
 device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 print(device, " will be used.\n")
 
-train_eval = 'eval'
+train_eval = 'train'
 
-load_model = True
-load_ensemble = True
+load_model = False
+load_ensemble = False
 
 use_base_resnet = 'base'
 use_thanos_vicreg = 'vicreg'
@@ -37,7 +37,7 @@ load_encoder = True
 train_classifier = False
 train_classifier_head = True
 train_using_knn = True
-train_ensemble = False
+train_ensemble = True
 
 load_path = ' '
 state_dict = {}
@@ -148,7 +148,8 @@ else:
                 missing_keys, unexpected_keys = classifier.load_state_dict(state_dict, strict=False)
             else:
                 #path = './checkpoints/vicreg_backbone_base_fashion_60.pth'
-                path = './checkpoints/supvic_backbone_base_fashion_60.pth'
+                #path = './checkpoints/supvic_backbone_base_fashion_60.pth'
+                path = './checkpoints/supvic_backbone_base_fashion_.85_157.pth'
                 state_dict = torch.load(path, map_location=device)
 
                 missing_keys, unexpected_keys = classifier.load_state_dict(state_dict, strict=False)
