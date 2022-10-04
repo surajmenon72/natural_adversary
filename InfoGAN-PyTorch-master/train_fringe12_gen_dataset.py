@@ -98,6 +98,8 @@ if (train_eval == 'train'):
         netG.eval()
 
         for i, (data, true_label, idx) in enumerate(dataloader, 0):
+            print ('Batch')
+            print (i)
             real_data = data.to(device)
             true_label_g = true_label.to(device)
 
@@ -134,6 +136,7 @@ if (train_eval == 'train'):
 
     exp_dir = 'gen_fmnist_' + str(seed)
     torch.save(state, exp_dir)
+    print ('Done!')
 else:
     load_path = './checkpoint/gen_fmnist_1130'
     gen_dset = torch.load(load_path, map_location=device)
