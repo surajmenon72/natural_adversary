@@ -272,13 +272,15 @@ def main(args):
             supcon_loss = sup_criterion(xy_features_s, labels)
             #supcon_loss = torch.zeros(1)
 
+            loss = alpha*vicreg_loss + (1-alpha)*supcon_loss
+
             if ((step % 50) == 0):
                 print ('Current Vicreg Loss')
                 print (vicreg_loss)
                 print ('Current Supcon Loss')
                 print (supcon_loss)
-
-            loss = alpha*vicreg_loss + (1-alpha)*supcon_loss
+                print ('Total Loss')
+                print (loss)
 
             loss.backward()
             optimizer.step()
