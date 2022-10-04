@@ -27,6 +27,8 @@ print("Random Seed: ", seed)
 device = torch.device('cpu')
 print(device, " will be used.\n")
 
+train_eval = 'train'
+
 load_model = True
 
 use_base_resnet = 'base'
@@ -60,6 +62,8 @@ netG = Generator().to(device)
 netG.apply(weights_init)
 print (netG)
 
+split_measure = nn.KLDivLoss()
+
 if (load_model):
     classifier.load_state_dict(state_dict['classifier'])
     netC.load_state_dict(state_dict['netC'])
@@ -75,54 +79,92 @@ print("-"*25)
 start_time = time.time()
 iters = 0
 num_batches = len(dataloader)
-cc_iter = int(num_batches/num_ccs)
 
-b_size = params['batch_size']
-gen_images = torch.zeros((b_size, 1, 28, 28))
-gen_labels = torch.zeros((b_size, 10))
+if (train_eval == 'train'):
+    b_size = params['batch_size']
+    gen_images = torch.zeros((b_size, 1, 28, 28))
+    gen_labels = torch.zeros((b_size, 10))
 
-full_images = torch.zeros((1, 1, 28, 28))
-full_labels = torch.zeros((1, 10))
+    full_images = torch.zeros((1, 1, 28, 28))
+    full_labels = torch.zeros((1, 10))
 
-num_passes = 1
-for p in range(num_passes):
-    epoch_start_time = time.time()
+    num_passes = 1
+    for p in range(num_passes):
+        epoch_start_time = time.time()
 
-    classifier.eval()
-    netC.eval()
-    netG.eval()
+        classifier.eval()
+        netC.eval()
+        netG.eval()
 
-    for i, (data, true_label, idx) in enumerate(dataloader_train, 0):
-        real_data = data.to(device)
-        true_label_g = true_label.to(device)
+        for i, (data, true_label, idx) in enumerate(dataloader_train, 0):
+            real_data = data.to(device)
+            true_label_g = true_label.to(device)
 
-        embedding = classifier(real_data)
+            embedding = classifier(real_data)
 
-        for j in range(b_size):
-            if (j < (b_size-1)):
-                i0 = j
-                i1 = j+1
-            else:
-                i0 = j
-                i1 = 0
+            for j in range(b_size):
+                if (j < (b_size-1)):
+                    i0 = j
+                    i1 = j+1
+                else:
+                    i0 = j
+                    i1 = 0
 
-            diff = embedding[i1] - embedding[i0]
-            diff /= 2
-            noise = embedding[i0] + diff
+                diff = embedding[i1] - embedding[i0]
+                diff /= 2
+                noise = embedding[i0] + diff
 
-            gen_images[i0] = netG(noise).detach().cpu()
-            l0 = true_label_g[i0]
-            l1 = true_label_g[i1]
-            gen_labels[i0, l0] = 0.5
-            gen_labels[i0, l1] = 0.5
+                gen_images[i0] = netG(noise).detach().cpu()
+                l0 = true_label_g[i0]
+                l1 = true_label_g[i1]
+                gen_labels[i0, l0] = 0.5
+                gen_labels[i0, l1] = 0.5
 
-        full_images = torch.cat((full_images, gen_images), dim=0)
-        full_labels = torch.cat((full_labels, gen_labels), dim=0)
+            full_images = torch.cat((full_images, gen_images), dim=0)
+            full_labels = torch.cat((full_labels, gen_labels), dim=0)
 
-torch.save({
-    'images': full_images[1:],
-    'labels' : full_labels[1:]
-    } 'checkpoint/gen_fmnist_%d' % seed)
+    torch.save({
+        'images': full_images[1:],
+        'labels' : full_labels[1:]
+        } 'checkpoint/gen_fmnist_%d' % seed)
+else:
+    load_path = './checkpoint/gen_fmnist_1130'
+    gen_dset = torch.load(load_path, map_location=device)
+
+    images = gen_dset['images'].to(device)
+    labels = gen_dset['labels'].to(device)
+
+    total_kl = 0
+    total_samples = 0
+
+    for i, image in enumerate(images):
+        label = labels[i]
+
+        embedding = classifier(image)
+        pred = netC(embedding)
+        pred = F.log_softmax(pred, dim=1)
+
+        kl = split_measure(pred, label)
+
+        total_kl += kl
+        total_samples += 1
+
+
+    avg_kl = total_kl/total_samples
+
+    print ('Avg KL')
+    print (avg_kl)
+
+
+
+
+
+
+
+
+
+
+
 
 
 
