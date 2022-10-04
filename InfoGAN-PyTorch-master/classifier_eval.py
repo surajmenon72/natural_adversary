@@ -535,8 +535,10 @@ def main_worker(args):
 
             print (fuzzy_guesses.shape)
             print (fuzzy_guesses[0])
-            exit()
             entropy = calc_entropy(fuzzy_guesses)
+            print (entropy[0])
+            print (torch.sum(entropy))
+            exit()
             total_entropy += entropy
 
 
