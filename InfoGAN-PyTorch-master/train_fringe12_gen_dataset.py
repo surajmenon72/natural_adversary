@@ -97,7 +97,7 @@ if (train_eval == 'train'):
         netC.eval()
         netG.eval()
 
-        for i, (data, true_label, idx) in enumerate(dataloader_train, 0):
+        for i, (data, true_label, idx) in enumerate(dataloader, 0):
             real_data = data.to(device)
             true_label_g = true_label.to(device)
 
