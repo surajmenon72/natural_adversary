@@ -204,7 +204,7 @@ else:
     total_kl_e = 0
     total_kl_m = 0
     total_samples = 0
-    test_samples = 20000
+    test_samples = 5000
 
     for i, image in enumerate(images):
         label = labels[i].unsqueeze(0)
@@ -230,7 +230,7 @@ else:
             cc8.eval()
             cc9.eval()
             ccm.eval()
-            
+
             output_cc0 = cc0(image.unsqueeze(0))
             output_cc1 = cc1(image.unsqueeze(0))
             output_cc2 = cc2(image.unsqueeze(0))
