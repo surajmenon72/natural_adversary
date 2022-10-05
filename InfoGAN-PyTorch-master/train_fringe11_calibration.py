@@ -506,8 +506,8 @@ else:
         total_entropy_avg += torch.sum(avg_entropy)
         total_entropy_ccm += torch.sum(ccm_entropy)
 
-        if (i == 50):
-            break
+        # if (i == 50):
+        #     break
 
 
     #Accuracies
