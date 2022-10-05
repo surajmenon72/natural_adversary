@@ -219,6 +219,18 @@ else:
         total_samples += 1
 
         if (eval_ensemble):
+            cc0.eval()
+            cc1.eval()
+            cc2.eval()
+            cc3.eval()
+            cc4.eval()
+            cc5.eval()
+            cc6.eval()
+            cc7.eval()
+            cc8.eval()
+            cc9.eval()
+            ccm.eval()
+            
             output_cc0 = cc0(image.unsqueeze(0))
             output_cc1 = cc1(image.unsqueeze(0))
             output_cc2 = cc2(image.unsqueeze(0))
