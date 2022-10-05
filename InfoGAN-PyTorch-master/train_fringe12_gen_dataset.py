@@ -30,6 +30,7 @@ print(device, " will be used.\n")
 train_eval = 'eval'
 
 load_model = True
+eval_ensemble = True
 
 use_base_resnet = 'base'
 
@@ -38,6 +39,12 @@ state_dict = {}
 if (load_model):
     load_path = './checkpoint/model_load'
     state_dict = torch.load(load_path, map_location=device)
+
+ensemble_path = ' '
+ensemble_dict = {}
+if (load_ensemble):
+    load_path = './checkpoint/model_e_load'
+    ensemble_dict = torch.load(load_path, map_location=device)
 
 use_3_channel = False
 if (use_base_resnet == 'resnet'):
@@ -60,7 +67,32 @@ netG = Generator().to(device)
 netG.apply(weights_init)
 print (netG)
 
-split_measure = nn.KLDivLoss()
+num_ccs = 10
+cc0 = CheapClassifier().to(device)
+cc0.apply(weights_init)
+cc1 = CheapClassifier().to(device)
+cc1.apply(weights_init)
+cc2 = CheapClassifier().to(device)
+cc2.apply(weights_init)
+cc3 = CheapClassifier().to(device)
+cc3.apply(weights_init)
+cc4 = CheapClassifier().to(device)
+cc4.apply(weights_init)
+cc5 = CheapClassifier().to(device)
+cc5.apply(weights_init)
+cc6 = CheapClassifier().to(device)
+cc6.apply(weights_init)
+cc7 = CheapClassifier().to(device)
+cc7.apply(weights_init)
+cc8 = CheapClassifier().to(device)
+cc8.apply(weights_init)
+cc9 = CheapClassifier().to(device)
+cc9.apply(weights_init)
+ccm = CheapClassifier().to(device)
+ccm.apply(weights_init)
+
+#split_measure = nn.KLDivLoss()
+split_measure = nn.CrossEntropyLoss()
 
 if (load_model):
     classifier.load_state_dict(state_dict['classifier'])
@@ -68,6 +100,20 @@ if (load_model):
     if (train_eval == 'train'):
         netG.load_state_dict(state_dict['netG'])
     print ('Model successfully loaded')
+
+if (load_ensemble == True):
+    cc0.load_state_dict(ensemble_dict['cc0'])
+    cc1.load_state_dict(ensemble_dict['cc1'])
+    cc2.load_state_dict(ensemble_dict['cc2'])
+    cc3.load_state_dict(ensemble_dict['cc3'])
+    cc4.load_state_dict(ensemble_dict['cc4'])
+    cc5.load_state_dict(ensemble_dict['cc5'])
+    cc6.load_state_dict(ensemble_dict['cc6'])
+    cc7.load_state_dict(ensemble_dict['cc7'])
+    cc8.load_state_dict(ensemble_dict['cc8'])
+    cc9.load_state_dict(ensemble_dict['cc9'])
+    ccm.load_state_dict(ensemble_dict['ccm'])
+    print ('Loaded Ensemble')
 
 
 print("-"*25)
@@ -154,6 +200,8 @@ else:
     labels = gen_dset['labels'].to(device)
 
     total_kl = 0
+    total_kl_e = 0
+    total_kl_m = 0
     total_samples = 0
     test_samples = 20000
 
@@ -162,12 +210,34 @@ else:
 
         embedding = classifier(image.unsqueeze(0))
         pred = netC(embedding)
-        pred = F.log_softmax(pred, dim=1)
+        #pred = F.log_softmax(pred, dim=1)
 
         kl = split_measure(pred, label)
 
         total_kl += torch.sum(kl)
         total_samples += 1
+
+        if (eval_ensemble):
+            output_cc0 = cc0(image.unsqueeze(0))
+            output_cc1 = cc1(image.unsqueeze(0))
+            output_cc2 = cc2(image.unsqueeze(0))
+            output_cc3 = cc3(image.unsqueeze(0))
+            output_cc4 = cc4(image.unsqueeze(0))
+            output_cc5 = cc5(image.unsqueeze(0))
+            output_cc6 = cc6(image.unsqueeze(0))
+            output_cc7 = cc7(image.unsqueeze(0))
+            output_cc8 = cc8(image.unsqueeze(0))
+            output_cc9 = cc9(image.unsqueeze(0))
+            output_ccm = ccm(image.unsqueeze(0))
+
+            output_sum = (output_cc0 + output_cc1 + output_cc2 + output_cc3 + output_cc4 + 
+                          output_cc5 + output_cc6 + output_cc7 + output_cc8 + output_cc9)
+
+            kl = split_measure(output_sum, label)
+            total_kl_e += torch.sum(kl)
+
+            kl = split_measure(output_ccm, label)
+            total_kl_m += kl
 
         if (i % 1000 == 0):
             print ('Image')
@@ -178,9 +248,17 @@ else:
 
 
     avg_kl = total_kl/total_samples
+    avg_kl_e = total_kl_e/total_samples
+    avg_kl_m = total_kl_m/total_samples
 
     print ('Avg KL')
     print (avg_kl)
+
+    print ('Avg KL E')
+    print (avg_kl_e)
+
+    print ('Avg KL M')
+    print (avg_kl_m)
 
 
 
