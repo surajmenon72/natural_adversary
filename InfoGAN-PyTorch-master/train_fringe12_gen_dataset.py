@@ -38,7 +38,7 @@ use_base_resnet = 'base'
 load_path = ' '
 state_dict = {}
 if (load_model):
-    load_path = './checkpoint/model_load'
+    load_path = './checkpoint/model_c_load'
     state_dict = torch.load(load_path, map_location=device)
 
 ensemble_path = ' '
