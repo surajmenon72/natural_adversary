@@ -213,6 +213,10 @@ else:
         pred = netC(embedding)
         #pred = F.log_softmax(pred, dim=1)
 
+        print (pred.shape)
+        print (label.shape)
+        exit()
+
         kl = split_measure(pred, label)
 
         total_kl += torch.sum(kl)
