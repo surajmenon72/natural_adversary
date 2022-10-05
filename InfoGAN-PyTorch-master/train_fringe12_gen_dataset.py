@@ -246,6 +246,8 @@ else:
             output_sum = (output_cc0 + output_cc1 + output_cc2 + output_cc3 + output_cc4 + 
                           output_cc5 + output_cc6 + output_cc7 + output_cc8 + output_cc9)
 
+            output_sum = output_sum/10
+
             kl = split_measure(output_sum, label)
             total_kl_e += torch.sum(kl)
 
