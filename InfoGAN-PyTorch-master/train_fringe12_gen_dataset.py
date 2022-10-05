@@ -204,7 +204,7 @@ else:
     total_kl_e = 0
     total_kl_m = 0
     total_samples = 0
-    test_samples = 5000
+    test_samples = 10000
 
     for i, image in enumerate(images):
         label = labels[i].unsqueeze(0)
