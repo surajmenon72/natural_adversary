@@ -30,6 +30,7 @@ print(device, " will be used.\n")
 train_eval = 'eval'
 
 load_model = True
+load_ensemble = True
 eval_ensemble = True
 
 use_base_resnet = 'base'
