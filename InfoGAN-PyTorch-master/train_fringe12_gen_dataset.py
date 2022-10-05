@@ -207,15 +207,11 @@ else:
     test_samples = 20000
 
     for i, image in enumerate(images):
-        label = labels[i]
+        label = labels[i].unsqueeze(0)
 
         embedding = classifier(image.unsqueeze(0))
         pred = netC(embedding)
         #pred = F.log_softmax(pred, dim=1)
-
-        print (pred.shape)
-        print (label.shape)
-        exit()
 
         kl = split_measure(pred, label)
 
