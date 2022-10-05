@@ -13,7 +13,7 @@ from dataloader import get_data
 from utils import *
 from config import params
 
-from models.mnist_model_wtsmooth2 import Encoder, CHead, Generator
+from models.mnist_model_wtsmooth2 import Encoder, CHead, Generator, CheapClassifier
 from copy import deepcopy
 
 # Set random seed for reproducibility.
