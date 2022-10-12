@@ -209,6 +209,7 @@ for epoch in range(niter):
             vutils.save_image(real_cpu,'output/real_samples.png',normalize=True)
             fake = netG(fixed_noise)
             vutils.save_image(fake.detach(),'output/fake_samples_epoch_%03d.png' % (epoch),normalize=True)
+            break
     
     # Check pointing for every epoch
     torch.save(netG.state_dict(), 'weights/netG_epoch_%d.pth' % (epoch))
