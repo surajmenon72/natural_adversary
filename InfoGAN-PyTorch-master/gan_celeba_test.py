@@ -140,7 +140,8 @@ criterion = nn.BCELoss()
 optimizerD = optim.Adam(netD.parameters(), lr=0.0002, betas=(0.5, 0.999))
 optimizerG = optim.Adam(netG.parameters(), lr=0.0002, betas=(0.5, 0.999))
 
-fixed_noise = torch.randn(128, nz, 1, 1, device=device)
+#fixed_noise = torch.randn(128, nz, 1, 1, device=device)
+start_noise = torch.randn(128, nz, 1, 1, device=device)
 real_label = 1
 fake_label = 0
 
@@ -191,6 +192,16 @@ for epoch in range(niter):
 
         print('[%d/%d][%d/%d] Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f' % (epoch, niter, i, len(dataloader), errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
         
+        if (i == 5):
+            for s in range(10):
+                index = 10*s
+                fixed_noise[index] = start_noise[index]
+                fixed_noise[index+9] = start_noise[index+1]
+                diff = embedding[index+1] - embedding[index]
+                diff = diff/8
+                for sp in range(1, 9):
+                    fixed_noise[index+sp] = fixed_noise[index+sp-1] + diff
+
         #save the output
         if i % 100 == 0:
             print('saving the output')
