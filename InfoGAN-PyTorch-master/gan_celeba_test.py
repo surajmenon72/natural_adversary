@@ -142,6 +142,7 @@ optimizerG = optim.Adam(netG.parameters(), lr=0.0002, betas=(0.5, 0.999))
 
 #fixed_noise = torch.randn(128, nz, 1, 1, device=device)
 start_noise = torch.randn(128, nz, 1, 1, device=device)
+fixed_noise = torch.zeros(128, nz, 1, 1, device=device)
 real_label = 1
 fake_label = 0
 
