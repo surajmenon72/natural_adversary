@@ -198,7 +198,7 @@ for epoch in range(niter):
                 index = 10*s
                 fixed_noise[index] = start_noise[index]
                 fixed_noise[index+9] = start_noise[index+1]
-                diff = embedding[index+1] - embedding[index]
+                diff = start_noise[index+1] - start_noise[index]
                 diff = diff/8
                 for sp in range(1, 9):
                     fixed_noise[index+sp] = fixed_noise[index+sp-1] + diff
