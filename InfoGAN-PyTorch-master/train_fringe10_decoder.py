@@ -310,7 +310,7 @@ for epoch in range(params['num_epochs']):
     epoch_start_time = time.time()
 
     total_c_loss = torch.zeros(1).to(device)
-    for i, (data, true_label) in enumerate(dataloader, 0):
+    for i, (data, true_label, idx) in enumerate(dataloader, 0):
         # print ('Batch')
         # print (i)
         # Get batch size
