@@ -377,8 +377,8 @@ for epoch in range(params['num_epochs']):
         #     total_c_loss += C_loss
         #     continue
 
-        # netD.train()
-        # optimD.zero_grad()
+        netD.train()
+        optimD.zero_grad()
 
         if (epoch % d_train_cadence == 0):
             # Real data
