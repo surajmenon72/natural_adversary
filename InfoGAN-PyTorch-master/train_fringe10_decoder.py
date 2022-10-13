@@ -57,7 +57,8 @@ use_3_channel = False
 if (use_base_resnet == 'resnet'):
     use_3_channel = True
 
-dataloader = get_data(params['dataset'], params['batch_size'], use_3_channel=use_3_channel)
+#dataloader = get_data(params['dataset'], params['batch_size'], use_3_channel=use_3_channel)
+dataloader = get_data('FashionMNIST', params['batch_size'], train_test='train_index', use_3_channel=use_3_channel)
 dataloader_knn = get_data(params['dataset'], params['knn_batch_size'], use_3_channel=use_3_channel)
 
 # Set appropriate hyperparameters depending on the dataset used.
@@ -246,7 +247,18 @@ optimG = optim.Adam([{'params': netG.parameters()}, {'params': netQ.parameters()
 #Fixed Noise
 #z = torch.randn(100, params['num_z'], 1, 1, device=device)
 z = torch.rand(100, params['num_z'], 1, 1, device=device)
-fixed_noise = z
+start_noise = z
+fixed_noise = torch.zeros(100, params['num_z'], 1, 1, device=device)
+
+#trying a spectrum test
+for s in range(10):
+    index = 10*s
+    fixed_noise[index] = start_noise[index]
+    fixed_noise[index+9] = start_noise[index+1]
+    diff = start_noise[index+1] - start_noise[index]
+    diff = diff/8
+    for sp in range(1, 9):
+        fixed_noise[index+sp] = fixed_noise[index+sp-1] + diff
 # if(params['num_dis_c'] != 0):
 #     idx = np.arange(params['dis_c_dim']).repeat(10)
 #     dis_c = torch.zeros(100, params['num_dis_c'], params['dis_c_dim'], device=device)
@@ -368,37 +380,37 @@ for epoch in range(params['num_epochs']):
         # netD.train()
         # optimD.zero_grad()
 
-        # if (epoch % d_train_cadence == 0):
-        #     # Real data
-        #     label = torch.full((b_size, ), real_label, device=device)
-        #     real_output = discriminator(real_data)
-        #     probs_real = netD(real_output).view(-1)
-        #     label = label.to(torch.float32)
-        #     loss_real = criterionD(probs_real, label)
-        #     #calculate grad
-        #     loss_real.backward()
+        if (epoch % d_train_cadence == 0):
+            # Real data
+            label = torch.full((b_size, ), real_label, device=device)
+            real_output = discriminator(real_data)
+            probs_real = netD(real_output).view(-1)
+            label = label.to(torch.float32)
+            loss_real = criterionD(probs_real, label)
+            #calculate grad
+            loss_real.backward()
 
-        #     # Generate fake image batch with G
-        #     fake_data = netG(z_noise)
-        #     #fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1) 
+            # Generate fake image batch with G
+            fake_data = netG(z_noise)
+            #fake_data = torch.cat([fake_data, fake_data, fake_data], dim=1) 
 
-        #     # Train with fake
-        #     label.fill_(fake_label)
-        #     fake_output = discriminator(fake_data.detach())
-        #     probs_fake = netD(fake_output).view(-1)
-        #     label = label.to(torch.float32)
-        #     loss_fake = criterionD(probs_fake, label)
-        #     #calculate grad
-        #     loss_fake.backward()
+            # Train with fake
+            label.fill_(fake_label)
+            fake_output = discriminator(fake_data.detach())
+            probs_fake = netD(fake_output).view(-1)
+            label = label.to(torch.float32)
+            loss_fake = criterionD(probs_fake, label)
+            #calculate grad
+            loss_fake.backward()
 
-        #     D_loss = loss_real + loss_fake
-        # else:
-        #     D_loss = torch.zeros(1)
+            D_loss = loss_real + loss_fake
+        else:
+            D_loss = torch.zeros(1)
 
         # if (clip_grads):
         #     nn.utils.clip_grad_value_(discriminator.parameters(), clip_value_1)
         #     nn.utils.clip_grad_value_(netD.parameters(), clip_value_1)
-        # optimD.step()
+        optimD.step()
 
         netG.train()
         #netQ.train()
@@ -410,10 +422,10 @@ for epoch in range(params['num_epochs']):
             total_dec_loss = 0
             total_gen_d_loss = 0
 
-            embedding = classifier(real_data)
-            ea = embedding.shape[0]
-            eb = embedding.shape[1]
-            embedding = torch.reshape(embedding, (ea, eb, 1, 1))
+            # embedding = classifier(real_data)
+            # ea = embedding.shape[0]
+            # eb = embedding.shape[1]
+            # embedding = torch.reshape(embedding, (ea, eb, 1, 1))
 
             #test using the real embedding
             #fixed_noise = embedding[:100]
@@ -423,16 +435,6 @@ for epoch in range(params['num_epochs']):
             # fake_embedding = classifier(real_data)
             # fake_embedding = torch.reshape(fake_embedding, (ea, eb, 1, 1))
             # fixed_noise = fake_embedding[:100]
-
-            #trying a spectrum test
-            for s in range(10):
-                index = 10*s
-                fixed_noise[index] = embedding[index]
-                fixed_noise[index+9] = embedding[index+1]
-                diff = embedding[index+1] - embedding[index]
-                diff = diff/8
-                for sp in range(1, 9):
-                    fixed_noise[index+sp] = fixed_noise[index+sp-1] + diff
 
  
             #print (embedding[0])
@@ -444,7 +446,7 @@ for epoch in range(params['num_epochs']):
             #split_labels = get_split_labels(true_label_g, targets, c_nums, params['dis_c_dim'], device)
             #fake_data = netG(z_noise)
             #reconstruction = netG(embedding)
-            reconstruction = netG.f_logits(embedding)
+            #reconstruction = netG.f_logits(embedding)
 
             #print (reconstruction[0])
 
@@ -455,7 +457,7 @@ for epoch in range(params['num_epochs']):
             #print (real_data.shape)
             #print (reconstruction.shape)
 
-            reconstruction_loss = criterionRecon(reconstruction, real_data)
+            #reconstruction_loss = criterionRecon(reconstruction, real_data)
             #print (reconstruction_loss)
 
             # if (use_3_channel):
@@ -480,18 +482,18 @@ for epoch in range(params['num_epochs']):
             # loss_split = criterionG(probs_split, split_labels)
 
 
-            # label = torch.full((b_size, ), real_label, device=device)
-            # fake_data = netG(z_noise)
-            # output_d = discriminator(fake_data)
-            # probs_fake = netD(output_d).view(-1)
-            # label = label.to(torch.float32)
-            # gen_d_loss = criterionD(probs_fake, label)
+            label = torch.full((b_size, ), real_label, device=device)
+            fake_data = netG(z_noise)
+            output_d = discriminator(fake_data)
+            probs_fake = netD(output_d).view(-1)
+            label = label.to(torch.float32)
+            gen_d_loss = criterionD(probs_fake, label)
 
             #Loss for Split, needs to be tuned
             #G_loss = alpha*loss_split + gamma*gen_d_loss
             #G_loss = alpha*dec_loss + gamma*gen_d_loss
-            #G_loss = gen_d_loss
-            G_loss = reconstruction_loss
+            G_loss = gen_d_loss
+            #G_loss = reconstruction_loss
             totalG_loss += G_loss
             
             #total_dec_loss += dec_loss
