@@ -23,6 +23,7 @@ torch.manual_seed(seed)
 print("Random Seed: ", seed)
 
 # Use GPU if available.
+#1 GPU
 device = torch.device("cuda:0" if(torch.cuda.is_available()) else "cpu")
 #device = torch.device('cpu')
 print(device, " will be used.\n")
